@@ -12,6 +12,8 @@ class axi4_env #(
   int USER_W = 1
 ) extends uvm_env;
 
+  localparam string RID = "AXI4_ENV";
+
   axi4_env_cfg#(ADDR_W, DATA_W, ID_W, USER_W) cfg;
 
   axi4_agent#(ADDR_W, DATA_W, ID_W, USER_W) agents[$];
@@ -27,7 +29,7 @@ class axi4_env #(
   function void build_phase(uvm_phase phase);
     super.build_phase(phase);
     if (!uvm_config_db#(axi4_env_cfg#(ADDR_W, DATA_W, ID_W, USER_W))::get(this, "", "cfg", cfg)) begin
-      `uvm_fatal(get_type_name(), "Missing env cfg in config DB (key: cfg)")
+      `uvm_fatal(RID, "Missing env cfg in config DB (key: cfg)")
     end
 
     for (int i = 0; i < cfg.agent_cfgs.size(); i++) begin
@@ -54,4 +56,3 @@ class axi4_env #(
 endclass
 
 `endif // KVIPS_AXI4_ENV_SVH
-

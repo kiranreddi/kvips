@@ -183,7 +183,6 @@ class axi4_agent_cfg #(
 
   // Role Configuration
   bit                is_master = 1;        // Master or slave agent
-  uvm_active_passive_enum is_active = UVM_ACTIVE;
   virtual axi4_if    vif;                  // Interface handle
   
   // Master Configuration
@@ -202,10 +201,13 @@ class axi4_agent_cfg #(
   
   // Slave Configuration
   bit                slave_mem_enable = 0; // Enable internal memory model
-  int unsigned       slave_read_latency_min = 1;
-  int unsigned       slave_read_latency_max = 10;
-  int unsigned       slave_write_latency_min = 1;
-  int unsigned       slave_write_latency_max = 10;
+  int unsigned       slave_mem_bytes  = 64*1024;
+  longint unsigned   slave_mem_base   = 0; // Address mapping base for internal memory
+  bit                slave_mem_wrap   = 0; // Wrap (addr - base) modulo slave_mem_bytes
+  int unsigned       ready_min = 0;        // Random READY min delay (cycles)
+  int unsigned       ready_max = 0;        // Random READY max delay (cycles)
+  int unsigned       resp_min  = 0;        // Response latency min (cycles)
+  int unsigned       resp_max  = 0;        // Response latency max (cycles)
   bit                slave_err_enable = 0; // Enable error injection
   logic [ADDR_W-1:0] slave_err_start = '0;
   logic [ADDR_W-1:0] slave_err_end = '0;
@@ -244,8 +246,10 @@ mst_cfg.master_aw_delay_min = 0;
 mst_cfg.master_aw_delay_max = 20;
 mst_cfg.master_w_beat_gap_min = 0;
 mst_cfg.master_w_beat_gap_max = 10;
-slv_cfg.slave_read_latency_min = 5;
-slv_cfg.slave_read_latency_max = 50;
+slv_cfg.ready_min = 0;
+slv_cfg.ready_max = 5;
+slv_cfg.resp_min  = 5;
+slv_cfg.resp_max  = 50;
 ```
 
 #### Debug Mode

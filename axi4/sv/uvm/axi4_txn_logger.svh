@@ -18,6 +18,8 @@ class axi4_txn_logger #(
   int USER_W = 1
 ) extends uvm_subscriber #(axi4_item#(ADDR_W, DATA_W, ID_W, USER_W));
 
+  localparam string RID = "AXI4_LOG";
+
   bit enable = 1'b0;
 
   `uvm_component_param_utils(axi4_txn_logger#(ADDR_W, DATA_W, ID_W, USER_W))
@@ -33,10 +35,9 @@ class axi4_txn_logger #(
 
   virtual function void write(axi4_item#(ADDR_W, DATA_W, ID_W, USER_W) t);
     if (!enable) return;
-    `uvm_info(get_type_name(), {"AXI4 txn:\n", t.sprint()}, UVM_LOW)
+    `uvm_info(RID, {"AXI4 txn:\n", t.sprint()}, UVM_LOW)
   endfunction
 
 endclass
 
 `endif // KVIPS_AXI4_TXN_LOGGER_SVH
-

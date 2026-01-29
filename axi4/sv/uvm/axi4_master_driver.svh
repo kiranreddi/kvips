@@ -13,6 +13,7 @@ class axi4_master_driver #(
 ) extends uvm_driver #(axi4_item#(ADDR_W, DATA_W, ID_W, USER_W));
 
   localparam int STRB_W = DATA_W/8;
+  localparam string RID = "AXI4_MDRV";
 
   typedef virtual axi4_if #(ADDR_W, DATA_W, ID_W, USER_W) axi4_vif_t;
 
@@ -28,10 +29,10 @@ class axi4_master_driver #(
   function void build_phase(uvm_phase phase);
     super.build_phase(phase);
     if (!uvm_config_db#(axi4_agent_cfg#(ADDR_W, DATA_W, ID_W, USER_W))::get(this, "", "cfg", cfg)) begin
-      `uvm_fatal(get_type_name(), "Missing cfg in config DB (key: cfg)")
+      `uvm_fatal(RID, "Missing cfg in config DB (key: cfg)")
     end
     vif = cfg.vif;
-    if (vif == null) `uvm_fatal(get_type_name(), "cfg.vif is null")
+    if (vif == null) `uvm_fatal(RID, "cfg.vif is null")
   endfunction
 
   task automatic drive_idle();
@@ -68,7 +69,7 @@ class axi4_master_driver #(
       axi4_item#(ADDR_W, DATA_W, ID_W, USER_W) tr;
       forever begin
         seq_item_port.get_next_item(tr);
-        if (cfg.trace_enable) `uvm_info(get_type_name(), {"DRV got item:\n", tr.sprint()}, UVM_MEDIUM)
+        if (cfg.trace_enable) `uvm_info(RID, {"DRV got item:\n", tr.sprint()}, UVM_MEDIUM)
         if (tr.is_write) drive_write(tr);
         else            drive_read(tr);
         seq_item_port.item_done();
@@ -106,8 +107,6 @@ class axi4_master_driver #(
     function new(string name = "axi4_req_ctx");
       super.new(name);
     endfunction
-
-    `uvm_object_utils(axi4_req_ctx)
   endclass
 
   axi4_req_ctx wr_issue_q[$];
@@ -149,7 +148,7 @@ class axi4_master_driver #(
         ctx.id_info.set_sequence_id(req.get_sequence_id());
         ctx.id_info.set_transaction_id(req.get_transaction_id());
 
-        if (cfg.trace_enable) `uvm_info(get_type_name(), {"PIPE accept:\n", ctx.tr.sprint()}, UVM_MEDIUM)
+        if (cfg.trace_enable) `uvm_info(RID, {"PIPE accept:\n", ctx.tr.sprint()}, UVM_MEDIUM)
         if (ctx.tr.is_write) wr_issue_q.push_back(ctx);
         else                 rd_issue_q.push_back(ctx);
       end
@@ -258,7 +257,7 @@ class axi4_master_driver #(
           seq_item_port.put_response(rsp);
         end
       end else begin
-        `uvm_warning(get_type_name(), $sformatf("B seen with BID=0x%0h but no matching outstanding write ctx", vif.bid))
+        `uvm_warning(RID, $sformatf("B seen with BID=0x%0h but no matching outstanding write ctx", vif.bid))
       end
 
       if (outstanding_w != 0) outstanding_w--;
@@ -347,7 +346,7 @@ class axi4_master_driver #(
           ctx.tr.data[ctx.beat_idx]  = vif.rdata;
           ctx.tr.rresp[ctx.beat_idx] = axi4_resp_e'(vif.rresp);
         end else begin
-          `uvm_error(get_type_name(), $sformatf("R beat overflow rid=0x%0h beat_idx=%0d beats=%0d", vif.rid, ctx.beat_idx, ctx.beats))
+          `uvm_error(RID, $sformatf("R beat overflow rid=0x%0h beat_idx=%0d beats=%0d", vif.rid, ctx.beat_idx, ctx.beats))
         end
         ctx.beat_idx++;
         rd_wait_r[vif.rid][0] = ctx;
@@ -364,7 +363,7 @@ class axi4_master_driver #(
           if (outstanding_r != 0) outstanding_r--;
         end
       end else begin
-        `uvm_warning(get_type_name(), $sformatf("R seen with RID=0x%0h but no matching outstanding read ctx", vif.rid))
+        `uvm_warning(RID, $sformatf("R seen with RID=0x%0h but no matching outstanding read ctx", vif.rid))
       end
 
     end
@@ -377,7 +376,7 @@ class axi4_master_driver #(
       if (vif.awready) break;
       cycles++;
       if ((cfg.handshake_timeout_cycles != 0) && (cycles > cfg.handshake_timeout_cycles)) begin
-        `uvm_fatal(get_type_name(), "Handshake timeout on AW")
+        `uvm_fatal(RID, "Handshake timeout on AW")
       end
     end
   endtask
@@ -389,7 +388,7 @@ class axi4_master_driver #(
       if (vif.wready) break;
       cycles++;
       if ((cfg.handshake_timeout_cycles != 0) && (cycles > cfg.handshake_timeout_cycles)) begin
-        `uvm_fatal(get_type_name(), "Handshake timeout on W")
+        `uvm_fatal(RID, "Handshake timeout on W")
       end
     end
   endtask
@@ -401,7 +400,7 @@ class axi4_master_driver #(
       if (vif.arready) break;
       cycles++;
       if ((cfg.handshake_timeout_cycles != 0) && (cycles > cfg.handshake_timeout_cycles)) begin
-        `uvm_fatal(get_type_name(), "Handshake timeout on AR")
+        `uvm_fatal(RID, "Handshake timeout on AR")
       end
     end
   endtask
@@ -465,7 +464,7 @@ class axi4_master_driver #(
       if (vif.bvalid) break;
       cycles++;
       if ((cfg.handshake_timeout_cycles != 0) && (cycles > cfg.handshake_timeout_cycles)) begin
-        `uvm_fatal(get_type_name(), "Timeout waiting for BVALID")
+        `uvm_fatal(RID, "Timeout waiting for BVALID")
       end
     end
     tr.bresp = axi4_resp_e'(vif.bresp);
@@ -505,7 +504,7 @@ class axi4_master_driver #(
 
     // R
     if (cfg.master_rready_random) begin
-      `uvm_warning(get_type_name(), "master_rready_random is supported in pipelined mode; non-pipelined drive_read keeps RREADY asserted")
+      `uvm_warning(RID, "master_rready_random is supported in pipelined mode; non-pipelined drive_read keeps RREADY asserted")
     end
 
     @(negedge vif.aclk);
@@ -517,13 +516,13 @@ class axi4_master_driver #(
         if (vif.rvalid) break;
         cycles++;
         if ((cfg.handshake_timeout_cycles != 0) && (cycles > cfg.handshake_timeout_cycles)) begin
-          `uvm_fatal(get_type_name(), "Timeout waiting for RVALID")
+          `uvm_fatal(RID, "Timeout waiting for RVALID")
         end
       end
       tr.data[i]  = vif.rdata;
       tr.rresp[i] = axi4_resp_e'(vif.rresp);
-      if ((i == beats-1) && !vif.rlast) `uvm_error(get_type_name(), "Expected RLAST on final beat")
-      if ((i != beats-1) && vif.rlast)  `uvm_error(get_type_name(), "Unexpected RLAST before final beat")
+      if ((i == beats-1) && !vif.rlast) `uvm_error(RID, "Expected RLAST on final beat")
+      if ((i != beats-1) && vif.rlast)  `uvm_error(RID, "Unexpected RLAST before final beat")
       @(posedge vif.aclk);
     end
     @(negedge vif.aclk);

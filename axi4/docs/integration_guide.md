@@ -66,6 +66,17 @@ Example tests live in `kvips/axi4/examples/uvm_back2back/tb/tb_pkg.sv`.
   - Disable: `+KVIPS_AXI4_SB_OFF`
   - Warn on unwritten read bytes: `+KVIPS_AXI4_SB_WARN_UNINIT`
 
+## Slave memory address mapping (common integration gotcha)
+
+When using the built-in slave memory model (`axi4_agent_cfg.slave_mem_enable=1`), the memory is a simple
+byte array indexed by `(addr - slave_mem_base)`.
+
+Use these fields to align the model with your SoC address map:
+
+- `axi4_agent_cfg.slave_mem_base`: base address that maps to memory index 0
+- `axi4_agent_cfg.slave_mem_bytes`: size of the memory image
+- `axi4_agent_cfg.slave_mem_wrap`: when set, addresses wrap modulo `slave_mem_bytes` (useful for stress tests)
+
 ## Running on Questa via LSF (bsub)
 
 From repo root:

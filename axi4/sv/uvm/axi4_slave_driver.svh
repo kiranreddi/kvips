@@ -14,10 +14,19 @@ class axi4_slave_mem #(
 
   byte unsigned mem[];
   int unsigned  mem_bytes;
+  longint unsigned mem_base;
+  bit             mem_wrap;
 
-  function new(string name = "axi4_slave_mem", int unsigned bytes = 64*1024);
+  function new(
+    string name = "axi4_slave_mem",
+    int unsigned bytes = 64*1024,
+    longint unsigned base = 0,
+    bit wrap = 1'b0
+  );
     super.new(name);
     mem_bytes = bytes;
+    mem_base  = base;
+    mem_wrap  = wrap;
     mem = new[mem_bytes];
     foreach (mem[i]) mem[i] = 8'h00;
   endfunction
@@ -29,7 +38,11 @@ class axi4_slave_mem #(
     for (int unsigned b = 0; b < STRB_W; b++) begin
       if (strb[b]) begin
         longint unsigned idx_l;
-        idx_l = base + b;
+        longint unsigned a;
+        a = base + b;
+        if (a < mem_base) continue;
+        idx_l = a - mem_base;
+        if (mem_wrap && (mem_bytes != 0)) idx_l = idx_l % mem_bytes;
         if (idx_l < mem_bytes) mem[int'(idx_l)] = data[8*b +: 8];
       end
     end
@@ -43,7 +56,11 @@ class axi4_slave_mem #(
     data = '0;
     for (int unsigned b = 0; b < STRB_W; b++) begin
       longint unsigned idx_l;
-      idx_l = base + b;
+      longint unsigned a;
+      a = base + b;
+      if (a < mem_base) continue;
+      idx_l = a - mem_base;
+      if (mem_wrap && (mem_bytes != 0)) idx_l = idx_l % mem_bytes;
       if (idx_l < mem_bytes) data[8*b +: 8] = mem[int'(idx_l)];
     end
     return data;
@@ -61,6 +78,7 @@ class axi4_slave_driver #(
 ) extends uvm_component;
 
   localparam int STRB_W = DATA_W/8;
+  localparam string RID = "AXI4_SDRV";
 
   typedef virtual axi4_if #(ADDR_W, DATA_W, ID_W, USER_W) axi4_vif_t;
 
@@ -115,11 +133,11 @@ class axi4_slave_driver #(
   function void build_phase(uvm_phase phase);
     super.build_phase(phase);
     if (!uvm_config_db#(axi4_agent_cfg#(ADDR_W, DATA_W, ID_W, USER_W))::get(this, "", "cfg", cfg)) begin
-      `uvm_fatal(get_type_name(), "Missing cfg in config DB (key: cfg)")
+      `uvm_fatal(RID, "Missing cfg in config DB (key: cfg)")
     end
     vif = cfg.vif;
-    if (vif == null) `uvm_fatal(get_type_name(), "cfg.vif is null")
-    if (cfg.slave_mem_enable) mem = new("mem", cfg.slave_mem_bytes);
+    if (vif == null) `uvm_fatal(RID, "cfg.vif is null")
+    if (cfg.slave_mem_enable) mem = new("mem", cfg.slave_mem_bytes, cfg.slave_mem_base, cfg.slave_mem_wrap);
   endfunction
 
   task automatic drive_idle();
@@ -258,7 +276,7 @@ class axi4_slave_driver #(
       aw.err_resp = cfg.slave_err_resp;
       aw.user  = vif.awuser;
       aw_q.push_back(aw);
-      if (cfg.trace_enable) `uvm_info(get_type_name(), $sformatf("AW accepted id=0x%0h addr=0x%0h len=%0d", aw.id, aw.addr, aw.len), UVM_MEDIUM)
+      if (cfg.trace_enable) `uvm_info(RID, $sformatf("AW accepted id=0x%0h addr=0x%0h len=%0d", aw.id, aw.addr, aw.len), UVM_MEDIUM)
       @(negedge vif.aclk);
       vif.awready <= 1'b0;
     end
@@ -412,7 +430,7 @@ class axi4_slave_driver #(
         if (vif.bvalid && vif.bready) break;
         cycles++;
         if ((cfg.handshake_timeout_cycles != 0) && (cycles > cfg.handshake_timeout_cycles)) begin
-          `uvm_fatal(get_type_name(), "Timeout waiting for BREADY")
+          `uvm_fatal(RID, "Timeout waiting for BREADY")
         end
       end
       @(negedge vif.aclk);
@@ -449,7 +467,7 @@ class axi4_slave_driver #(
         end
       end
       ar_q.push_back(ar);
-      if (cfg.trace_enable) `uvm_info(get_type_name(), $sformatf("AR accepted id=0x%0h addr=0x%0h len=%0d", ar.id, ar.addr, ar.len), UVM_MEDIUM)
+      if (cfg.trace_enable) `uvm_info(RID, $sformatf("AR accepted id=0x%0h addr=0x%0h len=%0d", ar.id, ar.addr, ar.len), UVM_MEDIUM)
       @(negedge vif.aclk);
       vif.arready <= 1'b0;
     end
@@ -488,7 +506,7 @@ class axi4_slave_driver #(
           if (vif.rvalid && vif.rready) break;
           cycles++;
           if ((cfg.handshake_timeout_cycles != 0) && (cycles > cfg.handshake_timeout_cycles)) begin
-            `uvm_fatal(get_type_name(), "Timeout waiting for RREADY")
+            `uvm_fatal(RID, "Timeout waiting for RREADY")
           end
         end
         @(negedge vif.aclk);
@@ -564,7 +582,7 @@ class axi4_slave_driver #(
           if (vif.rvalid && vif.rready) break;
           cycles++;
           if ((cfg.handshake_timeout_cycles != 0) && (cycles > cfg.handshake_timeout_cycles)) begin
-            `uvm_fatal(get_type_name(), "Timeout waiting for RREADY")
+            `uvm_fatal(RID, "Timeout waiting for RREADY")
           end
         end
         @(negedge vif.aclk);

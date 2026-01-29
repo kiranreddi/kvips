@@ -96,6 +96,8 @@ Explore our collection of professional-grade SystemVerilog UVM verification IPs,
 
 <div class="container">
 
+For the engineering checklist and directory/template expectations, see `kvips/docs/protocol_roadmap.md`.
+
 ### Phase 1: Bus Protocols (In Progress)
 
 <table>

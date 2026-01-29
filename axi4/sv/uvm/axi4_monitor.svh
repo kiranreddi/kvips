@@ -12,6 +12,8 @@ class axi4_monitor #(
   int USER_W = 1
 ) extends uvm_component;
 
+  localparam string RID = "AXI4_MON";
+
   typedef virtual axi4_if #(ADDR_W, DATA_W, ID_W, USER_W) axi4_vif_t;
 
   axi4_agent_cfg#(ADDR_W, DATA_W, ID_W, USER_W) cfg;
@@ -22,6 +24,15 @@ class axi4_monitor #(
   // -------------------------
   // Optional performance statistics (lightweight)
   // -------------------------
+  // Always-on summary counters (independent of cfg.stats_enable). These are used
+  // for end-of-test reporting even when full stats are disabled.
+  longint unsigned sum_aw_hs;
+  longint unsigned sum_w_hs;
+  longint unsigned sum_b_hs;
+  longint unsigned sum_ar_hs;
+  longint unsigned sum_r_hs;
+  longint unsigned sum_r_last_hs;
+
   longint unsigned stat_cycles;
   longint unsigned stat_aw_hs;
   longint unsigned stat_w_hs;
@@ -116,6 +127,22 @@ class axi4_monitor #(
     cov = new();
   endfunction
 
+  function automatic void get_summary_counts(
+    output longint unsigned aw_hs,
+    output longint unsigned w_hs,
+    output longint unsigned b_hs,
+    output longint unsigned ar_hs,
+    output longint unsigned r_hs,
+    output longint unsigned r_last_hs
+  );
+    aw_hs     = sum_aw_hs;
+    w_hs      = sum_w_hs;
+    b_hs      = sum_b_hs;
+    ar_hs     = sum_ar_hs;
+    r_hs      = sum_r_hs;
+    r_last_hs = sum_r_last_hs;
+  endfunction
+
   function automatic void maybe_record(axi4_item#(ADDR_W, DATA_W, ID_W, USER_W) tr, string label);
     if (!cfg.tr_record_enable) return;
     void'(begin_tr(tr, cfg.tr_stream_name, label));
@@ -126,10 +153,17 @@ class axi4_monitor #(
   function void build_phase(uvm_phase phase);
     super.build_phase(phase);
     if (!uvm_config_db#(axi4_agent_cfg#(ADDR_W, DATA_W, ID_W, USER_W))::get(this, "", "cfg", cfg)) begin
-      `uvm_fatal(get_type_name(), "Missing cfg in config DB (key: cfg)")
+      `uvm_fatal(RID, "Missing cfg in config DB (key: cfg)")
     end
     vif = cfg.vif;
-    if (vif == null) `uvm_fatal(get_type_name(), "cfg.vif is null")
+    if (vif == null) `uvm_fatal(RID, "cfg.vif is null")
+
+    sum_aw_hs = 0;
+    sum_w_hs = 0;
+    sum_b_hs = 0;
+    sum_ar_hs = 0;
+    sum_r_hs = 0;
+    sum_r_last_hs = 0;
 
     stat_cycles = 0;
     stat_aw_hs = 0;
@@ -212,7 +246,7 @@ class axi4_monitor #(
       if ((cfg.stats_window_cycles != 0) && ((stat_cycles % cfg.stats_window_cycles) == 0)) begin
         longint unsigned win_cycles;
         win_cycles = stat_cycles - last_cycles;
-        `uvm_info(get_type_name(),
+        `uvm_info(RID,
           $sformatf("AXI4 STATS WINDOW cycles=%0d AW=%0d W=%0d B=%0d AR=%0d R=%0d | stalls AW=%0d W=%0d B=%0d AR=%0d R=%0d",
             win_cycles,
             (stat_aw_hs - last_aw_hs), (stat_w_hs - last_w_hs), (stat_b_hs - last_b_hs),
@@ -247,6 +281,7 @@ class axi4_monitor #(
 
       if (vif.mon_cb.awvalid && vif.mon_cb.awready) begin
         a_chan_t tmp;
+        sum_aw_hs++;
         tmp.id    = vif.mon_cb.awid;
         tmp.addr  = vif.mon_cb.awaddr;
         tmp.len   = vif.mon_cb.awlen;
@@ -288,6 +323,7 @@ class axi4_monitor #(
       end
 
       if (have_aw && (tr != null) && (vif.mon_cb.wvalid && vif.mon_cb.wready)) begin
+        sum_w_hs++;
         if (cfg.stats_enable) stat_w_hs++;
         if (beat_idx < tr.num_beats()) begin
           tr.data[beat_idx] = vif.mon_cb.wdata;
@@ -304,6 +340,7 @@ class axi4_monitor #(
       if (vif.mon_cb.bvalid && vif.mon_cb.bready) begin
         logic [ID_W-1:0] bid;
         item_t trb;
+        sum_b_hs++;
         bid = vif.mon_cb.bid;
         if (cfg.stats_enable) begin
           longint unsigned start_c;
@@ -327,9 +364,9 @@ class axi4_monitor #(
           end
           maybe_record(trb, "axi4_write");
           ap.write(trb);
-          if (cfg.trace_enable) `uvm_info(get_type_name(), {"MON write:\n", trb.sprint()}, UVM_LOW)
+          if (cfg.trace_enable) `uvm_info(RID, {"MON write:\n", trb.sprint()}, UVM_LOW)
         end else begin
-          `uvm_warning(get_type_name(), $sformatf("Observed B (bid=0x%0h) with no matching outstanding write", bid))
+          `uvm_warning(RID, $sformatf("Observed B (bid=0x%0h) with no matching outstanding write", bid))
         end
       end
     end
@@ -342,6 +379,7 @@ class axi4_monitor #(
 
       if (vif.mon_cb.arvalid && vif.mon_cb.arready) begin
         rd_state_t st;
+        sum_ar_hs++;
         st.tr = new("mon_rd");
         st.tr.is_write = 0;
         st.tr.id    = vif.mon_cb.arid;
@@ -369,15 +407,16 @@ class axi4_monitor #(
 
       if (vif.mon_cb.rvalid && vif.mon_cb.rready) begin
         logic [ID_W-1:0] rid;
+        sum_r_hs++;
         rid = vif.mon_cb.rid;
         if (cfg.stats_enable) stat_r_hs++;
         if (!(rd_q.exists(rid)) || (rd_q[rid].size() == 0)) begin
-          `uvm_warning(get_type_name(), $sformatf("Observed R (rid=0x%0h) with no matching outstanding read", rid))
+          `uvm_warning(RID, $sformatf("Observed R (rid=0x%0h) with no matching outstanding read", rid))
         end else begin
           rd_state_t st;
           st = rd_q[rid][0];
           if (st.beat_idx >= st.beats) begin
-            `uvm_error(get_type_name(), $sformatf("Read beat overflow rid=0x%0h beat_idx=%0d beats=%0d", rid, st.beat_idx, st.beats))
+            `uvm_error(RID, $sformatf("Read beat overflow rid=0x%0h beat_idx=%0d beats=%0d", rid, st.beat_idx, st.beats))
           end else begin
             st.tr.data[st.beat_idx]  = vif.mon_cb.rdata;
             st.tr.rresp[st.beat_idx] = axi4_resp_e'(vif.mon_cb.rresp);
@@ -386,6 +425,7 @@ class axi4_monitor #(
           rd_q[rid][0] = st;
 
           if (vif.mon_cb.rlast) begin
+            sum_r_last_hs++;
             st = rd_q[rid].pop_front();
             if (cfg.stats_enable) begin
               longint unsigned start_c;
@@ -407,7 +447,7 @@ class axi4_monitor #(
               cov.sample(1'b0, st.tr.burst, int'(st.tr.size), int'(st.tr.len), st.tr.lock, resp0, st.tr.qos);
             end
             ap.write(st.tr);
-            if (cfg.trace_enable) `uvm_info(get_type_name(), {"MON read:\n", st.tr.sprint()}, UVM_LOW)
+            if (cfg.trace_enable) `uvm_info(RID, {"MON read:\n", st.tr.sprint()}, UVM_LOW)
           end
         end
       end
@@ -422,7 +462,7 @@ class axi4_monitor #(
   function void report_phase(uvm_phase phase);
     super.report_phase(phase);
     if (!cfg.stats_enable) return;
-    `uvm_info(get_type_name(),
+    `uvm_info(RID,
       $sformatf("AXI4 STATS cycles=%0d AW=%0d W=%0d B=%0d AR=%0d R=%0d | stalls AW=%0d W=%0d B=%0d AR=%0d R=%0d | out_max W=%0d R=%0d | lat_w(min/mean/max)=%0d/%0d/%0d (n=%0d) lat_r(min/mean/max)=%0d/%0d/%0d (n=%0d)",
         stat_cycles, stat_aw_hs, stat_w_hs, stat_b_hs, stat_ar_hs, stat_r_hs,
         stat_aw_stall, stat_w_stall, stat_b_stall, stat_ar_stall, stat_r_stall,
