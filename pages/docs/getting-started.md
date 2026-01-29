@@ -115,6 +115,16 @@ UVM_FATAL   :    0
 <strong>✅ Success!</strong> You've successfully run your first KVIPS simulation. Continue reading to learn how to integrate VIPs into your own testbench.
 </div>
 
+### Optional: Try the APB example
+
+KVIPS APB VIP supports APB3 and APB4 in a **single compiled image** with a runtime switch:
+
+```bash
+make -C kvips/apb/examples list-tests
+make -C kvips/apb/examples questa TEST=apb_b2b_smoke_test PLUSARGS='+APB_PROTOCOL=APB4'
+make -C kvips/apb/examples questa TEST=apb_b2b_smoke_test PLUSARGS='+APB_PROTOCOL=APB3'
+```
+
 ---
 
 ## 📦 Repository Structure
@@ -142,6 +152,10 @@ kvips/
 │       └── uvm_back2back/
 │           ├── tb/           # Testbench code
 │           └── sim/          # Simulation scripts
+├── apb/                       # APB3/APB4 VIP (beta)
+│   ├── sv/
+│   ├── docs/
+│   └── examples/
 └── README.md                  # Repository overview
 ```
 

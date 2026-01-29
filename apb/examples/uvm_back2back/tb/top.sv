@@ -29,10 +29,15 @@ module tb_top;
     PRESETn = 1'b1;
   end
 
+  // Optional wave dump
+  initial begin
+    `include "kvips_wave_dump.svh"
+    `KVIPS_MAYBE_ENABLE_WAVES("kvips_apb_b2b")
+  end
+
   initial begin
     uvm_config_db#(virtual apb_if #(ADDR_W, DATA_W, NSEL))::set(null, "*", "vif", apb);
     run_test();
   end
 
 endmodule
-

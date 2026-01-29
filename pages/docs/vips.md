@@ -59,32 +59,42 @@ Explore our collection of professional-grade SystemVerilog UVM verification IPs,
   </div>
 </div>
 
-<!-- Coming Soon Template -->
-<div class="card" style="border: 2px dashed var(--border-color); background: var(--bg-secondary);">
+<!-- APB VIP -->
+<div class="card">
   <div class="card-header">
-    <div class="card-icon" style="background: var(--gray-400);">🚧</div>
+    <div class="card-icon">🔌</div>
     <div>
       <h3 class="card-title" style="margin: 0;">APB</h3>
       <div style="margin-top: 0.5rem;">
-        <span class="badge badge-warning">Planned</span>
+        <span class="badge badge-warning">Beta v0.1</span>
+        <span class="badge badge-primary">UVM 1.2</span>
       </div>
     </div>
   </div>
   <div class="card-body">
     <h4>Advanced Peripheral Bus</h4>
-    <p>Master/slave VIP for AMBA APB protocol, ideal for low-bandwidth peripheral verification.</p>
+    <p>Master/slave VIP for AMBA APB3/APB4, ideal for low-bandwidth peripheral and register access verification.</p>
     
-    <h5>Planned Features:</h5>
+    <h5>Key Features:</h5>
     <ul>
-      <li>APB3/APB4 support</li>
+      <li>Single-image APB3/APB4 support (runtime switch)</li>
       <li>Configurable wait states</li>
       <li>Error response injection</li>
       <li>Protocol compliance checking</li>
+      <li>Monitor coverage + optional transaction recording</li>
     </ul>
     
-    <p style="margin-top: 1rem; font-style: italic; color: var(--text-secondary);">
-      Contributions welcome! Check our <a href="https://github.com/kiranreddi/kvips/blob/main/CONTRIBUTING.md">contribution guidelines</a>.
-    </p>
+    <h5>Validated On:</h5>
+    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem;">
+      <span class="badge badge-info">Questa 2025.3_2</span>
+      <span class="badge badge-info">VCS 2025.06_1</span>
+      <span class="badge badge-info">Xcelium 25.03.007</span>
+    </div>
+
+    <div style="display: flex; gap: 0.5rem; margin-top: 1.5rem;">
+      <a href="/docs/apb-vip/" class="btn btn-primary" style="font-size: 0.875rem; padding: 0.5rem 1rem;">Documentation</a>
+      <a href="/docs/getting-started/" class="btn btn-secondary" style="font-size: 0.875rem; padding: 0.5rem 1rem;">Quick Start</a>
+    </div>
   </div>
 </div>
 
@@ -116,8 +126,8 @@ Explore our collection of professional-grade SystemVerilog UVM verification IPs,
 </tr>
 <tr>
 <td><strong>APB</strong></td>
-<td><span class="badge badge-warning">📋 Planned</span></td>
-<td>Q2 2026</td>
+<td><span class="badge badge-warning">🧪 Beta</span></td>
+<td>v0.1</td>
 <td>High</td>
 </tr>
 <tr>

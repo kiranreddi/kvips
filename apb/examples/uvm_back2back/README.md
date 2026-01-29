@@ -12,19 +12,28 @@ From `kvips/apb/examples`:
 
 ```bash
 make -C kvips/apb/examples list-tests
+make -C kvips/apb/examples questa TEST=apb_b2b_smoke_test PLUSARGS='+APB_PROTOCOL=APB4'
+make -C kvips/apb/examples questa-waves TEST=apb_b2b_smoke_test PLUSARGS='+APB_PROTOCOL=APB4'
 make -C kvips/apb/examples vcs TEST=apb_b2b_smoke_test PLUSARGS='+APB_PROTOCOL=APB4'
 make -C kvips/apb/examples vcs TEST=apb_b2b_smoke_test PLUSARGS='+APB_PROTOCOL=APB3'
+make -C kvips/apb/examples xcelium TEST=apb_b2b_smoke_test PLUSARGS='+APB_PROTOCOL=APB4'
 ```
 
 LSF:
 
 ```bash
-module load lsf
-make -C kvips/apb/examples vcs USE_LSF=1 TEST=apb_b2b_smoke_test PLUSARGS='+APB_PROTOCOL=APB4'
+source /tools/lsf/conf/profile.lsf
+make -C kvips/apb/examples questa  USE_LSF=1 TEST=apb_b2b_smoke_test PLUSARGS='+APB_PROTOCOL=APB4'
+make -C kvips/apb/examples vcs    USE_LSF=1 TEST=apb_b2b_smoke_test PLUSARGS='+APB_PROTOCOL=APB4'
+make -C kvips/apb/examples xcelium USE_LSF=1 TEST=apb_b2b_smoke_test PLUSARGS='+APB_PROTOCOL=APB4'
 ```
+
+## Waves
+
+- Enable wave dumping: `+KVIPS_WAVES`
+- Questa FSDB run: `make -C kvips/apb/examples questa-waves ...` (requires Verdi/Novas PLI)
 
 ## Protocol mode switch
 
 - APB3: `+APB_PROTOCOL=APB3` (PSTRB/PPROT ignored/forced by master)
 - APB4: `+APB_PROTOCOL=APB4`
-
