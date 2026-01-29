@@ -1,0 +1,9 @@
+apb_b2b_reset_sanity_test
+apb_b2b_smoke_test
+apb_b2b_wait_state_test
+apb_b2b_back_to_back_test
+apb_b2b_error_injection_test
+apb_b2b_apb4_strobe_mask_test
+apb_b2b_apb4_pprot_variation_test
+apb_b2b_random_stress_test
+
