@@ -1,0 +1,50 @@
+# Pre-commit hooks for KVIPS
+# See https://pre-commit.com for more information
+
+repos:
+  # Verilator linting for SystemVerilog
+  - repo: https://github.com/verilator/verilator
+    rev: v5.026  # Use the latest stable version
+    hooks:
+      - id: verilator
+        name: Verilator Lint
+        description: Run Verilator linting on SystemVerilog files
+        entry: verilator
+        language: docker_image
+        files: \.(sv|svh|v|vh)$
+        args:
+          - --lint-only
+          - --Wall
+          - --Wno-fatal
+          - --bbox-unsup
+
+  # Trailing whitespace
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace
+        exclude: '\.(md|rst)$'
+      - id: end-of-file-fixer
+        exclude: '\.(md|rst|sv|svh)$'
+      - id: check-yaml
+        args: ['--unsafe']
+      - id: check-added-large-files
+        args: ['--maxkb=5000']
+      - id: check-merge-conflict
+      - id: mixed-line-ending
+        args: ['--fix=lf']
+
+  # Markdown linting
+  - repo: https://github.com/markdownlint/markdownlint
+    rev: v0.12.0
+    hooks:
+      - id: markdownlint
+        args: ['-r', '~MD013,~MD033,~MD041']  # Ignore line length, inline HTML, first line heading
+
+# Configuration
+default_language_version:
+  python: python3
+
+# Run specific hooks
+# pre-commit run verilator --all-files
+# pre-commit run --all-files

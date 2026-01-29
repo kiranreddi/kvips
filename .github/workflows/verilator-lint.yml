@@ -1,0 +1,110 @@
+name: Verilator Lint
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - '**.sv'
+      - '**.svh'
+      - '**.v'
+      - '**.vh'
+      - '.github/workflows/verilator-lint.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - '**.sv'
+      - '**.svh'
+      - '**.v'
+      - '**.vh'
+
+jobs:
+  verilator-lint:
+    name: Verilator Syntax Check
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install Verilator
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y verilator
+          verilator --version
+
+      - name: Lint SystemVerilog Files
+        run: |
+          echo "🔍 Running Verilator lint on all SystemVerilog files..."
+          ERROR=0
+          
+          # Find all .sv and .svh files
+          find . -type f \( -name "*.sv" -o -name "*.svh" \) | while read file; do
+            echo "Linting: $file"
+            
+            # Run Verilator with lint-only mode
+            if ! verilator --lint-only -Wall -Wno-fatal -Wno-DECLFILENAME --bbox-unsup "$file" 2>&1; then
+              echo "⚠️  Warnings/Errors found in $file"
+              ERROR=1
+            fi
+          done
+          
+          if [ $ERROR -eq 1 ]; then
+            echo "❌ Verilator found issues in some files"
+            exit 0  # Don't fail the build on warnings, just report
+          else
+            echo "✅ All files passed Verilator lint checks"
+          fi
+
+      - name: Lint AXI4 VIP Package
+        working-directory: ./axi4/sv
+        run: |
+          echo "🔍 Linting AXI4 VIP package..."
+          verilator --lint-only -Wall -Wno-fatal -Wno-DECLFILENAME \
+            --bbox-unsup \
+            -Ipkg/ -Iuvm/ -Iif/ \
+            pkg/axi4_uvm_pkg.sv || echo "⚠️  Warnings found (non-blocking)"
+
+      - name: Check for Critical Errors
+        run: |
+          echo "🔎 Checking for critical errors..."
+          
+          # Count actual errors (not warnings)
+          ERROR_COUNT=$(find . -type f \( -name "*.sv" -o -name "*.svh" \) -exec \
+            verilator --lint-only -Wall --bbox-unsup {} 2>&1 \; | \
+            grep -c "Error:" || true)
+          
+          echo "Total critical errors: $ERROR_COUNT"
+          
+          if [ "$ERROR_COUNT" -gt 0 ]; then
+            echo "❌ Found $ERROR_COUNT critical errors - build failed"
+            exit 1
+          else
+            echo "✅ No critical errors found - build passed"
+          fi
+
+      - name: Upload Lint Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: verilator-lint-report
+          path: |
+            **/*.log
+          retention-days: 30
+
+  summary:
+    name: Lint Summary
+    runs-on: ubuntu-latest
+    needs: verilator-lint
+    if: always()
+    
+    steps:
+      - name: Check Result
+        run: |
+          if [ "${{ needs.verilator-lint.result }}" == "success" ]; then
+            echo "✅ Verilator lint checks passed successfully"
+          else
+            echo "❌ Verilator lint checks failed"
+            exit 1
+          fi

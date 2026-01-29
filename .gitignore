@@ -1,0 +1,89 @@
+# KVIPS .gitignore
+
+# Gap Analysis - Local documentation only
+axi4/docs/avery_gap_analysis.md
+axi4/docs/questa_gap_analysis.md
+**/avery_gap_analysis.md
+**/questa_gap_analysis.md
+
+# Simulator outputs
+*.log
+*.wlf
+*.vstf
+*.vpd
+*.shm
+*.trn
+*.ucdb
+*.vcd
+simv
+simv.daidir/
+csrc/
+xcelium.d/
+verdiLog/
+*.fsdb
+*.fsdb.log
+transcript
+vsim.wlf
+vish_stacktrace.vstf
+vsim_stacktrace.vstf
+vc_hdrs.h
+ucli.key
+DVEfiles/
+inter.vpd
+
+# Compilation artifacts
+work/
+*.o
+*.so
+*.a
+
+# Waveforms
+waves/
+*.shm/
+*.trn
+novas*
+
+# Coverage
+*.cov
+coverage/
+covhtmlreport/
+urgReport/
+
+# Debug
+.simvision/
+*.dsn
+*.trn
+*.log
+
+# UVM logs
+uvm*.log
+
+# Tool temp files
+.nfs*
+*~
+*.swp
+*.swo
+.DS_Store
+
+# Build directories
+build/
+obj_dir/
+verilated_vcd/
+
+# Jekyll GitHub Pages
+_site/
+.sass-cache/
+.jekyll-cache/
+.jekyll-metadata
+vendor/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.pytest_cache/
+
+# OS
+.DS_Store
+Thumbs.db

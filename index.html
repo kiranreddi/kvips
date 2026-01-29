@@ -1,0 +1,399 @@
+---
+layout: default
+title: KVIPS - Premium Verification IP Library
+---
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description"
+        content="KVIPS - Industry-grade SystemVerilog UVM Verification IP Library. Protocol VIPs tested with Siemens Questa, Synopsys VCS, and Cadence Xcelium.">
+    <title>{{ page.title }}</title>
+    <link rel="stylesheet" href="{{ '/assets/css/style.css' | relative_url }}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+
+<body>
+
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="navbar-container">
+            <a href="/" class="navbar-logo">KVIPS</a>
+            <ul class="navbar-menu">
+                <li><a href="/">Home</a></li>
+                <li><a href="/vips/">VIPs</a></li>
+                <li><a href="/docs/">Documentation</a></li>
+                <li><a href="/docs/getting-started/">Get Started</a></li>
+                <li><a href="/docs/code-review/">Code Review</a></li>
+                <li><a href="https://github.com/kiranreddi/kvips" target="_blank">GitHub</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-content">
+            <h1>🚀 Premium Verification IP Library</h1>
+            <p>Industry-grade SystemVerilog UVM verification components for modern semiconductor design verification</p>
+            <div class="hero-buttons">
+                <a href="/docs/getting-started/" class="btn btn-primary">Get Started</a>
+                <a href="/vips/" class="btn btn-outline">Browse VIPs</a>
+                <a href="https://github.com/kiranreddi/kvips" class="btn btn-secondary" target="_blank">View on
+                    GitHub</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Tool Support Badges -->
+    <section class="container">
+        <div style="text-align: center; margin: 2rem 0;">
+            <h3 style="margin-bottom: 1rem;">Validated on Leading EDA Tools</h3>
+            <div style="display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap;">
+                <span class="badge badge-primary">Siemens Questa 2025.3_2</span>
+                <span class="badge badge-info">Synopsys VCS 2025.06_1</span>
+                <span class="badge badge-success">Cadence Xcelium 25.03.007</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features">
+        <div class="container">
+            <h2 style="text-align: center; font-size: 2.5rem; margin-bottom: 3rem;">Why Choose KVIPS?</h2>
+            <div class="feature-grid">
+                <div class="feature-item">
+                    <div class="feature-icon">⚡</div>
+                    <h3 class="feature-title">Production Ready</h3>
+                    <p>Extensively tested and validated against industry-leading EDA simulators. Each VIP includes
+                        comprehensive regression suites.</p>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">🎯</div>
+                    <h3 class="feature-title">UVM Compliant</h3>
+                    <p>Built on Accellera UVM 1.1d/1.2 standards with IEEE 1800 SystemVerilog. Seamlessly integrates
+                        with your existing testbenches.</p>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">🔧</div>
+                    <h3 class="feature-title">Highly Configurable</h3>
+                    <p>Extensive configuration knobs for delay modeling, error injection, outstanding transactions, and
+                        protocol-specific features.</p>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">📊</div>
+                    <h3 class="feature-title">Built-in Checkers</h3>
+                    <p>SystemVerilog Assertions (SVA) for protocol compliance, plus optional scoreboards for data
+                        integrity verification.</p>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">📚</div>
+                    <h3 class="feature-title">Comprehensive Docs</h3>
+                    <p>Detailed user guides, API references, integration guides, and working examples for rapid
+                        deployment.</p>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">🔓</div>
+                    <h3 class="feature-title">Vendor Neutral</h3>
+                    <p>No vendor lock-in. Pure SystemVerilog implementation works across Questa, VCS, and Xcelium
+                        without modification.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Available VIPs -->
+    <section class="container">
+        <h2 style="text-align: center; font-size: 2.5rem; margin-bottom: 2rem;">Available Verification IPs</h2>
+
+        <div class="grid grid-2">
+            <!-- AXI4 VIP Card -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon">🔌</div>
+                    <div>
+                        <h3 class="card-title">AXI4 Full</h3>
+                        <span class="badge badge-success">Stable</span>
+                        <span class="badge badge-gray">v1.0</span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <p><strong>AMBA AXI4 Full Protocol VIP</strong></p>
+                    <ul style="margin-left: 1.5rem; color: var(--text-secondary);">
+                        <li>Master & Slave agents with configurable memory model</li>
+                        <li>INCR/FIXED/WRAP bursts (up to 256 beats)</li>
+                        <li>Exclusive access support with reservation tracking</li>
+                        <li>Multiple outstanding transactions (pipelined mode)</li>
+                        <li>Configurable delays, backpressure, error injection</li>
+                        <li>Comprehensive SVA protocol checkers</li>
+                        <li>Built-in scoreboard for data verification</li>
+                    </ul>
+                    <div style="margin-top: 1.5rem; display: flex; gap: 0.5rem;">
+                        <a href="/vips/axi4/" class="btn btn-primary"
+                            style="font-size: 0.875rem; padding: 0.5rem 1rem;">Documentation</a>
+                        <a href="/docs/axi4/quick-start/" class="btn btn-secondary"
+                            style="font-size: 0.875rem; padding: 0.5rem 1rem;">Quick Start</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Placeholder for Future VIPs -->
+            <div class="card" style="border: 2px dashed var(--border-color); background: var(--bg-secondary);">
+                <div class="card-header">
+                    <div class="card-icon" style="background: var(--gray-300);">🚧</div>
+                    <div>
+                        <h3 class="card-title">More VIPs Coming Soon</h3>
+                        <span class="badge badge-warning">In Development</span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <p><strong>Roadmap:</strong></p>
+                    <ul style="margin-left: 1.5rem; color: var(--text-secondary);">
+                        <li>APB (Advanced Peripheral Bus)</li>
+                        <li>AHB (Advanced High-performance Bus)</li>
+                        <li>PCIe (PCI Express)</li>
+                        <li>USB 2.0 / 3.0</li>
+                        <li>Ethernet (MAC/PHY)</li>
+                        <li>I2C, SPI, UART</li>
+                    </ul>
+                    <p style="margin-top: 1rem; font-style: italic;">
+                        Contributions welcome! Check our <a
+                            href="https://github.com/kiranreddi/kvips/blob/main/CONTRIBUTING.md">contribution
+                            guidelines</a>.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Key Features Detail -->
+    <section class="container">
+        <h2 style="text-align: center; font-size: 2.5rem; margin-bottom: 2rem;">Technical Highlights</h2>
+
+        <div class="grid grid-3">
+            <div class="card">
+                <h4>🎮 Flexible Sequencing</h4>
+                <p>Rich library of pre-built sequences including:</p>
+                <ul style="margin-left: 1.5rem;">
+                    <li>Basic directed sequences</li>
+                    <li>Constrained random sequences</li>
+                    <li>Stress & corner-case sequences</li>
+                    <li>Protocol-specific sequences</li>
+                </ul>
+            </div>
+
+            <div class="card">
+                <h4>🔍 Debug & Observability</h4>
+                <p>Comprehensive debug capabilities:</p>
+                <ul style="margin-left: 1.5rem;">
+                    <li>Transaction-level tracing</li>
+                    <li>UVM transaction recording</li>
+                    <li>Performance statistics</li>
+                    <li>Runtime assertion control</li>
+                </ul>
+            </div>
+
+            <div class="card">
+                <h4>⚙️ Coverage Driven</h4>
+                <p>Built-in functional coverage:</p>
+                <ul style="margin-left: 1.5rem;">
+                    <li>Protocol feature coverage</li>
+                    <li>Cross-coverage matrices</li>
+                    <li>Transition coverage</li>
+                    <li>Corner case tracking</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- Quick Start Code Example -->
+    <section class="container"
+        style="background: var(--bg-secondary); padding: 3rem; border-radius: var(--radius-xl); margin: 3rem auto;">
+        <h2 style="text-align: center; font-size: 2.5rem; margin-bottom: 2rem;">Quick Start Example</h2>
+        <p style="text-align: center; font-size: 1.125rem; color: var(--text-secondary); margin-bottom: 2rem;">
+            Get up and running in minutes with KVIPS
+        </p>
+
+        <div class="tab-container">
+            <div style="display: flex; gap: 1rem; margin-bottom: 1rem; border-bottom: 2px solid var(--border-color);">
+                <button class="tab-btn active"
+                    style="padding: 0.75rem 1.5rem; background: none; border: none; cursor: pointer; border-bottom: 3px solid var(--primary-color); font-weight: 600;">Questa</button>
+                <button class="tab-btn"
+                    style="padding: 0.75rem 1.5rem; background: none; border: none; cursor: pointer; font-weight: 600;">VCS</button>
+                <button class="tab-btn"
+                    style="padding: 0.75rem 1.5rem; background: none; border: none; cursor: pointer; font-weight: 600;">Xcelium</button>
+            </div>
+
+            <div class="tab-panel active">
+                ```bash
+                # Clone the repository
+                git clone https://github.com/kiranreddi/kvips.git
+                cd kvips
+
+                # Run AXI4 example on Questa
+                cd axi4/examples/uvm_back2back/sim
+                ./run_questa.sh +UVM_TESTNAME=axi4_b2b_test
+
+                # Run full regression
+                ./regress_questa_ignrc.sh
+                ```
+            </div>
+
+            <div class="tab-panel">
+                ```bash
+                # Clone the repository
+                git clone https://github.com/kiranreddi/kvips.git
+                cd kvips
+
+                # Run AXI4 example on VCS
+                cd axi4/examples/uvm_back2back/sim
+                ./run_vcs.sh +UVM_TESTNAME=axi4_b2b_test
+                ```
+            </div>
+
+            <div class="tab-panel">
+                ```bash
+                # Clone the repository
+                git clone https://github.com/kiranreddi/kvips.git
+                cd kvips
+
+                # Run AXI4 example on Xcelium
+                cd axi4/examples/uvm_back2back/sim
+                ./run_xcelium.sh +UVM_TESTNAME=axi4_b2b_test
+                ```
+            </div>
+        </div>
+    </section>
+
+    <!-- Integration Example -->
+    <section class="container-narrow">
+        <h2 style="text-align: center; font-size: 2.5rem; margin-bottom: 2rem;">Simple Integration</h2>
+
+        ```systemverilog
+        // Instantiate AXI4 interface
+        axi4_if #(
+        .ADDR_W(32),
+        .DATA_W(64),
+        .ID_W(4)
+        ) axi_if (
+        .aclk(clk),
+        .areset_n(rst_n)
+        );
+
+        // Configure and create agents
+        axi4_env_cfg cfg = new("cfg");
+        axi4_agent_cfg mst_cfg = new("mst_cfg");
+        mst_cfg.is_master = 1;
+        mst_cfg.vif = axi_if;
+        cfg.agent_cfgs.push_back(mst_cfg);
+
+        // Create environment
+        axi4_env env = axi4_env::type_id::create("env", this);
+        uvm_config_db#(axi4_env_cfg)::set(this, "env", "cfg", cfg);
+
+        // Start sequences
+        axi4_basic_write_seq seq = new("seq");
+        seq.start(env.get_master_sequencer(0));
+        ```
+    </section>
+
+    <!-- Statistics -->
+    <section class="container" style="text-align: center; padding: 3rem 0;">
+        <h2 style="font-size: 2.5rem; margin-bottom: 3rem;">By the Numbers</h2>
+        <div class="grid grid-4">
+            <div>
+                <div style="font-size: 3rem; font-weight: 700; color: var(--primary-color); margin-bottom: 0.5rem;">1+
+                </div>
+                <div style="font-size: 1.125rem; color: var(--text-secondary);">Protocol VIPs</div>
+            </div>
+            <div>
+                <div style="font-size: 3rem; font-weight: 700; color: var(--secondary-color); margin-bottom: 0.5rem;">3
+                </div>
+                <div style="font-size: 1.125rem; color: var(--text-secondary);">EDA Tools</div>
+            </div>
+            <div>
+                <div style="font-size: 3rem; font-weight: 700; color: var(--accent-color); margin-bottom: 0.5rem;">100%
+                </div>
+                <div style="font-size: 1.125rem; color: var(--text-secondary);">UVM Compliant</div>
+            </div>
+            <div>
+                <div style="font-size: 3rem; font-weight: 700; color: var(--info-color); margin-bottom: 0.5rem;">∞</div>
+                <div style="font-size: 1.125rem; color: var(--text-secondary);">No Vendor Lock-in</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Call to Action -->
+    <section class="container"
+        style="background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%); color: white; padding: 3rem; border-radius: var(--radius-2xl); text-align: center; margin: 3rem auto;">
+        <h2
+            style="color: white; font-size: 2.5rem; margin-bottom: 1rem; background: none; -webkit-text-fill-color: white;">
+            Ready to Accelerate Your Verification?</h2>
+        <p style="font-size: 1.25rem; margin-bottom: 2rem; color: rgba(255, 255, 255, 0.95);">
+            Start using KVIPS today and experience professional-grade verification IPs.
+        </p>
+        <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+            <a href="/docs/getting-started/" class="btn btn-secondary">Get Started Now</a>
+            <a href="/docs/" class="btn btn-outline">Read the Docs</a>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-section">
+                <h3>KVIPS</h3>
+                <p>Premium verification IP library for SystemVerilog UVM environments.</p>
+                <p style="margin-top: 1rem;">
+                    <strong>License:</strong> MIT<br>
+                    <strong>Status:</strong> Active Development
+                </p>
+            </div>
+
+            <div class="footer-section">
+                <h3>Quick Links</h3>
+                <ul class="footer-links">
+                    <li><a href="/vips/">VIP Catalog</a></li>
+                    <li><a href="/docs/getting-started/">Getting Started</a></li>
+                    <li><a href="/docs/code-review/">Code Review</a></li>
+                    <li><a href="/docs/contributing/">Contributing</a></li>
+                    <li><a href="/docs/changelog/">Changelog</a></li>
+                </ul>
+            </div>
+
+            <div class="footer-section">
+                <h3>Documentation</h3>
+                <ul class="footer-links">
+                    <li><a href="/docs/axi4/">AXI4 User Guide</a></li>
+                    <li><a href="/docs/axi4/api/">API Reference</a></li>
+                    <li><a href="/docs/axi4/assertions/">Assertions</a></li>
+                    <li><a href="/docs/best-practices/">Best Practices</a></li>
+                    <li><a href="/docs/faq/">FAQ</a></li>
+                </ul>
+            </div>
+
+            <div class="footer-section">
+                <h3>Community</h3>
+                <ul class="footer-links">
+                    <li><a href="https://github.com/kiranreddi/kvips">GitHub Repository</a></li>
+                    <li><a href="https://github.com/kiranreddi/kvips/issues">Issue Tracker</a></li>
+                    <li><a href="https://github.com/kiranreddi/kvips/discussions">Discussions</a></li>
+                    <li><a href="https://github.com/kiranreddi/kvips/pulls">Pull Requests</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="footer-bottom">
+            <p>&copy; 2026 KVIPS. Released under the MIT License.</p>
+            <p style="margin-top: 0.5rem;">Built with ❤️ for the verification community</p>
+        </div>
+    </footer>
+
+    <script src="{{ '/assets/js/main.js' | relative_url }}"></script>
+</body>
+
+</html>
