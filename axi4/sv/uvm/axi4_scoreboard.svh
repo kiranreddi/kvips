@@ -22,6 +22,8 @@ class axi4_scoreboard #(
   int USER_W = 1
 ) extends uvm_subscriber #(axi4_item#(ADDR_W, DATA_W, ID_W, USER_W));
 
+  localparam string RID = "AXI4_SCB";
+
   localparam int STRB_W = DATA_W/8;
 
   bit enable = 1'b1;
@@ -30,6 +32,13 @@ class axi4_scoreboard #(
   // Byte-addressed expected memory image.
   byte unsigned exp_mem[longint unsigned];
   bit           exp_mem_valid[longint unsigned];
+
+  // Summary counters (always-on; even if enable=0 we still count observed txns).
+  longint unsigned sum_wr_txns;
+  longint unsigned sum_wr_err_txns;
+  longint unsigned sum_rd_txns;
+  longint unsigned sum_rd_uninit_beats;
+  longint unsigned sum_rd_mismatch_beats;
 
   `uvm_component_param_utils(axi4_scoreboard#(ADDR_W, DATA_W, ID_W, USER_W))
 
@@ -41,6 +50,31 @@ class axi4_scoreboard #(
     super.build_phase(phase);
     if ($test$plusargs("KVIPS_AXI4_SB_OFF")) enable = 1'b0;
     if ($test$plusargs("KVIPS_AXI4_SB_WARN_UNINIT")) warn_uninit = 1'b1;
+    // Optional per-instance overrides (useful for targeted tests).
+    void'(uvm_config_db#(bit)::get(this, "", "enable", enable));
+    void'(uvm_config_db#(bit)::get(this, "", "warn_uninit", warn_uninit));
+
+    sum_wr_txns = 0;
+    sum_wr_err_txns = 0;
+    sum_rd_txns = 0;
+    sum_rd_uninit_beats = 0;
+    sum_rd_mismatch_beats = 0;
+  endfunction
+
+  function automatic void get_summary(
+    output bit enabled,
+    output longint unsigned wr_txns,
+    output longint unsigned wr_err_txns,
+    output longint unsigned rd_txns,
+    output longint unsigned rd_uninit_beats,
+    output longint unsigned rd_mismatch_beats
+  );
+    enabled = enable;
+    wr_txns = sum_wr_txns;
+    wr_err_txns = sum_wr_err_txns;
+    rd_txns = sum_rd_txns;
+    rd_uninit_beats = sum_rd_uninit_beats;
+    rd_mismatch_beats = sum_rd_mismatch_beats;
   endfunction
 
   function automatic longint unsigned to_addr_u(logic [ADDR_W-1:0] a);
@@ -81,7 +115,6 @@ class axi4_scoreboard #(
   endfunction
 
   virtual function void write(axi4_item#(ADDR_W, DATA_W, ID_W, USER_W) t);
-    if (!enable) return;
     if (t == null) return;
 
     t.allocate_payload();
@@ -89,12 +122,20 @@ class axi4_scoreboard #(
     if (t.is_write) begin
       int unsigned beats;
       beats = t.num_beats();
+      sum_wr_txns++;
 
       // Do not model memory updates for transactions that did not complete
       // successfully (error response), or for failed exclusive writes (LOCK=1
       // but BRESP != EXOKAY in our slave model).
-      if ((t.bresp == AXI4_RESP_SLVERR) || (t.bresp == AXI4_RESP_DECERR)) return;
-      if (t.lock && (t.bresp != AXI4_RESP_EXOKAY)) return;
+      if ((t.bresp == AXI4_RESP_SLVERR) || (t.bresp == AXI4_RESP_DECERR)) begin
+        sum_wr_err_txns++;
+        return;
+      end
+      if (t.lock && (t.bresp != AXI4_RESP_EXOKAY)) begin
+        sum_wr_err_txns++;
+        return;
+      end
+      if (!enable) return;
 
       for (int unsigned i = 0; i < beats; i++) begin
         longint unsigned base = axi4_beat_addr(to_addr_u(t.addr), int'(t.size), int'(t.len), t.burst, i);
@@ -102,7 +143,10 @@ class axi4_scoreboard #(
         apply_write_beat(base, t.data[i], strb);
       end
     end else begin
-      int unsigned beats = t.num_beats();
+      int unsigned beats;
+      beats = t.num_beats();
+      sum_rd_txns++;
+      if (!enable) return;
       for (int unsigned i = 0; i < beats; i++) begin
         bit any_uninit;
         longint unsigned base;
@@ -114,15 +158,27 @@ class axi4_scoreboard #(
 
         base = axi4_beat_addr(to_addr_u(t.addr), int'(t.size), int'(t.len), t.burst, i);
         exp  = build_expected_beat(base, any_uninit);
-        if (any_uninit && warn_uninit) begin
-          `uvm_warning(get_type_name(), $sformatf("Read touches unwritten bytes at addr=0x%0h (treated as 0)", base))
+        if (any_uninit) begin
+          sum_rd_uninit_beats++;
+          if (warn_uninit) begin
+            `uvm_warning(RID, $sformatf("Read touches unwritten bytes at addr=0x%0h (treated as 0)", base))
+          end
         end
         if (t.data[i] !== exp) begin
-          `uvm_error(get_type_name(),
+          sum_rd_mismatch_beats++;
+          `uvm_error(RID,
             $sformatf("READ MISMATCH addr=0x%0h beat=%0d exp=0x%0h got=0x%0h", base, i, exp, t.data[i]))
         end
       end
     end
+  endfunction
+
+  function void report_phase(uvm_phase phase);
+    super.report_phase(phase);
+    `uvm_info(RID,
+      $sformatf("AXI4 SB summary: enable=%0d wr_txns=%0d wr_err=%0d rd_txns=%0d rd_mismatch_beats=%0d rd_uninit_warn_beats=%0d",
+        enable, sum_wr_txns, sum_wr_err_txns, sum_rd_txns, sum_rd_mismatch_beats, sum_rd_uninit_beats),
+      UVM_LOW)
   endfunction
 
 endclass

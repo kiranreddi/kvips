@@ -59,6 +59,12 @@ class axi4_agent_cfg #(
   // Slave knobs
   bit          slave_mem_enable = 1'b1;
   int unsigned slave_mem_bytes  = 64*1024;
+  // Slave memory address mapping:
+  // - The memory model is a byte array [0:slave_mem_bytes-1]
+  // - Transactions index into it using (addr - slave_mem_base)
+  // - Optionally wrap addresses modulo slave_mem_bytes
+  longint unsigned slave_mem_base = 0;
+  bit             slave_mem_wrap = 1'b0;
 
   // Slave: error-response injection (simple address-range based model).
   // If enabled and the transaction overlaps [slave_err_start, slave_err_end],
@@ -126,6 +132,8 @@ class axi4_agent_cfg #(
     `uvm_field_int(master_rready_low_max, UVM_DEFAULT)
     `uvm_field_int(slave_mem_enable, UVM_DEFAULT)
     `uvm_field_int(slave_mem_bytes, UVM_DEFAULT)
+    `uvm_field_int(slave_mem_base, UVM_DEFAULT)
+    `uvm_field_int(slave_mem_wrap, UVM_DEFAULT)
     `uvm_field_int(slave_err_enable, UVM_DEFAULT)
     `uvm_field_int(slave_err_on_read, UVM_DEFAULT)
     `uvm_field_int(slave_err_on_write, UVM_DEFAULT)
@@ -162,6 +170,7 @@ class axi4_env_cfg #(
   endfunction
 
   `uvm_object_param_utils_begin(axi4_env_cfg#(ADDR_W, DATA_W, ID_W, USER_W))
+    `uvm_field_queue_object(agent_cfgs, UVM_DEFAULT)
   `uvm_object_utils_end
 
 endclass

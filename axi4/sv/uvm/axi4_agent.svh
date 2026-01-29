@@ -12,6 +12,8 @@ class axi4_agent #(
   int USER_W = 1
 ) extends uvm_agent;
 
+  localparam string RID = "AXI4_AGENT";
+
   axi4_agent_cfg#(ADDR_W, DATA_W, ID_W, USER_W) cfg;
 
   axi4_sequencer#(ADDR_W, DATA_W, ID_W, USER_W)   sequencer;
@@ -28,7 +30,7 @@ class axi4_agent #(
   function void build_phase(uvm_phase phase);
     super.build_phase(phase);
     if (!uvm_config_db#(axi4_agent_cfg#(ADDR_W, DATA_W, ID_W, USER_W))::get(this, "", "cfg", cfg)) begin
-      `uvm_fatal(get_type_name(), "Missing cfg in config DB (key: cfg)")
+      `uvm_fatal(RID, "Missing cfg in config DB (key: cfg)")
     end
 
     monitor = axi4_monitor#(ADDR_W, DATA_W, ID_W, USER_W)::type_id::create("monitor", this);
@@ -55,4 +57,3 @@ class axi4_agent #(
 endclass
 
 `endif // KVIPS_AXI4_AGENT_SVH
-

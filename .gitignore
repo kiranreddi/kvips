@@ -1,5 +1,9 @@
 # KVIPS .gitignore
 
+# Local agent instructions (do not commit)
+AGENTS.md
+agents.md
+
 # Gap Analysis - Local documentation only
 axi4/docs/avery_gap_analysis.md
 axi4/docs/questa_gap_analysis.md

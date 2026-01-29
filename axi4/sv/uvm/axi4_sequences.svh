@@ -59,6 +59,10 @@ class axi4_write_readback_seq #(
   rand bit          enable_incr  = 1'b1;
   rand bit          enable_narrow = 1'b1;
   rand bit          enable_random_id = 1'b0;
+  // When using the KVIPS pipelined master driver, the driver completes items
+  // immediately and returns results via the sequencer response queue.
+  // Set this to 1 to drain expected responses at the end of the sequence.
+  bit               collect_responses = 1'b0;
 
   rand logic [ADDR_W-1:0] base_addr = 32'h1000;
 
@@ -193,6 +197,13 @@ class axi4_write_readback_seq #(
 
       start_item(rd);
       finish_item(rd);
+    end
+
+    if (collect_responses) begin
+      axi4_item#(ADDR_W, DATA_W, ID_W, USER_W) rsp;
+      for (int unsigned i = 0; i < (2 * num_txns); i++) begin
+        get_response(rsp);
+      end
     end
   endtask
 
