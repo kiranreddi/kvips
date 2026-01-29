@@ -15,13 +15,15 @@ From the repo root:
 - VCS: `kvips/axi4/examples/uvm_back2back/sim/run_vcs.sh`
 - Xcelium: `kvips/axi4/examples/uvm_back2back/sim/run_xcelium.sh`
 
-## Questa regression via LSF (ignrc)
+## Regressions via LSF (bsub)
 From the repo root:
-- `kvips/axi4/examples/uvm_back2back/sim/regress_questa_ignrc.sh`
+- Questa: `module load lsf && make -C kvips/axi4/examples regress-questa USE_LSF=1`
+- VCS: `module load lsf && make -C kvips/axi4/examples regress-vcs USE_LSF=1`
+- Xcelium: `module load lsf && make -C kvips/axi4/examples regress-xcelium USE_LSF=1`
 
 ## FSDB report (Verdi)
 After generating an FSDB (see `run_questa_fsdb.sh`), you can dump key AXI signals with `fsdbreport`:
-- Run directly on an ignrc/LSF node: `kvips/axi4/examples/uvm_back2back/sim/run_fsdbreport_ignrc.sh <fsdb> --bt 0ns --et 2us`
+- Run on a node with Verdi available (e.g. via LSF `bsub`): `kvips/axi4/examples/uvm_back2back/sim/run_fsdbreport_lsf.sh <fsdb> --bt 0ns --et 2us`
 - Submit with `bsub` (optional): `kvips/axi4/examples/uvm_back2back/sim/submit_fsdbreport_bsub.sh <fsdb> --bt 0ns --et 2us`
 
 ## Useful debug knobs

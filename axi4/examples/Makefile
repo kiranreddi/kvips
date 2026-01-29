@@ -1,21 +1,22 @@
-.PHONY: help list-tests questa questa-waves vcs xcelium regress-questa fsdbreport clean
+.PHONY: help list-tests questa questa-waves vcs xcelium regress-questa regress-vcs regress-xcelium fsdbreport clean
 
 SIM_DIR := uvm_back2back/sim
+SIM_DIR_ABS := $(abspath $(SIM_DIR))
 
 TEST ?= axi4_b2b_test
 SEED ?= 1
 UVM_VERBOSITY ?= UVM_LOW
 PLUSARGS ?=
 
-USE_IGNRC ?= 0
-IGNRC ?= /tools/scripts/ignrc
+USE_LSF ?= 0
+LSF_BSUB ?= bsub -Ip -app gnrc -P boxsteru4 -Lp boxsteru4 -q interactive
 
 FSDB ?=
 BT ?=
 ET ?=
 
-ifneq ($(USE_IGNRC),0)
-RUN_PREFIX := $(IGNRC)
+ifneq ($(USE_LSF),0)
+RUN_PREFIX := $(LSF_BSUB)
 else
 RUN_PREFIX :=
 endif
@@ -27,39 +28,47 @@ help:
 	@echo ""
 	@echo "Targets:"
 	@echo "  make list-tests"
-	@echo "  make questa         TEST=<name> SEED=<n> UVM_VERBOSITY=<lvl> PLUSARGS='<...>' [USE_IGNRC=1]"
-	@echo "  make questa-waves   (Questa FSDB) same vars as 'questa' [USE_IGNRC=1]"
-	@echo "  make vcs            TEST=<name> SEED=<n> ... [USE_IGNRC=1]"
-	@echo "  make xcelium        TEST=<name> SEED=<n> ... [USE_IGNRC=1]"
+	@echo "  make questa         TEST=<name> SEED=<n> UVM_VERBOSITY=<lvl> PLUSARGS='<...>' [USE_LSF=1]"
+	@echo "  make questa-waves   (Questa FSDB) same vars as 'questa' [USE_LSF=1]"
+	@echo "  make vcs            TEST=<name> SEED=<n> ... [USE_LSF=1]"
+	@echo "  make xcelium        TEST=<name> SEED=<n> ... [USE_LSF=1]"
 	@echo "  make regress-questa PLUSARGS='<...>'"
+	@echo "  make regress-vcs    PLUSARGS='<...>'"
+	@echo "  make regress-xcelium PLUSARGS='<...>'"
 	@echo "  make fsdbreport     FSDB=<path> [BT=<time>] [ET=<time>]"
 	@echo "  make clean"
 	@echo ""
 	@echo "Notes:"
-	@echo "  - USE_IGNRC=1 prepends '$(IGNRC)' (required on some clusters)."
+	@echo "  - USE_LSF=1 prepends '$(LSF_BSUB)' (edit LSF_BSUB to match your site)."
 	@echo "  - The sim scripts auto-load tool modules when available."
 
 list-tests:
 	@cat $(SIM_DIR)/tests_questa.list
 
 questa:
-	@$(RUN_PREFIX) $(SIM_DIR)/run_questa.sh $(COMMON_PLUSARGS)
+	@$(RUN_PREFIX) $(SIM_DIR_ABS)/run_questa.sh $(COMMON_PLUSARGS)
 
 questa-waves:
-	@$(RUN_PREFIX) $(SIM_DIR)/run_questa_fsdb.sh $(COMMON_PLUSARGS)
+	@$(RUN_PREFIX) $(SIM_DIR_ABS)/run_questa_fsdb.sh $(COMMON_PLUSARGS)
 
 vcs:
-	@$(RUN_PREFIX) $(SIM_DIR)/run_vcs.sh $(COMMON_PLUSARGS)
+	@$(RUN_PREFIX) $(SIM_DIR_ABS)/run_vcs.sh $(COMMON_PLUSARGS)
 
 xcelium:
-	@$(RUN_PREFIX) $(SIM_DIR)/run_xcelium.sh $(COMMON_PLUSARGS)
+	@$(RUN_PREFIX) $(SIM_DIR_ABS)/run_xcelium.sh $(COMMON_PLUSARGS)
 
 regress-questa:
-	@$(SIM_DIR)/regress_questa_ignrc.sh $(PLUSARGS)
+	@$(RUN_PREFIX) $(SIM_DIR_ABS)/regress_questa_lsf.sh $(PLUSARGS)
+
+regress-vcs:
+	@$(RUN_PREFIX) $(SIM_DIR_ABS)/regress_vcs_lsf.sh $(PLUSARGS)
+
+regress-xcelium:
+	@$(RUN_PREFIX) $(SIM_DIR_ABS)/regress_xcelium_lsf.sh $(PLUSARGS)
 
 fsdbreport:
 	@if [ -z "$(FSDB)" ]; then echo "ERROR: FSDB=<path> required"; exit 2; fi
-	@$(RUN_PREFIX) $(SIM_DIR)/run_fsdbreport_ignrc.sh "$(FSDB)" $(if $(BT),--bt "$(BT)",) $(if $(ET),--et "$(ET)",)
+	@$(RUN_PREFIX) $(SIM_DIR_ABS)/run_fsdbreport_lsf.sh "$(FSDB)" $(if $(BT),--bt "$(BT)",) $(if $(ET),--et "$(ET)",)
 
 clean:
 	@rm -rf $(SIM_DIR)/out

@@ -198,7 +198,9 @@ cd axi4/examples/uvm_back2back/sim
 ./run_questa.sh +UVM_TESTNAME=axi4_b2b_test
 
 # Run full regression
-./regress_questa_ignrc.sh</code></pre>
+module load lsf
+cd ../../..
+make -C kvips/axi4/examples regress-questa USE_LSF=1</code></pre>
                 </div>
             </div>
 
