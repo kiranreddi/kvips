@@ -62,8 +62,11 @@ cd axi4/examples/uvm_back2back/sim
 # Single test
 ./run_questa.sh +UVM_TESTNAME=axi4_b2b_test
 
-# With waveforms
+# With waveforms (VCD)
 ./run_questa.sh +UVM_TESTNAME=axi4_b2b_test +KVIPS_WAVES
+
+# With waveforms (FSDB, requires Verdi/Novas PLI)
+./run_questa_fsdb.sh +UVM_TESTNAME=axi4_b2b_test
 
 # Full regression
 ./regress_questa_ignrc.sh
@@ -77,7 +80,7 @@ cd axi4/examples/uvm_back2back/sim
 # Single test
 ./run_vcs.sh +UVM_TESTNAME=axi4_b2b_test
 
-# With DVE waveforms
+# With waveforms (VCD)
 ./run_vcs.sh +UVM_TESTNAME=axi4_b2b_test +KVIPS_WAVES
 ```
 
@@ -89,7 +92,7 @@ cd axi4/examples/uvm_back2back/sim
 # Single test
 ./run_xcelium.sh +UVM_TESTNAME=axi4_b2b_test
 
-# With SimVision waveforms
+# With waveforms (VCD)
 ./run_xcelium.sh +UVM_TESTNAME=axi4_b2b_test +KVIPS_WAVES
 ```
 
