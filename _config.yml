@@ -1,0 +1,118 @@
+# KVIPS - Premium Verification IP Suite
+# GitHub Pages Configuration
+
+title: KVIPS
+description: >-
+  Premium SystemVerilog UVM Verification IP Library - Industry-grade 
+  protocol VIPs tested with Siemens Questa, Synopsys VCS, and Cadence Xcelium
+baseurl: "" # Leave empty for user/org pages, or set to /repo-name for project pages
+url: "" # Will be set by GitHub Pages automatically
+
+# Theme settings
+theme: jekyll-theme-minimal
+remote_theme: pages-themes/cayman@v0.2.0
+
+# Build settings
+markdown: kramdown
+kramdown:
+  input: GFM
+  syntax_highlighter: rouge
+  syntax_highlighter_opts:
+    block:
+      line_numbers: true
+
+# Collections
+collections:
+  docs:
+    output: true
+    permalink: /docs/:path/
+  vips:
+    output: true
+    permalink: /vips/:path/
+
+# Defaults
+defaults:
+  - scope:
+      path: ""
+      type: "docs"
+    values:
+      layout: "default"
+  - scope:
+      path: ""
+      type: "vips"
+    values:
+      layout: "vip"
+
+# Navigation
+navigation:
+  - title: Home
+    url: /
+  - title: VIPs
+    url: /vips/
+  - title: Documentation
+    url: /docs/
+  - title: Getting Started
+    url: /docs/getting-started/
+  - title: Code Review
+    url: /docs/code-review/
+  - title: GitHub
+    url: https://github.com/kiranreddi/kvips
+
+# Plugins
+plugins:
+  - jekyll-seo-tag
+  - jekyll-sitemap
+  - jekyll-feed
+
+# SEO
+author: KVIPS Team
+twitter:
+  username: YOUR_TWITTER
+  card: summary_large_image
+
+# Social
+social:
+  name: KVIPS
+  links:
+    - https://github.com/kiranreddi/kvips
+
+# Google Analytics (optional - replace with your tracking ID)
+# google_analytics: UA-XXXXXXXXX-X
+
+# Exclude from build
+exclude:
+  - Gemfile
+  - Gemfile.lock
+  - node_modules
+  - vendor
+  - .sass-cache
+  - .jekyll-cache
+  - .git
+  - .gitignore
+  - README.md
+  - LICENSE
+  - "*.svh"
+  - "*.sv"
+  - "*.sh"
+  - "*.f"
+  - "*.list"
+  - sim/
+  - examples/*/sim/
+  - csrc/
+  - simv*
+  - ucli.key
+  - vc_hdrs.h
+  - .vscode/
+  - logs/
+  - transcript
+  - work/
+
+# Include
+include:
+  - _pages
+  - assets
+
+# Sass
+sass:
+  style: compressed
+  sass_dir: assets/css

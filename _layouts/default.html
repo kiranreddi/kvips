@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="{{ page.description | default: site.description }}">
+    <title>{{ page.title | default: site.title }}</title>
+
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="{{ '/assets/css/style.css' | relative_url }}">
+
+    <!-- SEO -->
+    {% seo %}
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="{{ '/assets/images/favicon.svg' | relative_url }}">
+</head>
+
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="navbar-container">
+            <a href="{{ '/' | relative_url }}" class="navbar-logo">KVIPS</a>
+            <ul class="navbar-menu">
+                <li><a href="{{ '/' | relative_url }}">Home</a></li>
+                <li><a href="{{ '/vips/' | relative_url }}">VIPs</a></li>
+                <li><a href="{{ '/docs/' | relative_url }}">Documentation</a></li>
+                <li><a href="{{ '/docs/getting-started/' | relative_url }}">Get Started</a></li>
+                <li><a href="{{ '/docs/code-review/' | relative_url }}">Code Review</a></li>
+                <li><a href="https://github.com/kiranreddi/kvips" target="_blank">GitHub</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main>
+        {{ content }}
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-section">
+                <h3>KVIPS</h3>
+                <p>Premium verification IP library for SystemVerilog UVM environments.</p>
+                <p style="margin-top: 1rem;">
+                    <strong>License:</strong> MIT<br>
+                    <strong>Status:</strong> Active Development
+                </p>
+            </div>
+
+            <div class="footer-section">
+                <h3>Quick Links</h3>
+                <ul class="footer-links">
+                    <li><a href="{{ '/vips/' | relative_url }}">VIP Catalog</a></li>
+                    <li><a href="{{ '/docs/getting-started/' | relative_url }}">Getting Started</a></li>
+                    <li><a href="{{ '/docs/code-review/' | relative_url }}">Code Review</a></li>
+                    <li><a href="{{ '/docs/contributing/' | relative_url }}">Contributing</a></li>
+                    <li><a href="{{ '/docs/changelog/' | relative_url }}">Changelog</a></li>
+                </ul>
+            </div>
+
+            <div class="footer-section">
+                <h3>Documentation</h3>
+                <ul class="footer-links">
+                    <li><a href="{{ '/docs/axi4-vip/' | relative_url }}">AXI4 VIP</a></li>
+                    <li><a href="{{ '/docs/best-practices/' | relative_url }}">Best Practices</a></li>
+                    <li><a href="{{ '/docs/faq/' | relative_url }}">FAQ</a></li>
+                    <li><a href="{{ '/docs/examples/' | relative_url }}">Examples</a></li>
+                </ul>
+            </div>
+
+            <div class="footer-section">
+                <h3>Community</h3>
+                <ul class="footer-links">
+                    <li><a href="https://github.com/kiranreddi/kvips">GitHub Repository</a></li>
+                    <li><a href="https://github.com/kiranreddi/kvips/issues">Issue Tracker</a></li>
+                    <li><a href="https://github.com/kiranreddi/kvips/discussions">Discussions</a></li>
+                    <li><a href="https://github.com/kiranreddi/kvips/pulls">Pull Requests</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="footer-bottom">
+            <p>&copy; {{ 'now' | date: "%Y" }} KVIPS. Released under the MIT License.</p>
+            <p style="margin-top: 0.5rem;">Built with ❤️ for the verification community</p>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="{{ '/assets/js/main.js' | relative_url }}"></script>
+
+    <!-- Analytics (optional - add your tracking code) -->
+    {% if site.google_analytics %}
+    <script async src="https://www.googletagmanager.com/gtag/js?id={{ site.google_analytics }}"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+        gtag('config', '{{ site.google_analytics }}');
+    </script>
+    {% endif %}
+</body>
+
+</html>
