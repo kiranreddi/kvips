@@ -59,5 +59,12 @@ exclude:
   - .jekyll-cache
   - .git
   - .gitignore
-  - README.md
   - LICENSE
+  - axi4
+  - common
+  - docs
+
+# Include assets
+include:
+  - _layouts
+  - assets
