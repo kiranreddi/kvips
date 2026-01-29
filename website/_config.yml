@@ -1,0 +1,63 @@
+# KVIPS - Premium Verification IP Suite
+# GitHub Pages Configuration
+
+title: KVIPS
+description: >-
+  Premium SystemVerilog UVM Verification IP Library - Industry-grade 
+  protocol VIPs tested with Siemens Questa, Synopsys VCS, and Cadence Xcelium
+
+# GitHub Pages will set these automatically
+baseurl: "/kvips" # Project pages baseurl
+url: "https://kiranreddi.github.io" # Your GitHub Pages URL
+
+# Build settings
+markdown: kramdown
+kramdown:
+  input: GFM
+  syntax_highlighter: rouge
+  syntax_highlighter_opts:
+    block:
+      line_numbers: false
+
+# Collections
+collections:
+  pages:
+    output: true
+    permalink: /:path/
+
+# Defaults
+defaults:
+  - scope:
+      path: ""
+    values:
+      layout: "default"
+
+# Plugins (GitHub Pages whitelist)
+plugins:
+  - jekyll-seo-tag
+  - jekyll-sitemap
+  - jekyll-feed
+  - jekyll-relative-links
+
+# SEO
+author: Kiran Reddi
+lang: en_US
+
+# Social
+social:
+  name: KVIPS
+  links:
+    - https://github.com/kiranreddi/kvips
+
+# Exclude from build
+exclude:
+  - Gemfile
+  - Gemfile.lock
+  - node_modules
+  - vendor
+  - .sass-cache
+  - .jekyll-cache
+  - .git
+  - .gitignore
+  - README.md
+  - LICENSE
