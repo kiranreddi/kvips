@@ -60,7 +60,7 @@ if ! command -v vcs >/dev/null 2>&1; then
 fi
 if ! command -v vcs >/dev/null 2>&1; then
   echo "ERROR: 'vcs' not found on PATH."
-  echo "Hint: run on a node with VCS available (e.g. via ignrc/LSF) and load 'vcs/2025.06_1'."
+  echo "Hint: run on a node with VCS available (e.g. via LSF bsub) and load 'vcs/2025.06_1'."
   echo "PATH=${PATH}"
   exit 127
 fi

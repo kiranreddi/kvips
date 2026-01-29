@@ -56,7 +56,7 @@ if ! command -v xrun >/dev/null 2>&1; then
 fi
 if ! command -v xrun >/dev/null 2>&1; then
   echo "ERROR: 'xrun' not found on PATH."
-  echo "Hint: run on a node with Xcelium available (e.g. via ignrc/LSF) and load 'xcelium/25.03.007'."
+  echo "Hint: run on a node with Xcelium available (e.g. via LSF bsub) and load 'xcelium/25.03.007'."
   echo "PATH=${PATH}"
   exit 127
 fi

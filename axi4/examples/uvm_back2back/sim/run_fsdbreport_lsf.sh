@@ -9,10 +9,10 @@ mkdir -p "${OUT_DIR}"
 usage() {
   cat <<'EOF'
 Usage:
-  run_fsdbreport_ignrc.sh <fsdb_path> [--bt <time>] [--et <time>] [--cfg <cfgfile>] [--out <outfile>]
+  run_fsdbreport_lsf.sh <fsdb_path> [--bt <time>] [--et <time>] [--cfg <cfgfile>] [--out <outfile>]
 
 Notes:
-  - Intended to run via LSF/ignrc (tools live on grid nodes).
+  - Intended to run via LSF (tools live on grid nodes).
   - Loads verdi/2023.03_sp2 if module is available.
 EOF
 }
@@ -70,4 +70,3 @@ else
   echo "ERROR: fsdbreport did not create output: ${OUT}"
   exit 3
 fi
-

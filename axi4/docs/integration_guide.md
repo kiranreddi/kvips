@@ -66,9 +66,9 @@ Example tests live in `kvips/axi4/examples/uvm_back2back/tb/tb_pkg.sv`.
   - Disable: `+KVIPS_AXI4_SB_OFF`
   - Warn on unwritten read bytes: `+KVIPS_AXI4_SB_WARN_UNINIT`
 
-## Running on Questa via LSF/ignrc
+## Running on Questa via LSF (bsub)
 
 From repo root:
 
-- Regression: `kvips/axi4/examples/uvm_back2back/sim/regress_questa_ignrc.sh`
-- Single test: `module load questa/2025_3_2 && module load lsf && ignrc kvips/axi4/examples/uvm_back2back/sim/run_questa.sh +UVM_TESTNAME=axi4_b2b_test`
+- Regression: `module load lsf && make -C kvips/axi4/examples regress-questa USE_LSF=1`
+- Single test: `module load lsf && make -C kvips/axi4/examples questa TEST=axi4_b2b_test USE_LSF=1`

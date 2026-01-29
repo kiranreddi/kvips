@@ -57,13 +57,13 @@ fi
 
 if ! command -v vlog >/dev/null 2>&1; then
   echo "ERROR: 'vlog' not found on PATH (need Questa)."
-  echo "Hint: 'module load questa/2025_3_2' (and run via ignrc/LSF if needed)."
+  echo "Hint: 'module load questa/2025_3_2' (and run via LSF bsub if needed)."
   echo "PATH=${PATH}"
   exit 127
 fi
 if ! command -v vsim >/dev/null 2>&1; then
   echo "ERROR: 'vsim' not found on PATH (need Questa)."
-  echo "Hint: 'module load questa/2025_3_2' (and run via ignrc/LSF if needed)."
+  echo "Hint: 'module load questa/2025_3_2' (and run via LSF bsub if needed)."
   echo "PATH=${PATH}"
   exit 127
 fi
@@ -94,7 +94,7 @@ if NOVAS_FLI="$(find_novas_fli 2>/dev/null)"; then
   echo "INFO: Using FSDB PLI: ${NOVAS_FLI}" | tee "${OUT}/fsdb_pli.log"
 else
   echo "ERROR: Could not find 'novas_fli.so' (Verdi/Novas PLI)." | tee "${OUT}/fsdb_pli.log"
-  echo "Hint: ensure Verdi module is available in your ignrc/LSF environment." | tee -a "${OUT}/fsdb_pli.log"
+  echo "Hint: ensure Verdi module is available in your LSF environment." | tee -a "${OUT}/fsdb_pli.log"
   exit 2
 fi
 

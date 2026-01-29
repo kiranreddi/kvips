@@ -69,7 +69,9 @@ cd axi4/examples/uvm_back2back/sim
 ./run_questa_fsdb.sh +UVM_TESTNAME=axi4_b2b_test
 
 # Full regression
-./regress_questa_ignrc.sh
+module load lsf
+cd ../../..
+make -C kvips/axi4/examples regress-questa USE_LSF=1
 ```
 
 #### Option B: Synopsys VCS

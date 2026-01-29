@@ -26,8 +26,7 @@ BSUB_ARGS=(-q "${QUEUE}" -app "${APP}")
 FSDB="$1"
 shift
 
-CMD=(bash "${SIM_DIR}/run_fsdbreport_ignrc.sh" "${FSDB}" "$@")
+CMD=(bash "${SIM_DIR}/run_fsdbreport_lsf.sh" "${FSDB}" "$@")
 
 echo "bsub ${BSUB_ARGS[*]} ${CMD[*]}"
 exec bsub "${BSUB_ARGS[@]}" "${CMD[@]}"
-
