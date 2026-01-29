@@ -54,29 +54,30 @@ For each protocol:
    - Mark each item as: `missing`, `partial`, `implemented`, and link to the test(s) that prove it.
 3. Implement features + add tests until gap analyses are all `implemented` (or clearly documented limitations).
 
-## APB (APB3/APB4) VIP plan
+## APB (APB3/APB4) VIP status
 
-**Core features**
-- APB3 + APB4 signals: `PADDR`, `PSELx`, `PENABLE`, `PWRITE`, `PWDATA`, `PRDATA`, `PREADY`, `PSLVERR`, `PPROT`, `PSTRB`.
-- Configurable wait states and `PREADY` behavior (fixed and randomized).
-- Error response injection (`PSLVERR`) with address-range configuration.
-- Optional functional coverage for address ranges, read/write mix, wait-states.
+Implemented under `kvips/apb/` as a single-image APB3/APB4 VIP with runtime mode switch (`+APB_PROTOCOL=APB3|APB4`).
+
+**Docs**
+- `kvips/apb/docs/integration_guide.md`
+- `kvips/apb/docs/supported_features.md`
+- `kvips/apb/docs/assertions.md`
+- `kvips/apb/docs/testplan.md`
+
+**Example**
+- `kvips/apb/examples/uvm_back2back/`
 
 **Assertions**
-- Correct APB state machine sequencing (setup/access phases).
-- Stable address/control during access.
-- `PSEL`/`PENABLE` legality and reset behavior.
+- Setup/access sequencing, stability during wait-states, known-value checks, APB4-only rules (runtime gated).
 
-**UVM components**
-- `apb_agent_cfg`, `apb_item`, master/slave drivers, monitor, sequencer.
-- Simple memory-mapped slave model (byte-addressable) with base mapping (same pattern as AXI4 `slave_mem_base`).
-- Scoreboard: write-derived expected vs read observed.
+**Regression targets**
+- Questa: `questa/2025_3_2`
+- VCS: `vcs/2025.06_1`
+- Xcelium: `xcelium/25.03.007`
 
-**Tests (examples/uvm_back2back)**
-- Smoke: basic read/write.
-- Wait-state sweep: 0..N cycles.
-- Error injection: SLVERR on reads/writes in a range.
-- Randomized stress: address/data/byte-enables (APB4).
+**Next improvements (incremental)**
+- Add additional examples (master-only, slave-only, passive monitor)
+- Expand directed sequences/tests (more corner cases)
 
 ## AHB (AHB-Lite / AHB) VIP plan
 
@@ -129,4 +130,3 @@ For each protocol VIP, do not “declare done” until:
 - Example regression runs cleanly on Questa/VCS/Xcelium (and Verilator-lint where applicable).
 - Assertions are present, documented, and have disable switches.
 - User guide shows minimal integration snippets and debug knobs.
-
