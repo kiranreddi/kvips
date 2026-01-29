@@ -1,0 +1,10 @@
++incdir+kvips/common/sv
++incdir+kvips/apb/sv/uvm
++incdir+kvips/apb/sv/assertions
++incdir+kvips/apb/sv/if
+kvips/apb/sv/if/apb_if.sv
+kvips/apb/sv/pkg/apb_types_pkg.sv
+kvips/apb/sv/pkg/apb_uvm_pkg.sv
+kvips/apb/examples/uvm_back2back/tb/tb_pkg.sv
+kvips/apb/examples/uvm_back2back/tb/top.sv
+
