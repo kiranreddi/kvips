@@ -268,6 +268,10 @@
     // Fade In Animation on Scroll
     // ==========================================
     function initScrollAnimations() {
+        // Disabled to prevent content disappearing
+        // Elements will be visible immediately without scroll animations
+        return;
+
         const observerOptions = {
             root: null,
             rootMargin: '0px',
