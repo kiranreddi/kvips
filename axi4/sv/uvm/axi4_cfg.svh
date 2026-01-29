@@ -80,6 +80,10 @@ class axi4_agent_cfg #(
 
   // Statistics
   bit stats_enable = 1'b0;
+  int unsigned stats_window_cycles = 0; // 0 disables windowed reporting
+
+  // Functional coverage (monitor-based)
+  bit coverage_enable = 1'b0;
 
   function new(string name = "axi4_agent_cfg");
     super.new(name);
@@ -134,6 +138,8 @@ class axi4_agent_cfg #(
     `uvm_field_int(resp_max, UVM_DEFAULT)
     `uvm_field_int(handshake_timeout_cycles, UVM_DEFAULT)
     `uvm_field_int(stats_enable, UVM_DEFAULT)
+    `uvm_field_int(stats_window_cycles, UVM_DEFAULT)
+    `uvm_field_int(coverage_enable, UVM_DEFAULT)
   `uvm_object_utils_end
 
 endclass

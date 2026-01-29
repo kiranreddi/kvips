@@ -48,6 +48,7 @@ package tb_pkg;
       begin
         axi4_agent_cfg#(ADDR_W, DATA_W, ID_W, USER_W) m_cfg;
         int unsigned mo;
+        int unsigned win;
         m_cfg = axi4_agent_cfg#(ADDR_W, DATA_W, ID_W, USER_W)::type_id::create("m_cfg");
         m_cfg.set_role_master();
         m_cfg.vif = vif;
@@ -56,6 +57,12 @@ package tb_pkg;
         if ($test$plusargs("VIP_TR")) m_cfg.tr_record_enable = 1'b1;
         if ($test$plusargs("VIP_PIPE")) m_cfg.master_pipelined = 1'b1;
         if ($test$plusargs("VIP_STATS")) m_cfg.stats_enable = 1'b1;
+        win = 0;
+        if ($value$plusargs("VIP_STATS_WIN=%d", win)) begin
+          m_cfg.stats_enable = 1'b1;
+          m_cfg.stats_window_cycles = win;
+        end
+        if ($test$plusargs("VIP_COV")) m_cfg.coverage_enable = 1'b1;
         mo = 0;
         if ($value$plusargs("VIP_MAX_OUTS=%d", mo)) begin
           if (mo != 0) begin
@@ -206,6 +213,29 @@ package tb_pkg;
 
       seq = new("seq");
       seq.base_addr = 32'h4000;
+      seq.start(seqr);
+
+      phase.drop_objection(this);
+    endtask
+  endclass
+
+  class axi4_b2b_corner_case_test extends axi4_b2b_base_test;
+    `uvm_component_utils(axi4_b2b_corner_case_test)
+
+    function new(string name, uvm_component parent);
+      super.new(name, parent);
+    endfunction
+
+    task run_phase(uvm_phase phase);
+      axi4_sequencer#(ADDR_W, DATA_W, ID_W, USER_W) seqr;
+      axi4_corner_case_seq#(ADDR_W, DATA_W, ID_W, USER_W) seq;
+      phase.raise_objection(this);
+
+      seqr = env.get_master_sequencer(0);
+      if (seqr == null) `uvm_fatal(get_type_name(), "Master sequencer not found at index 0")
+
+      seq = new("seq");
+      seq.base_addr = 32'h10000;
       seq.start(seqr);
 
       phase.drop_objection(this);

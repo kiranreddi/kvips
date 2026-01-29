@@ -46,6 +46,7 @@ This document maps **implemented** AXI4 VIP functionality to runnable tests and 
 | Burst types (INCR/FIXED/WRAP) | `axi4_b2b_burst_types_test` | `kvips/axi4/examples/uvm_back2back/tb/tb_pkg.sv` |
 | Backpressure | `axi4_b2b_backpressure_test` | `kvips/axi4/examples/uvm_back2back/tb/tb_pkg.sv` |
 | SIZE+lane sweep (directed narrow/full) | `axi4_b2b_lane_sweep_test` | `kvips/axi4/examples/uvm_back2back/tb/tb_pkg.sv` |
+| Corner cases (4KB edge, length extremes) | `axi4_b2b_corner_case_test` | `kvips/axi4/examples/uvm_back2back/tb/tb_pkg.sv` |
 | Randomized features (sizes/len/burst/id) | `axi4_b2b_randomized_features_test` | `kvips/axi4/examples/uvm_back2back/tb/tb_pkg.sv` |
 | Multiple outstanding + response reordering/interleaving | `axi4_b2b_pipelined_outstanding_test` | `kvips/axi4/examples/uvm_back2back/tb/tb_pkg.sv` |
 | Master-side RREADY backpressure (pipelined) | `axi4_b2b_pipelined_rready_backpressure_test` | `kvips/axi4/examples/uvm_back2back/tb/tb_pkg.sv` |
@@ -66,6 +67,7 @@ This document maps **implemented** AXI4 VIP functionality to runnable tests and 
 | LEN 1..16 beats | `axi4_b2b_backpressure_test`, `axi4_b2b_randomized_features_test` |
 | SIZE 1B..bus-width | `axi4_b2b_lane_sweep_test`, `axi4_b2b_randomized_features_test` |
 | Narrow write strobes | `axi4_b2b_lane_sweep_test`, `axi4_b2b_randomized_features_test` |
+| 4KB “edge of window” cases | `axi4_b2b_corner_case_test` |
 | ID propagation (no interleaving) | `axi4_b2b_randomized_features_test` |
 | Outstanding + B reorder + R interleave | `axi4_b2b_pipelined_outstanding_test` |
 | Master RREADY backpressure | `axi4_b2b_pipelined_rready_backpressure_test` |
@@ -81,5 +83,5 @@ This document maps **implemented** AXI4 VIP functionality to runnable tests and 
 These are AXI4 features not yet modeled/checked by this initial VIP:
 - Full AXI4 protection/cache/QoS/region semantics beyond signal presence
 - Low-power / clock gating considerations
-- Protocol corner cases (deeper unaligned/addressing corner coverage beyond current generators)
-- Comprehensive SVA suite (this is a starter set; expand to full AMBA requirements)
+- Protocol corner cases (additional unaligned/addressing corner coverage beyond current directed set)
+- Comprehensive SVA parity vs vendor VIPs (KVIPS includes a starter + stateful set; extend as needed)

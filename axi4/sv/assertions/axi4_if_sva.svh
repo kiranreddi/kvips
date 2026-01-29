@@ -13,12 +13,21 @@ bit kvips_axi4_assertions_on;
 bit kvips_axi4_known_checks_on;
 bit kvips_axi4_burst_checks_on;
 bit kvips_axi4_excl_checks_on;
+int unsigned kvips_axi4_max_outs_w;
+int unsigned kvips_axi4_max_outs_r;
+
+localparam logic [1:0] KVIPS_AXI4_RESP_EXOKAY = 2'b01;
 
 initial begin
   kvips_axi4_assertions_on   = !$test$plusargs("KVIPS_AXI4_ASSERT_OFF");
   kvips_axi4_known_checks_on =  $test$plusargs("KVIPS_AXI4_ASSERT_KNOWN");
   kvips_axi4_burst_checks_on = !$test$plusargs("KVIPS_AXI4_ASSERT_BURST_OFF");
   kvips_axi4_excl_checks_on  = !$test$plusargs("KVIPS_AXI4_ASSERT_EXCL_OFF");
+
+  kvips_axi4_max_outs_w = 0;
+  kvips_axi4_max_outs_r = 0;
+  void'($value$plusargs("KVIPS_AXI4_ASSERT_MAX_OUTS_W=%d", kvips_axi4_max_outs_w));
+  void'($value$plusargs("KVIPS_AXI4_ASSERT_MAX_OUTS_R=%d", kvips_axi4_max_outs_r));
 end
 
 function automatic longint unsigned kvips_bytes_per_beat(input logic [2:0] size);
@@ -225,3 +234,143 @@ property kvips_p_known_b;
     bvalid |-> (!$isunknown({bid, bresp}));
 endproperty
 a_kvips_known_b: assert property (kvips_p_known_b);
+
+// -----------------------------------------------------------------------------
+// Stateful protocol checks (portable "compliance" starter set)
+// -----------------------------------------------------------------------------
+
+typedef struct packed {
+  logic [ID_W-1:0] id;
+  int unsigned     beats_left;
+  bit              lock;
+} kvips_wr_ctx_t;
+
+kvips_wr_ctx_t kvips_wr_fifo[$];
+bit kvips_wr_done_lock_q[logic [ID_W-1:0]][$];
+int unsigned kvips_outs_w;
+
+int unsigned kvips_rd_beats_q[logic [ID_W-1:0]][$];
+bit kvips_rd_lock_q[logic [ID_W-1:0]][$];
+int unsigned kvips_outs_r;
+
+always_ff @(posedge aclk) begin
+  if (!areset_n || !kvips_axi4_assertions_on) begin
+    kvips_wr_fifo.delete();
+    foreach (kvips_wr_done_lock_q[id]) kvips_wr_done_lock_q[id].delete();
+    kvips_outs_w <= 0;
+
+    foreach (kvips_rd_beats_q[id]) kvips_rd_beats_q[id].delete();
+    foreach (kvips_rd_lock_q[id])  kvips_rd_lock_q[id].delete();
+    kvips_outs_r <= 0;
+  end else begin
+    // -----------------
+    // AW -> W tracking (W has no ID; must follow AW order)
+    // -----------------
+    if (awvalid && awready) begin
+      kvips_wr_ctx_t ctx;
+      ctx.id = awid;
+      ctx.beats_left = int'(awlen) + 1;
+      ctx.lock = awlock;
+      kvips_wr_fifo.push_back(ctx);
+      kvips_outs_w <= kvips_outs_w + 1;
+    end
+
+    if (wvalid && wready) begin
+      if (kvips_wr_fifo.size() == 0) begin
+        $error("KVIPS_AXI4_ASSERT: W beat seen with no outstanding AW");
+      end else begin
+        kvips_wr_ctx_t ctx;
+        ctx = kvips_wr_fifo[0];
+        if (ctx.beats_left == 0) begin
+          $error("KVIPS_AXI4_ASSERT: W beat overflow (beats_left==0)");
+        end else begin
+          if ((ctx.beats_left == 1) && !wlast) begin
+            $error("KVIPS_AXI4_ASSERT: Missing WLAST on final W beat");
+          end
+          if ((ctx.beats_left != 1) && wlast) begin
+            $error("KVIPS_AXI4_ASSERT: Unexpected WLAST before final W beat");
+          end
+          ctx.beats_left--;
+          kvips_wr_fifo[0] = ctx;
+        end
+        if (wlast) begin
+          // Require the FIFO front to complete.
+          if (kvips_wr_fifo[0].beats_left != 0) begin
+            $error("KVIPS_AXI4_ASSERT: WLAST asserted but beats_left != 0 after decrement");
+          end
+          // Mark this write as "data complete" for BID matching.
+          kvips_wr_done_lock_q[kvips_wr_fifo[0].id].push_back(kvips_wr_fifo[0].lock);
+          void'(kvips_wr_fifo.pop_front());
+        end
+      end
+    end
+
+    // -----------------
+    // B must only come after WLAST for the matching ID
+    // -----------------
+    if (bvalid && bready) begin
+      if (!(kvips_wr_done_lock_q.exists(bid)) || (kvips_wr_done_lock_q[bid].size() == 0)) begin
+        $error("KVIPS_AXI4_ASSERT: B seen with BID having no completed write data");
+      end else begin
+        bit lock_seen;
+        lock_seen = kvips_wr_done_lock_q[bid].pop_front();
+        if ((bresp == KVIPS_AXI4_RESP_EXOKAY) && !lock_seen) begin
+          $error("KVIPS_AXI4_ASSERT: BRESP=EXOKAY observed for non-exclusive write");
+        end
+      end
+      if (kvips_outs_w != 0) kvips_outs_w <= kvips_outs_w - 1;
+    end
+
+    // -----------------
+    // AR -> R tracking (per-ID)
+    // -----------------
+    if (arvalid && arready) begin
+      kvips_rd_beats_q[arid].push_back(int'(arlen) + 1);
+      kvips_rd_lock_q[arid].push_back(arlock);
+      kvips_outs_r <= kvips_outs_r + 1;
+    end
+
+    if (rvalid && rready) begin
+      if (!(kvips_rd_beats_q.exists(rid)) || (kvips_rd_beats_q[rid].size() == 0)) begin
+        $error("KVIPS_AXI4_ASSERT: R beat seen with no outstanding AR for RID");
+      end else begin
+        int unsigned beats_left;
+        bit lock_seen;
+        beats_left = kvips_rd_beats_q[rid][0];
+        lock_seen  = kvips_rd_lock_q[rid][0];
+        if ((beats_left == 1) && !rlast) begin
+          $error("KVIPS_AXI4_ASSERT: Missing RLAST on final R beat");
+        end
+        if ((beats_left != 1) && rlast) begin
+          $error("KVIPS_AXI4_ASSERT: Unexpected RLAST before final R beat");
+        end
+        if (kvips_axi4_excl_checks_on && (rresp == KVIPS_AXI4_RESP_EXOKAY) && !lock_seen) begin
+          $error("KVIPS_AXI4_ASSERT: RRESP=EXOKAY observed for non-exclusive read");
+        end
+        if (beats_left == 0) begin
+          $error("KVIPS_AXI4_ASSERT: R beat overflow (beats_left==0)");
+        end else begin
+          kvips_rd_beats_q[rid][0] = beats_left - 1;
+        end
+        if (rlast) begin
+          void'(kvips_rd_beats_q[rid].pop_front());
+          void'(kvips_rd_lock_q[rid].pop_front());
+          if (kvips_outs_r != 0) kvips_outs_r <= kvips_outs_r - 1;
+        end
+      end
+    end
+  end
+end
+
+// Optional outstanding-limit checks (set via plusargs).
+property kvips_p_outs_w_limit;
+  @(posedge aclk) disable iff (!areset_n || !kvips_axi4_assertions_on)
+    (kvips_axi4_max_outs_w == 0) or (kvips_outs_w <= kvips_axi4_max_outs_w);
+endproperty
+a_kvips_outs_w_limit: assert property (kvips_p_outs_w_limit);
+
+property kvips_p_outs_r_limit;
+  @(posedge aclk) disable iff (!areset_n || !kvips_axi4_assertions_on)
+    (kvips_axi4_max_outs_r == 0) or (kvips_outs_r <= kvips_axi4_max_outs_r);
+endproperty
+a_kvips_outs_r_limit: assert property (kvips_p_outs_r_limit);

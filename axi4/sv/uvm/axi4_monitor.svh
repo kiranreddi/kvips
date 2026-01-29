@@ -57,6 +57,10 @@ class axi4_monitor #(
     logic [2:0]          size;
     axi4_burst_e         burst;
     logic                lock;
+    logic [3:0]          cache;
+    logic [2:0]          prot;
+    logic [3:0]          qos;
+    logic [3:0]          region;
     logic [USER_W-1:0]   user;
   } a_chan_t;
 
@@ -76,11 +80,40 @@ class axi4_monitor #(
   // Read transactions waiting for R data, keyed by RID (to allow R interleaving across IDs).
   rd_state_t rd_q[logic [ID_W-1:0]][$];
 
+  // -------------------------
+  // Optional functional coverage (portable subset)
+  // -------------------------
+  covergroup cov with function sample(
+    bit          is_write,
+    axi4_burst_e burst,
+    int unsigned size,
+    int unsigned len,
+    bit          lock,
+    axi4_resp_e  resp,
+    logic [3:0]  qos
+  );
+    option.per_instance = 1;
+    cp_is_write: coverpoint is_write;
+    cp_burst:    coverpoint burst;
+    cp_size:     coverpoint size { bins sizes[] = {[0:$clog2(DATA_W/8)]}; }
+    cp_len:      coverpoint len  {
+      bins short_burst  = {[0:3]};
+      bins med_burst    = {[4:15]};
+      bins long_burst   = {[16:255]};
+    }
+    cp_lock:     coverpoint lock;
+    cp_resp:     coverpoint resp;
+    cp_qos:      coverpoint qos;
+    cx_burst_size: cross cp_burst, cp_size;
+    cx_write_resp: cross cp_is_write, cp_resp;
+  endgroup
+
   `uvm_component_param_utils(axi4_monitor#(ADDR_W, DATA_W, ID_W, USER_W))
 
   function new(string name, uvm_component parent);
     super.new(name, parent);
     ap = new("ap", this);
+    cov = new();
   endfunction
 
   function automatic void maybe_record(axi4_item#(ADDR_W, DATA_W, ID_W, USER_W) tr, string label);
@@ -121,6 +154,7 @@ class axi4_monitor #(
     rd_lat_max = 0;
     rd_lat_sum = 0;
     rd_lat_cnt = 0;
+
   endfunction
 
   task run_phase(uvm_phase phase);
@@ -136,11 +170,36 @@ class axi4_monitor #(
   endtask
 
   task automatic stats_loop();
+    longint unsigned last_cycles;
+    longint unsigned last_aw_hs;
+    longint unsigned last_w_hs;
+    longint unsigned last_b_hs;
+    longint unsigned last_ar_hs;
+    longint unsigned last_r_hs;
+    longint unsigned last_aw_stall;
+    longint unsigned last_w_stall;
+    longint unsigned last_b_stall;
+    longint unsigned last_ar_stall;
+    longint unsigned last_r_stall;
+
     if (!cfg.stats_enable) begin
       // Keep thread alive but idle to avoid fork/join termination ordering surprises.
       forever @(vif.mon_cb);
     end
     while (vif.areset_n !== 1'b1) @(vif.mon_cb);
+
+    last_cycles   = 0;
+    last_aw_hs    = 0;
+    last_w_hs     = 0;
+    last_b_hs     = 0;
+    last_ar_hs    = 0;
+    last_r_hs     = 0;
+    last_aw_stall = 0;
+    last_w_stall  = 0;
+    last_b_stall  = 0;
+    last_ar_stall = 0;
+    last_r_stall  = 0;
+
     forever begin
       @(vif.mon_cb);
       stat_cycles++;
@@ -149,6 +208,30 @@ class axi4_monitor #(
       if (vif.mon_cb.bvalid  && !vif.mon_cb.bready)  stat_b_stall++;
       if (vif.mon_cb.arvalid && !vif.mon_cb.arready) stat_ar_stall++;
       if (vif.mon_cb.rvalid  && !vif.mon_cb.rready)  stat_r_stall++;
+
+      if ((cfg.stats_window_cycles != 0) && ((stat_cycles % cfg.stats_window_cycles) == 0)) begin
+        longint unsigned win_cycles;
+        win_cycles = stat_cycles - last_cycles;
+        `uvm_info(get_type_name(),
+          $sformatf("AXI4 STATS WINDOW cycles=%0d AW=%0d W=%0d B=%0d AR=%0d R=%0d | stalls AW=%0d W=%0d B=%0d AR=%0d R=%0d",
+            win_cycles,
+            (stat_aw_hs - last_aw_hs), (stat_w_hs - last_w_hs), (stat_b_hs - last_b_hs),
+            (stat_ar_hs - last_ar_hs), (stat_r_hs - last_r_hs),
+            (stat_aw_stall - last_aw_stall), (stat_w_stall - last_w_stall), (stat_b_stall - last_b_stall),
+            (stat_ar_stall - last_ar_stall), (stat_r_stall - last_r_stall)),
+          UVM_LOW)
+        last_cycles   = stat_cycles;
+        last_aw_hs    = stat_aw_hs;
+        last_w_hs     = stat_w_hs;
+        last_b_hs     = stat_b_hs;
+        last_ar_hs    = stat_ar_hs;
+        last_r_hs     = stat_r_hs;
+        last_aw_stall = stat_aw_stall;
+        last_w_stall  = stat_w_stall;
+        last_b_stall  = stat_b_stall;
+        last_ar_stall = stat_ar_stall;
+        last_r_stall  = stat_r_stall;
+      end
     end
   endtask
 
@@ -170,6 +253,10 @@ class axi4_monitor #(
         tmp.size  = vif.mon_cb.awsize;
         tmp.burst = axi4_burst_e'(vif.mon_cb.awburst);
         tmp.lock  = vif.mon_cb.awlock;
+        tmp.cache  = vif.mon_cb.awcache;
+        tmp.prot   = vif.mon_cb.awprot;
+        tmp.qos    = vif.mon_cb.awqos;
+        tmp.region = vif.mon_cb.awregion;
         tmp.user  = vif.mon_cb.awuser;
         aw_q.push_back(tmp);
         if (cfg.stats_enable) begin
@@ -192,6 +279,10 @@ class axi4_monitor #(
         tr.size  = aw.size;
         tr.burst = aw.burst;
         tr.lock  = aw.lock;
+        tr.cache  = aw.cache;
+        tr.prot   = aw.prot;
+        tr.qos    = aw.qos;
+        tr.region = aw.region;
         tr.user  = aw.user;
         tr.allocate_payload();
       end
@@ -231,6 +322,9 @@ class axi4_monitor #(
         if (wr_wait_b.exists(bid) && (wr_wait_b[bid].size() != 0)) begin
           trb = wr_wait_b[bid].pop_front();
           trb.bresp = axi4_resp_e'(vif.mon_cb.bresp);
+          if (cfg.coverage_enable) begin
+            cov.sample(1'b1, trb.burst, int'(trb.size), int'(trb.len), trb.lock, trb.bresp, trb.qos);
+          end
           maybe_record(trb, "axi4_write");
           ap.write(trb);
           if (cfg.trace_enable) `uvm_info(get_type_name(), {"MON write:\n", trb.sprint()}, UVM_LOW)
@@ -256,6 +350,10 @@ class axi4_monitor #(
         st.tr.size  = vif.mon_cb.arsize;
         st.tr.burst = axi4_burst_e'(vif.mon_cb.arburst);
         st.tr.lock  = vif.mon_cb.arlock;
+        st.tr.cache  = vif.mon_cb.arcache;
+        st.tr.prot   = vif.mon_cb.arprot;
+        st.tr.qos    = vif.mon_cb.arqos;
+        st.tr.region = vif.mon_cb.arregion;
         st.tr.user  = vif.mon_cb.aruser;
         st.tr.allocate_payload();
         st.beat_idx = 0;
@@ -303,6 +401,11 @@ class axi4_monitor #(
               end
             end
             maybe_record(st.tr, "axi4_read");
+            if (cfg.coverage_enable) begin
+              axi4_resp_e resp0;
+              resp0 = (st.tr.rresp.size() != 0) ? st.tr.rresp[0] : AXI4_RESP_OKAY;
+              cov.sample(1'b0, st.tr.burst, int'(st.tr.size), int'(st.tr.len), st.tr.lock, resp0, st.tr.qos);
+            end
             ap.write(st.tr);
             if (cfg.trace_enable) `uvm_info(get_type_name(), {"MON read:\n", st.tr.sprint()}, UVM_LOW)
           end

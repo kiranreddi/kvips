@@ -173,7 +173,11 @@ class axi4_master_driver #(
       end
       ctx = wr_issue_q.pop_front();
 
-      maybe_wait_cycles(cfg.master_aw_delay_min, cfg.master_aw_delay_max);
+      if (ctx.tr.aw_delay_cycles >= 0) begin
+        repeat (ctx.tr.aw_delay_cycles) @(posedge vif.aclk);
+      end else begin
+        maybe_wait_cycles(cfg.master_aw_delay_min, cfg.master_aw_delay_max);
+      end
 
       // AW
       @(negedge vif.aclk);
@@ -183,10 +187,10 @@ class axi4_master_driver #(
       vif.awsize   <= ctx.tr.size;
       vif.awburst  <= ctx.tr.burst;
       vif.awlock   <= ctx.tr.lock;
-      vif.awcache  <= '0;
-      vif.awprot   <= '0;
-      vif.awqos    <= '0;
-      vif.awregion <= '0;
+      vif.awcache  <= ctx.tr.cache;
+      vif.awprot   <= ctx.tr.prot;
+      vif.awqos    <= ctx.tr.qos;
+      vif.awregion <= ctx.tr.region;
       vif.awuser   <= ctx.tr.user;
       vif.awvalid  <= 1'b1;
       wait_aw_handshake();
@@ -208,7 +212,13 @@ class axi4_master_driver #(
       end
       ctx = wr_w_q.pop_front();
       for (int unsigned i = 0; i < ctx.beats; i++) begin
-        if (i != 0) maybe_wait_cycles(cfg.master_w_beat_gap_min, cfg.master_w_beat_gap_max);
+        if (i != 0) begin
+          if (ctx.tr.w_beat_gap_cycles >= 0) begin
+            repeat (ctx.tr.w_beat_gap_cycles) @(posedge vif.aclk);
+          end else begin
+            maybe_wait_cycles(cfg.master_w_beat_gap_min, cfg.master_w_beat_gap_max);
+          end
+        end
         @(negedge vif.aclk);
         vif.wdata  <= ctx.tr.data[i];
         vif.wstrb  <= (ctx.tr.strb.size() == ctx.beats) ? ctx.tr.strb[i] : '1;
@@ -269,7 +279,11 @@ class axi4_master_driver #(
       end
       ctx = rd_issue_q.pop_front();
 
-      maybe_wait_cycles(cfg.master_ar_delay_min, cfg.master_ar_delay_max);
+      if (ctx.tr.ar_delay_cycles >= 0) begin
+        repeat (ctx.tr.ar_delay_cycles) @(posedge vif.aclk);
+      end else begin
+        maybe_wait_cycles(cfg.master_ar_delay_min, cfg.master_ar_delay_max);
+      end
 
       // AR
       @(negedge vif.aclk);
@@ -279,10 +293,10 @@ class axi4_master_driver #(
       vif.arsize   <= ctx.tr.size;
       vif.arburst  <= ctx.tr.burst;
       vif.arlock   <= ctx.tr.lock;
-      vif.arcache  <= '0;
-      vif.arprot   <= '0;
-      vif.arqos    <= '0;
-      vif.arregion <= '0;
+      vif.arcache  <= ctx.tr.cache;
+      vif.arprot   <= ctx.tr.prot;
+      vif.arqos    <= ctx.tr.qos;
+      vif.arregion <= ctx.tr.region;
       vif.aruser   <= ctx.tr.user;
       vif.arvalid  <= 1'b1;
       wait_ar_handshake();
@@ -398,7 +412,11 @@ class axi4_master_driver #(
     tr.allocate_payload();
     beats = tr.num_beats();
 
-    maybe_wait_cycles(cfg.master_aw_delay_min, cfg.master_aw_delay_max);
+    if (tr.aw_delay_cycles >= 0) begin
+      repeat (tr.aw_delay_cycles) @(posedge vif.aclk);
+    end else begin
+      maybe_wait_cycles(cfg.master_aw_delay_min, cfg.master_aw_delay_max);
+    end
 
     // AW
     @(negedge vif.aclk);
@@ -408,10 +426,10 @@ class axi4_master_driver #(
     vif.awsize   <= tr.size;
     vif.awburst  <= tr.burst;
     vif.awlock   <= tr.lock;
-    vif.awcache  <= '0;
-    vif.awprot   <= '0;
-    vif.awqos    <= '0;
-    vif.awregion <= '0;
+    vif.awcache  <= tr.cache;
+    vif.awprot   <= tr.prot;
+    vif.awqos    <= tr.qos;
+    vif.awregion <= tr.region;
     vif.awuser   <= tr.user;
     vif.awvalid  <= 1'b1;
     wait_aw_handshake();
@@ -420,7 +438,13 @@ class axi4_master_driver #(
 
     // W
     for (int unsigned i = 0; i < beats; i++) begin
-      if (i != 0) maybe_wait_cycles(cfg.master_w_beat_gap_min, cfg.master_w_beat_gap_max);
+      if (i != 0) begin
+        if (tr.w_beat_gap_cycles >= 0) begin
+          repeat (tr.w_beat_gap_cycles) @(posedge vif.aclk);
+        end else begin
+          maybe_wait_cycles(cfg.master_w_beat_gap_min, cfg.master_w_beat_gap_max);
+        end
+      end
       @(negedge vif.aclk);
       vif.wdata  <= tr.data[i];
       vif.wstrb  <= (tr.strb.size() == beats) ? tr.strb[i] : '1;
@@ -455,7 +479,11 @@ class axi4_master_driver #(
     tr.allocate_payload();
     beats = tr.num_beats();
 
-    maybe_wait_cycles(cfg.master_ar_delay_min, cfg.master_ar_delay_max);
+    if (tr.ar_delay_cycles >= 0) begin
+      repeat (tr.ar_delay_cycles) @(posedge vif.aclk);
+    end else begin
+      maybe_wait_cycles(cfg.master_ar_delay_min, cfg.master_ar_delay_max);
+    end
 
     // AR
     @(negedge vif.aclk);
@@ -465,10 +493,10 @@ class axi4_master_driver #(
     vif.arsize   <= tr.size;
     vif.arburst  <= tr.burst;
     vif.arlock   <= tr.lock;
-    vif.arcache  <= '0;
-    vif.arprot   <= '0;
-    vif.arqos    <= '0;
-    vif.arregion <= '0;
+    vif.arcache  <= tr.cache;
+    vif.arprot   <= tr.prot;
+    vif.arqos    <= tr.qos;
+    vif.arregion <= tr.region;
     vif.aruser   <= tr.user;
     vif.arvalid  <= 1'b1;
     wait_ar_handshake();

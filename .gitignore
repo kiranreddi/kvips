@@ -77,6 +77,7 @@ _site/
 .jekyll-cache/
 .jekyll-metadata
 vendor/
+website/
 
 # Python
 __pycache__/
