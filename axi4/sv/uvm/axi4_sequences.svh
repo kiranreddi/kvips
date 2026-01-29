@@ -537,6 +537,143 @@ class axi4_lane_sweep_seq #(
 
 endclass
 
+// Directed sequence: corner cases around burst length extremes and 4KB boundaries.
+class axi4_corner_case_seq #(
+  int ADDR_W = 32,
+  int DATA_W = 64,
+  int ID_W   = 4,
+  int USER_W = 1
+) extends axi4_base_seq#(ADDR_W, DATA_W, ID_W, USER_W);
+
+  rand logic [ADDR_W-1:0] base_addr = 32'h10000;
+
+  `uvm_object_param_utils(axi4_corner_case_seq#(ADDR_W, DATA_W, ID_W, USER_W))
+
+  function new(string name = "axi4_corner_case_seq");
+    super.new(name);
+  endfunction
+
+  function automatic logic [ADDR_W-1:0] pick_edge_addr(
+    input logic [ADDR_W-1:0] base4k,
+    input int unsigned       size,
+    input int unsigned       len,
+    input axi4_burst_e       burst
+  );
+    longint unsigned bytes_per_beat;
+    longint unsigned total_bytes;
+    longint unsigned max_off;
+    longint unsigned off;
+    longint unsigned a;
+
+    bytes_per_beat = longint'(1) << size;
+    total_bytes    = axi4_total_bytes(size, len);
+    // Park the burst at the end of the 4KB window without crossing.
+    max_off = (total_bytes >= 4096) ? 0 : (4096 - total_bytes);
+    off     = (max_off / bytes_per_beat) * bytes_per_beat;
+    a       = longint'(base4k) + off;
+
+    if (burst == AXI4_BURST_WRAP) begin
+      longint unsigned container;
+      container = total_bytes;
+      if (container != 0) a = (a / container) * container;
+    end
+
+    return a[ADDR_W-1:0];
+  endfunction
+
+  task body();
+    logic [ADDR_W-1:0] base4k;
+    base4k = logic'(longint'(base_addr) & ~longint'(12'hFFF));
+
+    // 1) Max INCR length (256 beats) at smallest size, aligned at 4KB base.
+    begin
+      axi4_item#(ADDR_W, DATA_W, ID_W, USER_W) wr;
+      axi4_item#(ADDR_W, DATA_W, ID_W, USER_W) rd;
+      wr = new("wr_incr_256beat");
+      wr.is_write = 1;
+      wr.id       = '0;
+      wr.addr     = base4k;
+      wr.len      = 8'd255;
+      wr.size     = 3'd0; // 1 byte
+      wr.burst    = AXI4_BURST_INCR;
+      wr.lock     = 1'b0;
+      wr.user     = '0;
+      wr.allocate_payload();
+      for (int unsigned i = 0; i < wr.num_beats(); i++) begin
+        wr.data[i] = {$urandom(), $urandom()};
+        if (DATA_W <= 32) wr.data[i] = $urandom();
+        wr.strb[i] = '1;
+      end
+      start_item(wr);
+      finish_item(wr);
+
+      rd = new("rd_incr_256beat");
+      rd.is_write = 0;
+      rd.id       = wr.id;
+      rd.addr     = wr.addr;
+      rd.len      = wr.len;
+      rd.size     = wr.size;
+      rd.burst    = wr.burst;
+      rd.lock     = wr.lock;
+      rd.user     = wr.user;
+      rd.allocate_payload();
+      start_item(rd);
+      finish_item(rd);
+    end
+
+    // 2) Edge-of-4KB addressing for different burst types/sizes.
+    begin
+      axi4_burst_e bursts[$];
+      bursts.push_back(AXI4_BURST_INCR);
+      bursts.push_back(AXI4_BURST_FIXED);
+      bursts.push_back(AXI4_BURST_WRAP);
+      foreach (bursts[i]) begin
+        axi4_burst_e burst;
+        int unsigned size;
+        int unsigned len;
+        axi4_item#(ADDR_W, DATA_W, ID_W, USER_W) wr;
+        axi4_item#(ADDR_W, DATA_W, ID_W, USER_W) rd;
+        burst = bursts[i];
+        size  = $urandom_range(0, $clog2(DATA_W/8));
+        len   = (burst == AXI4_BURST_INCR) ? 15 : 7;
+        if (burst == AXI4_BURST_WRAP) len = 15;
+
+        wr = new($sformatf("wr_edge_%0d", i));
+        wr.is_write = 1;
+        wr.id       = logic'(i[ID_W-1:0]);
+        wr.len      = len[7:0];
+        wr.size     = size[2:0];
+        wr.burst    = burst;
+        wr.addr     = pick_edge_addr(base4k, size, len, burst);
+        wr.lock     = 1'b0;
+        wr.user     = '0;
+        wr.allocate_payload();
+        for (int unsigned b = 0; b < wr.num_beats(); b++) begin
+          wr.data[b] = {$urandom(), $urandom()};
+          if (DATA_W <= 32) wr.data[b] = $urandom();
+          wr.strb[b] = '1;
+        end
+        start_item(wr);
+        finish_item(wr);
+
+        rd = new($sformatf("rd_edge_%0d", i));
+        rd.is_write = 0;
+        rd.id       = wr.id;
+        rd.addr     = wr.addr;
+        rd.len      = wr.len;
+        rd.size     = wr.size;
+        rd.burst    = wr.burst;
+        rd.lock     = wr.lock;
+        rd.user     = wr.user;
+        rd.allocate_payload();
+        start_item(rd);
+        finish_item(rd);
+      end
+    end
+  endtask
+
+endclass
+
 class axi4_exclusive_basic_seq #(
   int ADDR_W = 32,
   int DATA_W = 64,

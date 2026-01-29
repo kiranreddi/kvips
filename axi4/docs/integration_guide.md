@@ -50,13 +50,18 @@ Example tests live in `kvips/axi4/examples/uvm_back2back/tb/tb_pkg.sv`.
 - VIP trace: `+VIP_TRACE`
 - Transaction recording (monitor): `+VIP_TR` plus simulator/UVM enable (commonly `+UVM_TR_RECORD`)
 - Stats: set `axi4_agent_cfg.stats_enable=1` (demo shortcut: `+VIP_STATS`)
+- Windowed stats report: set `axi4_agent_cfg.stats_window_cycles` (demo shortcut: `+VIP_STATS_WIN=<cycles>`)
+- Functional coverage (monitor): set `axi4_agent_cfg.coverage_enable=1` (demo shortcut: `+VIP_COV`)
 - Exclusive accesses (slave model): set `axi4_item.lock=1` in sequences/items; slave enables by default via `axi4_agent_cfg.slave_exclusive_enable`
 - Error injection (slave model): enable `axi4_agent_cfg.slave_err_enable` and configure `slave_err_start/slave_err_end/slave_err_resp` (+ direction flags)
+- Address sideband attributes: drive via `axi4_item.cache/prot/qos/region` (master drives through to the bus; monitor captures)
+- Per-transaction timing overrides: `axi4_item.aw_delay_cycles/ar_delay_cycles/w_beat_gap_cycles` (`-1` means “use cfg”)
 - Assertions:
   - Disable: `+KVIPS_AXI4_ASSERT_OFF`
   - Known-value checks: `+KVIPS_AXI4_ASSERT_KNOWN`
   - Disable burst legality: `+KVIPS_AXI4_ASSERT_BURST_OFF`
   - Disable exclusive restrictions: `+KVIPS_AXI4_ASSERT_EXCL_OFF`
+  - Optional outstanding limit checks: `+KVIPS_AXI4_ASSERT_MAX_OUTS_W=<N>`, `+KVIPS_AXI4_ASSERT_MAX_OUTS_R=<N>`
 - Scoreboard:
   - Disable: `+KVIPS_AXI4_SB_OFF`
   - Warn on unwritten read bytes: `+KVIPS_AXI4_SB_WARN_UNINIT`

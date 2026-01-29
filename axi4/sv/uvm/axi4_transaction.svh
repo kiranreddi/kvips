@@ -25,6 +25,17 @@ class axi4_item #(
   rand logic [2:0]          size;    // AXI: bytes/beat = 2**size
   rand axi4_burst_e         burst;
 
+  // AXI4 sideband attributes (address phase)
+  rand logic [3:0]          cache;
+  rand logic [2:0]          prot;
+  rand logic [3:0]          qos;
+  rand logic [3:0]          region;
+
+  // Per-transaction timing controls (optional overrides; -1 means "use cfg randomization").
+  int aw_delay_cycles = -1;
+  int ar_delay_cycles = -1;
+  int w_beat_gap_cycles = -1;
+
   rand logic [DATA_W-1:0]   data[];  // one entry per beat
   rand logic [STRB_W-1:0]   strb[];  // one entry per beat (writes)
 
@@ -32,6 +43,10 @@ class axi4_item #(
   axi4_resp_e               rresp[];
 
   rand logic [USER_W-1:0]   user;
+
+  // Constraint escape hatches (for negative testing / corner stimulus)
+  rand bit allow_4kb_cross;
+  rand bit allow_wrap_misalign;
 
   // AXI4 burst legality (AMBA4):
   // - INCR supports 1..256 beats (LEN 0..255)
@@ -45,10 +60,42 @@ class axi4_item #(
   constraint c_burst_default { burst == AXI4_BURST_INCR; }
   constraint c_lock_default { lock == 1'b0; }
   constraint c_size_legal { (1<<size) <= STRB_W; }
+  constraint c_sideband_defaults {
+    cache  == '0;
+    prot   == '0;
+    qos    == '0;
+    region == '0;
+  }
+  constraint c_allow_defaults {
+    allow_4kb_cross     == 1'b0;
+    allow_wrap_misalign == 1'b0;
+  }
+
+  // Prevent generating bursts that cross a 4KB boundary (AMBA AXI4 rule).
+  // FIXED does not increment address and is exempt.
+  constraint c_no_4kb_cross {
+    if (!allow_4kb_cross) {
+      if (burst != AXI4_BURST_FIXED) !axi4_crosses_4kb(longint'(addr), int'(size), int'(len));
+    }
+  }
+
+  // Enforce WRAP start-address alignment to the wrap container.
+  constraint c_wrap_align {
+    if (!allow_wrap_misalign && (burst == AXI4_BURST_WRAP)) axi4_wrap_addr_aligned(longint'(addr), int'(size), int'(len));
+  }
 
   function new(string name = "axi4_item");
     super.new(name);
     lock = 1'b0;
+    cache  = '0;
+    prot   = '0;
+    qos    = '0;
+    region = '0;
+    aw_delay_cycles = -1;
+    ar_delay_cycles = -1;
+    w_beat_gap_cycles = -1;
+    allow_4kb_cross     = 1'b0;
+    allow_wrap_misalign = 1'b0;
   endfunction
 
   function automatic int unsigned num_beats();
@@ -78,11 +125,20 @@ class axi4_item #(
     `uvm_field_int(len,      UVM_DEFAULT)
     `uvm_field_int(size,     UVM_DEFAULT)
     `uvm_field_enum(axi4_burst_e, burst, UVM_DEFAULT)
+    `uvm_field_int(cache,    UVM_DEFAULT)
+    `uvm_field_int(prot,     UVM_DEFAULT)
+    `uvm_field_int(qos,      UVM_DEFAULT)
+    `uvm_field_int(region,   UVM_DEFAULT)
+    `uvm_field_int(aw_delay_cycles, UVM_DEFAULT)
+    `uvm_field_int(ar_delay_cycles, UVM_DEFAULT)
+    `uvm_field_int(w_beat_gap_cycles, UVM_DEFAULT)
     `uvm_field_array_int(data, UVM_DEFAULT)
     `uvm_field_array_int(strb, UVM_DEFAULT)
     `uvm_field_enum(axi4_resp_e, bresp, UVM_DEFAULT)
     `uvm_field_array_enum(axi4_resp_e, rresp, UVM_DEFAULT)
     `uvm_field_int(user, UVM_DEFAULT)
+    `uvm_field_int(allow_4kb_cross, UVM_DEFAULT)
+    `uvm_field_int(allow_wrap_misalign, UVM_DEFAULT)
   `uvm_object_utils_end
 
 endclass

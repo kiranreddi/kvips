@@ -135,6 +135,10 @@ constraint c_no_4kb_cross {
 }
 ```
 This would prevent generation of illegal bursts that cross 4KB boundaries.
+
+<div class="card" style="background: #f0fdf4; border-color: #86efac;">
+<strong>✅ Status:</strong> Implemented in `axi4_item` (`kvips/axi4/sv/uvm/axi4_transaction.svh`) with an escape hatch (`allow_4kb_cross`) for negative testing.
+</div>
 </div>
 
 <div class="alert alert-warning">
@@ -153,6 +157,10 @@ covergroup cg_axi4_txn;
   cx_burst_type_size: cross cp_burst_type, cp_burst_size;
 endgroup
 ```
+</div>
+
+<div class="card" style="background: #f0fdf4; border-color: #86efac;">
+<strong>✅ Status:</strong> Implemented monitor-based functional coverage in `kvips/axi4/sv/uvm/axi4_monitor.svh` (enable via `axi4_agent_cfg.coverage_enable`).
 </div>
 
 ---
@@ -362,6 +370,11 @@ endproperty
 ```
 </div>
 
+<div class="card" style="background: #f0fdf4; border-color: #86efac;">
+<strong>✅ Status:</strong> Implemented a stateful “starter compliance” set in `kvips/axi4/sv/assertions/axi4_if_sva.svh`:
+AW/W/WLAST tracking, AR/R/RLAST per-ID tracking, B-after-data checking, EXOKAY rules, and optional outstanding-limit checks (`+KVIPS_AXI4_ASSERT_MAX_OUTS_W/R`).
+</div>
+
 ---
 
 ## 📊 Test Coverage Analysis
@@ -397,6 +410,10 @@ class axi4_corner_case_test extends axi4_base_test;
   // Test: Narrow transfers (size < DATA_W)
 endclass
 ```
+
+<div class="card" style="background: #f0fdf4; border-color: #86efac;">
+<strong>✅ Status:</strong> Added `axi4_b2b_corner_case_test` + `axi4_corner_case_seq` (4KB-edge + length extremes) and included it in `tests_questa.list`.
+</div>
 
 2. **Error Scenarios:**
 ```systemverilog

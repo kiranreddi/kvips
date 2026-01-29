@@ -7,6 +7,7 @@
 - `axi4_assertions`: SVA protocol checker (optional runtime enable)
 - `axi4_scoreboard`: Passive data checker (write-derived expected vs read observed)
 - `axi4_monitor` stats (optional): stall/throughput/outstanding/latency summary when enabled
+- `axi4_monitor` coverage (optional): basic functional coverage when enabled
 
 ## Integrating in your testbench
 1. Instantiate `axi4_if` for each interface instance.
@@ -25,3 +26,9 @@ Use an env config object with arrays of agent configs, each with:
 
 ## Running examples
 See `kvips/axi4/examples/uvm_back2back/README.md`.
+
+## Useful runtime knobs (demo)
+- Trace: `+VIP_TRACE`
+- Stats summary: `+VIP_STATS`
+- Stats windowed report: `+VIP_STATS_WIN=<cycles>`
+- Functional coverage (monitor): `+VIP_COV`

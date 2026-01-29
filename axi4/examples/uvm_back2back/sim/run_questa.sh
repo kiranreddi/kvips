@@ -49,6 +49,24 @@ cd "${OUT}"
 rm -rf work modelsim.ini 2>/dev/null || true
 
 if ! command -v vlog >/dev/null 2>&1; then
+  if [[ -r /usr/share/Modules/init/bash ]]; then
+    # shellcheck disable=SC1091
+    source /usr/share/Modules/init/bash
+  fi
+  if command -v module >/dev/null 2>&1; then
+    module load questa/2025_3_2 >/dev/null 2>&1 || true
+  fi
+fi
+if ! command -v vsim >/dev/null 2>&1; then
+  if [[ -r /usr/share/Modules/init/bash ]]; then
+    # shellcheck disable=SC1091
+    source /usr/share/Modules/init/bash
+  fi
+  if command -v module >/dev/null 2>&1; then
+    module load questa/2025_3_2 >/dev/null 2>&1 || true
+  fi
+fi
+if ! command -v vlog >/dev/null 2>&1; then
   echo "ERROR: 'vlog' not found on PATH."
   echo "Hint: load Questa module (e.g. 'module load questa/2025_3_2') and ensure \$QUESTA_HOME/bin is accessible."
   echo "PATH=${PATH}"
