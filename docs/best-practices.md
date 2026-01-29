@@ -413,19 +413,19 @@ endclass
 
 ```bash
 # tests_questa.list
-axi4_basic_test              +ntb_random_seed=1
-axi4_burst_test              +ntb_random_seed=2
-axi4_outstanding_test        +ntb_random_seed=3
-axi4_exclusive_test          +ntb_random_seed=4
-axi4_error_inject_test       +ntb_random_seed=5
-axi4_stress_test             +ntb_random_seed=6 +iterations=1000
+axi4_b2b_test                          +ntb_random_seed=1
+axi4_b2b_burst_types_test              +ntb_random_seed=2
+axi4_b2b_pipelined_outstanding_test    +ntb_random_seed=3
+axi4_b2b_exclusive_basic_test          +ntb_random_seed=4
+axi4_b2b_error_write_test              +ntb_random_seed=5
+axi4_b2b_randomized_features_test      +ntb_random_seed=6
 
 # Add corner cases
-axi4_basic_test              +ntb_random_seed=100  # Different seed
-axi4_wrap_burst_test         +ntb_random_seed=7
-axi4_4kb_boundary_test       +ntb_random_seed=8
-axi4_narrow_transfer_test    +ntb_random_seed=9
-axi4_max_burst_test          +ntb_random_seed=10
+axi4_b2b_test                          +ntb_random_seed=100  # Different seed
+axi4_b2b_backpressure_test             +ntb_random_seed=7
+axi4_b2b_delay_stress_test             +ntb_random_seed=8
+axi4_b2b_incr_256beat_test             +ntb_random_seed=9
+axi4_b2b_pipelined_rready_backpressure_test +ntb_random_seed=10
 ```
 
 ### Regression Script

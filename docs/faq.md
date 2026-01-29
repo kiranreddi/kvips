@@ -178,11 +178,10 @@ Use any of these methods:
 <details>
 <summary><strong>How do I dump waveforms?</strong></summary>
 <p>
-Use the plusarg `+KVIPS_WAVES` which automatically configures the correct waveform format for your simulator:
+Use the plusarg `+KVIPS_WAVES` to enable wave dumping from the demo top:
 <ul>
-<li>Questa: WLF format</li>
-<li>VCS: VPD/FSDB format</li>
-<li>Xcelium: SHM format</li>
+<li>Default: VCD (`kvips_axi4_b2b.vcd`)</li>
+<li>Optional: FSDB when compiled with `FSDB` and the required Verdi/Novas PLI (see `axi4/examples/uvm_back2back/sim/run_questa_fsdb.sh`)</li>
 </ul>
 </p>
 </details>

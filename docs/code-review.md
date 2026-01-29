@@ -702,16 +702,8 @@ end
 3. **Add Portable Waveform Dumping:**
 ```systemverilog
 initial begin
-  if ($test$plusargs("KVIPS_WAVES")) begin
-    `ifdef QUESTA
-      $wlfdumpvars();
-    `elsif VCS
-      $vcdpluson();
-    `elsif XCELIUM
-      $shm_open("waves.shm");
-      $shm_probe("AS");
-    `endif
-  end
+  `include "kvips_wave_dump.svh"
+  `KVIPS_MAYBE_ENABLE_WAVES("waves")
 end
 ```
 </div>

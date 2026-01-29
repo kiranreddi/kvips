@@ -5,7 +5,45 @@ ROOT="$(cd "$(dirname "$0")/../../../../.." && pwd)"
 OUT="${ROOT}/kvips/axi4/examples/uvm_back2back/sim/out/xcelium"
 mkdir -p "${OUT}"
 
-cd "${ROOT}"
+ORIG_FILELIST="${ROOT}/kvips/axi4/examples/uvm_back2back/sim/filelist.f"
+ABS_FILELIST="${OUT}/filelist.abs.f"
+
+make_abs_filelist() {
+  local in="$1"
+  local out="$2"
+  : >"${out}"
+  while IFS= read -r line || [[ -n "${line}" ]]; do
+    case "${line}" in
+      ""|\#*)
+        printf '%s\n' "${line}" >>"${out}"
+        ;;
+      +incdir+*)
+        p="${line#'+incdir+'}"
+        if [[ "${p}" = /* ]]; then
+          printf '%s\n' "${line}" >>"${out}"
+        else
+          printf '+incdir+%s\n' "${ROOT}/${p}" >>"${out}"
+        fi
+        ;;
+      +*|-*)
+        printf '%s\n' "${line}" >>"${out}"
+        ;;
+      *)
+        if [[ "${line}" = /* ]]; then
+          printf '%s\n' "${line}" >>"${out}"
+        else
+          printf '%s\n' "${ROOT}/${line}" >>"${out}"
+        fi
+        ;;
+    esac
+  done <"${in}"
+}
+
+if [[ ! -f "${ORIG_FILELIST}" ]]; then
+  echo "ERROR: missing filelist: ${ORIG_FILELIST}"
+  exit 2
+fi
+make_abs_filelist "${ORIG_FILELIST}" "${ABS_FILELIST}"
 
 if ! command -v xrun >/dev/null 2>&1; then
   if [[ -r /usr/share/Modules/init/bash ]]; then
@@ -23,6 +61,8 @@ if ! command -v xrun >/dev/null 2>&1; then
   exit 127
 fi
 
+cd "${OUT}"
+
 EXTRA_ARGS=("$@")
 HAVE_TESTNAME=0
 HAVE_VERBOSITY=0
@@ -34,7 +74,7 @@ done
 [[ "$HAVE_VERBOSITY" -eq 0 ]] && EXTRA_ARGS+=("+UVM_VERBOSITY=UVM_LOW")
 
 xrun -64bit -sv -timescale 1ns/1ps \
-  -f kvips/axi4/examples/uvm_back2back/sim/filelist.f \
+  -f "${ABS_FILELIST}" \
   -uvm \
   -access +rwc \
   -l "${OUT}/xrun.log" \

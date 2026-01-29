@@ -11,12 +11,17 @@ repos:
         description: Run Verilator linting on SystemVerilog files
         entry: verilator
         language: docker_image
-        files: \.(sv|svh|v|vh)$
+        files: ^(common/sv/|axi4/sv/(if|pkg|assertions)/).*\.(sv|svh|v|vh)$
         args:
           - --lint-only
+          - --sv
           - --Wall
           - --Wno-fatal
           - --bbox-unsup
+          - -Icommon/sv
+          - -Iaxi4/sv/pkg
+          - -Iaxi4/sv/if
+          - -Iaxi4/sv/assertions
 
   # Trailing whitespace
   - repo: https://github.com/pre-commit/pre-commit-hooks

@@ -15,6 +15,7 @@ axi4/docs/questa_gap_analysis.md
 *.trn
 *.ucdb
 *.vcd
+**/sim/out/
 simv
 simv.daidir/
 csrc/

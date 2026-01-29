@@ -5,8 +5,45 @@ ROOT="$(cd "$(dirname "$0")/../../../../.." && pwd)"
 OUT="${ROOT}/kvips/axi4/examples/uvm_back2back/sim/out/questa_fsdb"
 mkdir -p "${OUT}"
 
-cd "${ROOT}"
-rm -rf work 2>/dev/null || true
+ORIG_FILELIST="${ROOT}/kvips/axi4/examples/uvm_back2back/sim/filelist.f"
+ABS_FILELIST="${OUT}/filelist.abs.f"
+
+make_abs_filelist() {
+  local in="$1"
+  local out="$2"
+  : >"${out}"
+  while IFS= read -r line || [[ -n "${line}" ]]; do
+    case "${line}" in
+      ""|\#*)
+        printf '%s\n' "${line}" >>"${out}"
+        ;;
+      +incdir+*)
+        p="${line#'+incdir+'}"
+        if [[ "${p}" = /* ]]; then
+          printf '%s\n' "${line}" >>"${out}"
+        else
+          printf '+incdir+%s\n' "${ROOT}/${p}" >>"${out}"
+        fi
+        ;;
+      +*|-*)
+        printf '%s\n' "${line}" >>"${out}"
+        ;;
+      *)
+        if [[ "${line}" = /* ]]; then
+          printf '%s\n' "${line}" >>"${out}"
+        else
+          printf '%s\n' "${ROOT}/${line}" >>"${out}"
+        fi
+        ;;
+    esac
+  done <"${in}"
+}
+
+if [[ ! -f "${ORIG_FILELIST}" ]]; then
+  echo "ERROR: missing filelist: ${ORIG_FILELIST}"
+  exit 2
+fi
+make_abs_filelist "${ORIG_FILELIST}" "${ABS_FILELIST}"
 
 if [[ -r /usr/share/Modules/init/bash ]]; then
   # shellcheck disable=SC1091
@@ -61,7 +98,12 @@ else
   exit 2
 fi
 
-vlog -sv -f kvips/axi4/examples/uvm_back2back/sim/filelist.f +define+FSDB -l "${OUT}/compile.log"
+cd "${OUT}"
+rm -rf work modelsim.ini 2>/dev/null || true
+
+vlib work
+vmap work work
+vlog -sv -f "${ABS_FILELIST}" +define+FSDB -l "${OUT}/compile.log"
 
 EXTRA_ARGS=("$@" "+KVIPS_WAVES")
 HAVE_TESTNAME=0
@@ -78,8 +120,9 @@ vsim -c top \
   -do "run -all; quit -f" \
   "${EXTRA_ARGS[@]}" | tee "${OUT}/run.log"
 
-if [[ -f "${ROOT}/kvips_axi4_b2b.fsdb" ]]; then
+if [[ -f "${OUT}/kvips_axi4_b2b.fsdb" ]]; then
+  echo "WROTE: ${OUT}/kvips_axi4_b2b.fsdb"
+elif [[ -f "${ROOT}/kvips_axi4_b2b.fsdb" ]]; then
   mv -f "${ROOT}/kvips_axi4_b2b.fsdb" "${OUT}/kvips_axi4_b2b.fsdb"
   echo "WROTE: ${OUT}/kvips_axi4_b2b.fsdb"
 fi
-

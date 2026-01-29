@@ -117,39 +117,33 @@ cd axi4
 ### Run Your First Test (Questa)
 
 ```bash
-# Compile the AXI4 VIP
 cd axi4/examples
-make compile_questa
 
-# Run a basic test
-make run_questa TEST=axi4_basic_test SEED=1
+# Run a single test (compiles + runs)
+make questa TEST=axi4_b2b_test SEED=1
 
-# View waveforms
-vsim -view vsim.wlf
+# Dump waves (VCD)
+make questa TEST=axi4_b2b_test SEED=1 PLUSARGS='+KVIPS_WAVES'
+
+# Dump waves (FSDB, requires Verdi/Novas PLI)
+make questa-waves TEST=axi4_b2b_test SEED=1
 ```
 
 ### Run Your First Test (VCS)
 
 ```bash
-# Compile and run
 cd axi4/examples
-make compile_vcs
-make run_vcs TEST=axi4_basic_test SEED=1
 
-# View waveforms with DVE
-dve -vpd vcdplus.vpd &
+make vcs TEST=axi4_b2b_test SEED=1
+make vcs TEST=axi4_b2b_test SEED=1 PLUSARGS='+KVIPS_WAVES'
 ```
 
 ### Run Your First Test (Xcelium)
 
 ```bash
-# Compile and run
 cd axi4/examples
-make compile_xcelium
-make run_xcelium TEST=axi4_basic_test SEED=1
-
-# View waveforms with SimVision
-simvision waves.shm &
+make xcelium TEST=axi4_b2b_test SEED=1
+make xcelium TEST=axi4_b2b_test SEED=1 PLUSARGS='+KVIPS_WAVES'
 ```
 
 ---
@@ -448,4 +442,3 @@ KVIPS is built on the shoulders of giants:
 ⭐ **Star this repo** if you find it useful! ⭐
 
 </div>
-
