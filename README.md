@@ -36,7 +36,7 @@ KVIPS is a comprehensive, production-ready verification IP suite built with Syst
 |----------|--------|---------|-------------|---------------|
 | **AXI4 Full** | ✅ Stable | v1.0 | Complete AMBA AXI4 master/slave agents with pipelined transactions, assertions, and scoreboard | [📖 AXI4 VIP Guide](https://kiranreddi.github.io/kvips/docs/axi4-vip/) |
 | **APB** | 🧪 Beta | v0.1 | AMBA APB3/APB4 master/slave agents for register access (single-image, runtime APB3/APB4 switch) | `kvips/apb/README.md` |
-| **AHB** | 🔜 Coming Soon | - | AMBA AHB-Lite/AHB5 master/slave agents | - |
+| **AHB** | 🧪 Beta | v0.1 | AMBA AHB-Lite/AHB Full master/slave agents with stalls, bursts, assertions, coverage, scoreboard | `kvips/ahb/README.md` |
 | **PCIe** | 📋 Planned | - | PCIe Gen3/Gen4/Gen5 with TLP generation | - |
 | **USB 3.x** | 📋 Planned | - | USB 3.0/3.1/3.2 protocol layers | - |
 
@@ -163,6 +163,14 @@ kvips/
 │   │   ├── tests/           # Test scenarios
 │   │   └── Makefile         # Build scripts
 │   └── docs/                 # VIP-specific documentation
+├── apb/                       # APB3/APB4 VIP (beta)
+│   ├── sv/
+│   ├── docs/
+│   └── examples/
+├── ahb/                       # AHB-Lite/AHB Full VIP (beta)
+│   ├── sv/
+│   ├── docs/
+│   └── examples/
 ├── docs/                      # GitHub Pages documentation
 │   ├── getting-started.md
 │   ├── axi4-vip.md

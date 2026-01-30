@@ -116,8 +116,6 @@ description: Industry-grade SystemVerilog UVM Verification IP Library. Protocol 
                 <div class="vip-card-body">
                     <p class="vip-description"><strong>Roadmap:</strong></p>
                     <ul class="vip-features">
-                        <li>APB (Advanced Peripheral Bus)</li>
-                        <li>AHB (Advanced High-performance Bus)</li>
                         <li>PCIe (PCI Express)</li>
                         <li>USB 2.0 / 3.0</li>
                         <li>Ethernet (MAC/PHY)</li>
