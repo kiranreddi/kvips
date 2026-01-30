@@ -1,0 +1,190 @@
+//------------------------------------------------------------------------------
+// AHB Slave Driver (single-slave responder + memory model)
+//------------------------------------------------------------------------------
+`ifndef KVIPS_AHB_SLAVE_DRIVER_SVH
+`define KVIPS_AHB_SLAVE_DRIVER_SVH
+
+class ahb_slave_driver #(
+  int ADDR_W  = 32,
+  int DATA_W  = 32,
+  int HRESP_W = 2
+) extends uvm_component;
+
+  localparam string RID = "AHB_SDRV";
+
+  typedef virtual ahb_if #(ADDR_W, DATA_W, .HRESP_W(HRESP_W)) ahb_vif_t;
+
+  ahb_cfg#(ADDR_W, DATA_W, HRESP_W) cfg;
+  ahb_vif_t                         vif;
+
+  // Simple byte-addressed memory model
+  byte unsigned mem[longint unsigned];
+
+  // Pipeline tracking for data phase
+  typedef struct packed {
+    bit                valid;
+    bit                write;
+    logic [ADDR_W-1:0] addr;
+    ahb_size_e         size;
+    ahb_burst_e        burst;
+    logic [3:0]        prot;
+    bit                lock;
+  } ctrl_t;
+
+  ctrl_t ctrl_pipe;   // accepted in the previous ready cycle (becomes data phase)
+  ctrl_t ctrl_data;   // currently in data phase (when valid)
+
+  int unsigned stall_rem; // remaining wait-state cycles for current data beat
+
+  `uvm_component_param_utils(ahb_slave_driver#(ADDR_W, DATA_W, HRESP_W))
+
+  function new(string name, uvm_component parent);
+    super.new(name, parent);
+  endfunction
+
+  function int unsigned data_bus_bytes();
+    return (DATA_W/8);
+  endfunction
+
+  function int unsigned size_bytes(ahb_size_e size);
+    return (1 << size);
+  endfunction
+
+  function void write_bytes(logic [ADDR_W-1:0] addr, ahb_size_e size, logic [DATA_W-1:0] wdata);
+    int unsigned sb = size_bytes(size);
+    int unsigned lane = addr % data_bus_bytes();
+    for (int unsigned i = 0; i < sb; i++) begin
+      int unsigned byte_lane = lane + i;
+      if (byte_lane < data_bus_bytes()) begin
+        mem[longint'(addr + i)] = wdata[(8*byte_lane) +: 8];
+      end
+    end
+  endfunction
+
+  function logic [DATA_W-1:0] read_bytes(logic [ADDR_W-1:0] addr, ahb_size_e size);
+    logic [DATA_W-1:0] r;
+    int unsigned sb = size_bytes(size);
+    int unsigned lane = addr % data_bus_bytes();
+    r = '0;
+    for (int unsigned i = 0; i < sb; i++) begin
+      int unsigned byte_lane = lane + i;
+      if (byte_lane < data_bus_bytes()) begin
+        if (mem.exists(longint'(addr + i)))
+          r[(8*byte_lane) +: 8] = mem[longint'(addr + i)];
+        else
+          r[(8*byte_lane) +: 8] = 8'h00;
+      end
+    end
+    return r;
+  endfunction
+
+  function logic [HRESP_W-1:0] resp_okay();
+    if (HRESP_W == 1) return logic'(1'b0);
+    return logic'(2'b00);
+  endfunction
+
+  function logic [HRESP_W-1:0] resp_error();
+    if (HRESP_W == 1) return logic'(1'b1);
+    return logic'(2'b01);
+  endfunction
+
+  function ctrl_t sample_ctrl();
+    ctrl_t c;
+    c.valid = (vif.cb_s.HSEL && vif.cb_s.HTRANS[1] && vif.cb_s.HREADY);
+    c.write = vif.cb_s.HWRITE;
+    c.addr  = vif.cb_s.HADDR;
+    c.size  = ahb_size_e'(vif.cb_s.HSIZE);
+    c.burst = ahb_burst_e'(vif.cb_s.HBURST);
+    c.prot  = vif.cb_s.HPROT;
+    c.lock  = vif.cb_s.HMASTLOCK;
+    return c;
+  endfunction
+
+  task run_phase(uvm_phase phase);
+    super.run_phase(phase);
+
+    if (!uvm_config_db#(ahb_cfg#(ADDR_W, DATA_W, HRESP_W))::get(this, "", "cfg", cfg)) begin
+      `uvm_fatal(RID, "Missing cfg in config DB (key: cfg)")
+    end
+    vif = cfg.vif;
+    if (vif == null) `uvm_fatal(RID, "cfg.vif is null")
+
+    // Defaults
+    ctrl_pipe = '{default:'0};
+    ctrl_data = '{default:'0};
+    stall_rem = 0;
+
+    vif.cb_s.HREADYOUT <= 1'b1;
+    vif.cb_s.HRESP     <= resp_okay();
+    vif.cb_s.HRDATA    <= '0;
+
+    @(posedge vif.HCLK);
+    while (!vif.HRESETn) begin
+      @(posedge vif.HCLK);
+      vif.cb_s.HREADYOUT <= 1'b1;
+      vif.cb_s.HRESP     <= resp_okay();
+      vif.cb_s.HRDATA    <= '0;
+      ctrl_pipe = '{default:'0};
+      ctrl_data = '{default:'0};
+      stall_rem = 0;
+    end
+
+    forever begin
+      @(vif.cb_s);
+
+      if (!vif.HRESETn) begin
+        ctrl_pipe = '{default:'0};
+        ctrl_data = '{default:'0};
+        stall_rem = 0;
+        vif.cb_s.HREADYOUT <= 1'b1;
+        vif.cb_s.HRESP     <= resp_okay();
+        vif.cb_s.HRDATA    <= '0;
+        continue;
+      end
+
+      // Manage wait-state insertion for the current data-phase beat.
+      if (ctrl_data.valid && cfg.allow_wait_states) begin
+        if (stall_rem == 0) begin
+          stall_rem = (cfg.max_wait >= cfg.min_wait) ? $urandom_range(cfg.min_wait, cfg.max_wait) : cfg.min_wait;
+        end
+      end
+
+      if (ctrl_data.valid && (stall_rem != 0)) begin
+        // Stall cycle: keep outputs stable, hold HREADYOUT low, decrement.
+        vif.cb_s.HREADYOUT <= 1'b0;
+        stall_rem--;
+        continue;
+      end
+
+      // Ready to complete current beat (if any) and accept next control.
+      vif.cb_s.HREADYOUT <= 1'b1;
+
+      // Complete data phase for ctrl_data (this cycle's handshake completes it).
+      if (ctrl_data.valid) begin
+        bit err = cfg.addr_in_error_range(ctrl_data.addr);
+        vif.cb_s.HRESP  <= err ? resp_error() : resp_okay();
+        if (!ctrl_data.write) begin
+          vif.cb_s.HRDATA <= read_bytes(ctrl_data.addr, ctrl_data.size);
+        end else begin
+          write_bytes(ctrl_data.addr, ctrl_data.size, vif.cb_s.HWDATA);
+          vif.cb_s.HRDATA <= '0;
+        end
+      end else begin
+        vif.cb_s.HRESP  <= resp_okay();
+        vif.cb_s.HRDATA <= '0;
+      end
+
+      // Shift pipeline at end of ready cycle:
+      // - ctrl_pipe captures newly accepted control.
+      // - ctrl_data becomes previous ctrl_pipe.
+      ctrl_data = ctrl_pipe;
+      ctrl_pipe = sample_ctrl();
+
+      if (!ctrl_data.valid) stall_rem = 0;
+    end
+  endtask
+
+endclass
+
+`endif // KVIPS_AHB_SLAVE_DRIVER_SVH
+

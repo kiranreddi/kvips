@@ -125,6 +125,16 @@ make -C kvips/apb/examples questa TEST=apb_b2b_smoke_test PLUSARGS='+APB_PROTOCO
 make -C kvips/apb/examples questa TEST=apb_b2b_smoke_test PLUSARGS='+APB_PROTOCOL=APB3'
 ```
 
+### Optional: Try the AHB example
+
+KVIPS AHB VIP supports AHB-Lite and AHB Full in a **single compiled image** with a runtime switch:
+
+```bash
+make -C kvips/ahb/examples list-tests
+make -C kvips/ahb/examples questa TEST=ahb_smoke_test
+make -C kvips/ahb/examples questa TEST=ahb_wait_state_test PLUSARGS='+AHB_MODE=AHB_LITE'
+```
+
 ---
 
 ## 📦 Repository Structure
@@ -153,6 +163,10 @@ kvips/
 │           ├── tb/           # Testbench code
 │           └── sim/          # Simulation scripts
 ├── apb/                       # APB3/APB4 VIP (beta)
+│   ├── sv/
+│   ├── docs/
+│   └── examples/
+├── ahb/                       # AHB-Lite/AHB Full VIP (beta)
 │   ├── sv/
 │   ├── docs/
 │   └── examples/

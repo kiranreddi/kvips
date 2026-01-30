@@ -852,7 +852,7 @@ The KVIPS codebase represents a solid, professional-grade verification IP that i
    - Implement QoS and cache modeling
 
 3. **Long-term (3-6 months):**
-   - Add additional protocol VIPs (APB, AHB)
+   - Add additional protocol VIPs (next: AXI-Lite, AXI-Stream, PCIe, I2C/UART)
    - Develop cocotb integration
    - Create advanced analysis/performance tools
 

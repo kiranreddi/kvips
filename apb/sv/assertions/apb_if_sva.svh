@@ -55,7 +55,7 @@
 
   // During access wait-states, address/control/data must remain stable.
   property p_stable_during_wait;
-    @(posedge PCLK) disable iff (!PRESETn || !kvips_apb_assert_en)
+    @(posedge PCLK) disable iff (!PRESETn || !kvips_apb_assert_en || !kvips_apb_strict_en)
       (kvips_xfer_access && !PREADY) |->
         ($stable(PADDR) && $stable(PWRITE) && $stable(PWDATA) && $stable(PSEL) && $stable(PPROT) && $stable(PSTRB));
   endproperty

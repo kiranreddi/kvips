@@ -1,0 +1,9 @@
+ahb_smoke_test
+ahb_single_read_write_test
+ahb_wait_state_test
+ahb_incr_burst_test
+ahb_wrap_burst_test
+ahb_back_to_back_test
+ahb_error_response_test
+ahb_random_stress_test
+
