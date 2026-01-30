@@ -27,6 +27,7 @@ class apb_slave_driver #(
     logic [DATA_W-1:0] wdata;
     logic [STRB_W-1:0] strb;
     logic [2:0]        prot;
+    bit                slv_err;
   } req_t;
 
   req_t pending;
@@ -102,6 +103,7 @@ class apb_slave_driver #(
     pending.wdata = vif.cb_s.PWDATA;
     pending.prot  = vif.cb_s.PPROT;
     pending.strb  = cfg.is_apb4() ? vif.cb_s.PSTRB : '1;
+    pending.slv_err = should_slverr(vif.cb_s.PADDR);
     have_pending = 1;
 
     if (cfg.allow_wait_states && (cfg.max_wait_cycles != 0)) begin
@@ -115,23 +117,22 @@ class apb_slave_driver #(
   endtask
 
   task automatic respond_access();
-    bit slv_err;
     longint unsigned wi;
     logic [DATA_W-1:0] old_d;
     logic [DATA_W-1:0] new_d;
 
-    slv_err = should_slverr(pending.addr);
-    vif.cb_s.PSLVERR <= slv_err;
+    vif.cb_s.PSLVERR <= pending.slv_err;
 
     wi = word_idx(pending.addr);
     old_d = mem.exists(wi) ? mem[wi] : '0;
 
     if (pending.write) begin
-      if (!slv_err) begin
-        if (cfg.is_apb4()) new_d = apply_strb(old_d, pending.wdata, pending.strb);
-        else               new_d = pending.wdata;
-        mem[wi] = new_d;
-      end
+      // Model choice: even when PSLVERR is asserted, a slave may still have side
+      // effects (e.g. register write partially commits). Keep a simple, robust
+      // model by committing writes regardless of PSLVERR.
+      if (cfg.is_apb4()) new_d = apply_strb(old_d, pending.wdata, pending.strb);
+      else               new_d = pending.wdata;
+      mem[wi] = new_d;
       vif.cb_s.PRDATA <= '0;
     end else begin
       vif.cb_s.PRDATA <= old_d;
@@ -156,10 +157,12 @@ class apb_slave_driver #(
       // Setup observed
       if ((|vif.cb_s.PSEL) && (vif.cb_s.PENABLE === 1'b0)) begin
         capture_setup();
-        done = (wait_left == 0);
-        vif.cb_s.PREADY  <= done;
+        // Response (PRDATA/PSLVERR) is only valid/meaningful in the ACCESS phase.
+        // Keep PSLVERR low in setup; respond_access() will drive the real response
+        // on the completion cycle in ACCESS.
+        vif.cb_s.PREADY  <= 1'b0;
         vif.cb_s.PSLVERR <= 1'b0;
-        if (done) respond_access();
+        vif.cb_s.PRDATA  <= '0;
         continue;
       end
 
@@ -170,21 +173,15 @@ class apb_slave_driver #(
           capture_setup();
         end
 
-        if (wait_left != 0) begin
+        // Stall for wait_left cycles with PREADY low, then complete with PREADY high.
+        if (wait_left > 0) begin
+          vif.cb_s.PREADY  <= 1'b0;
+          vif.cb_s.PSLVERR <= 1'b0;
           wait_left--;
-          done = (wait_left == 0);
-          vif.cb_s.PREADY <= done;
-          if (done) respond_access();
         end else begin
-          done = 1;
           vif.cb_s.PREADY <= 1'b1;
           respond_access();
-        end
-
-        // Transfer completes when PREADY is high in access phase.
-        if (done) begin
           have_pending = 0;
-          vif.cb_s.PSLVERR <= 1'b0;
         end
       end else begin
         // Idle: keep ready high, error low.

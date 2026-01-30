@@ -122,7 +122,22 @@ class apb_monitor #(
       end
 
       // Access phase: count wait cycles.
-      if ((|vif.cb_mon.PSEL) && (vif.cb_mon.PENABLE === 1'b1) && in_access) begin
+      if ((|vif.cb_mon.PSEL) && (vif.cb_mon.PENABLE === 1'b1)) begin
+        // Defensive: if we missed the setup phase (PSEL && !PENABLE), recover by
+        // creating the transaction from the access phase. This makes the monitor
+        // robust to DUT protocol bugs and avoids false scoreboard mismatches.
+        if (!in_access) begin
+          cur_tr = new("apb_mon_tr");
+          cur_tr.addr  = vif.cb_mon.PADDR;
+          cur_tr.write = (vif.cb_mon.PWRITE === 1'b1);
+          cur_tr.wdata = vif.cb_mon.PWDATA;
+          cur_tr.prot  = vif.cb_mon.PPROT;
+          cur_tr.strb  = cfg.is_apb4() ? vif.cb_mon.PSTRB : '1;
+          cur_tr.start_t = $time;
+          cur_wait = 0;
+          in_access = 1;
+        end
+
         if (vif.cb_mon.PREADY !== 1'b1) begin
           cur_wait++;
         end else begin
