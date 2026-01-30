@@ -87,7 +87,9 @@ class apb_scoreboard #(
     old_d = exp_mem.exists(wi) ? exp_mem[wi] : '0;
 
     if (t.write) begin
-      if (t.slverr) return;
+      // Do not assume an error response implies "no side effects". Keep expected
+      // memory updated even when PSLVERR is asserted so subsequent reads can be
+      // checked against the last observed write data.
       exp_d = apply_strb(old_d, t.wdata, t.strb);
       exp_mem[wi] = exp_d;
       exp_valid[wi] = 1'b1;
@@ -117,4 +119,3 @@ class apb_scoreboard #(
 endclass
 
 `endif // KVIPS_APB_SCOREBOARD_SVH
-
