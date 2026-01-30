@@ -12,7 +12,11 @@ class ahb_monitor #(
 
   localparam string RID = "AHB_MON";
 
-  typedef virtual ahb_if #(ADDR_W, DATA_W, .HRESP_W(HRESP_W)) ahb_vif_t;
+  typedef virtual ahb_if #(
+    .ADDR_W(ADDR_W),
+    .DATA_W(DATA_W),
+    .HRESP_W(HRESP_W)
+  ) ahb_vif_t;
 
   ahb_cfg#(ADDR_W, DATA_W, HRESP_W) cfg;
   ahb_vif_t                         vif;
@@ -63,6 +67,7 @@ class ahb_monitor #(
   function new(string name, uvm_component parent);
     super.new(name, parent);
     ap = new("ap", this);
+    cg_ahb = new();
   endfunction
 
   function ctrl_t sample_ctrl();
@@ -89,8 +94,6 @@ class ahb_monitor #(
     ctrl_pipe = '{default:'0};
     ctrl_data = '{default:'0};
     stall_cnt = 0;
-
-    if (cfg.coverage_enable) cg_ahb = new();
 
     @(posedge vif.HCLK);
     while (!vif.HRESETn) begin

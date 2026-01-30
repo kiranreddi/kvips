@@ -10,7 +10,11 @@ class ahb_cfg #(
   int HRESP_W = 2
 ) extends uvm_object;
 
-  typedef virtual ahb_if #(ADDR_W, DATA_W, .HRESP_W(HRESP_W)) ahb_vif_t;
+  typedef virtual ahb_if #(
+    .ADDR_W(ADDR_W),
+    .DATA_W(DATA_W),
+    .HRESP_W(HRESP_W)
+  ) ahb_vif_t;
   ahb_vif_t vif;
 
   // Protocol selection
@@ -163,4 +167,3 @@ class ahb_env_cfg #(
 endclass
 
 `endif // KVIPS_AHB_CFG_SVH
-

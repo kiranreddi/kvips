@@ -12,7 +12,11 @@ class ahb_master_driver #(
 
   localparam string RID = "AHB_MDRV";
 
-  typedef virtual ahb_if #(ADDR_W, DATA_W, .HRESP_W(HRESP_W)) ahb_vif_t;
+  typedef virtual ahb_if #(
+    .ADDR_W(ADDR_W),
+    .DATA_W(DATA_W),
+    .HRESP_W(HRESP_W)
+  ) ahb_vif_t;
 
   ahb_cfg#(ADDR_W, DATA_W, HRESP_W) cfg;
   ahb_vif_t                         vif;
@@ -40,6 +44,9 @@ class ahb_master_driver #(
   function logic [ADDR_W-1:0] next_addr(logic [ADDR_W-1:0] base, int unsigned beat, ahb_size_e size, ahb_burst_e burst);
     int unsigned bpb;
     int unsigned blen;
+    int unsigned boundary;
+    logic [ADDR_W-1:0] region_base;
+    logic [ADDR_W-1:0] offset;
     logic [ADDR_W-1:0] a;
     bpb = bytes_per_beat(size);
     a = base + beat * bpb;
@@ -51,9 +58,9 @@ class ahb_master_driver #(
           AHB_BURST_WRAP8:  blen = 8;
           default:          blen = 16;
         endcase
-        int unsigned boundary = blen * bpb;
-        logic [ADDR_W-1:0] region_base = base & ~(boundary-1);
-        logic [ADDR_W-1:0] offset = (base + beat * bpb) & (boundary-1);
+        boundary = blen * bpb;
+        region_base = base & ~(boundary-1);
+        offset = (base + beat * bpb) & (boundary-1);
         a = region_base | offset;
       end
       default: begin end
@@ -86,6 +93,11 @@ class ahb_master_driver #(
   endtask
 
   task run_phase(uvm_phase phase);
+    bit          next_data_valid;
+    bit          next_data_write;
+    int unsigned next_data_beat;
+    logic [ADDR_W-1:0] next_a;
+
     super.run_phase(phase);
 
     if (!uvm_config_db#(ahb_cfg#(ADDR_W, DATA_W, HRESP_W))::get(this, "", "cfg", cfg)) begin
@@ -141,9 +153,6 @@ class ahb_master_driver #(
         end
 
         // Compute the next-cycle data-phase beat (based on the control we accept now).
-        bit          next_data_valid;
-        bit          next_data_write;
-        int unsigned next_data_beat;
         next_data_valid = 0;
         next_data_write = 0;
         next_data_beat  = 0;
@@ -167,9 +176,9 @@ class ahb_master_driver #(
 
         // Issue next control beat (address/control phase) if any.
         if (cur_beat < cur_beats) begin
-          logic [ADDR_W-1:0] a = next_addr(cur_item.addr, cur_beat, cur_item.size, cur_item.burst);
+          next_a = next_addr(cur_item.addr, cur_beat, cur_item.size, cur_item.burst);
           vif.cb_m.HSEL   <= 1'b1;
-          vif.cb_m.HADDR  <= a;
+          vif.cb_m.HADDR  <= next_a;
           vif.cb_m.HWRITE <= cur_item.write;
           vif.cb_m.HSIZE  <= cur_item.size;
           vif.cb_m.HBURST <= cur_item.burst;

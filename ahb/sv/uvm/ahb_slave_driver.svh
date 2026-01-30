@@ -12,7 +12,11 @@ class ahb_slave_driver #(
 
   localparam string RID = "AHB_SDRV";
 
-  typedef virtual ahb_if #(ADDR_W, DATA_W, .HRESP_W(HRESP_W)) ahb_vif_t;
+  typedef virtual ahb_if #(
+    .ADDR_W(ADDR_W),
+    .DATA_W(DATA_W),
+    .HRESP_W(HRESP_W)
+  ) ahb_vif_t;
 
   ahb_cfg#(ADDR_W, DATA_W, HRESP_W) cfg;
   ahb_vif_t                         vif;
@@ -187,4 +191,3 @@ class ahb_slave_driver #(
 endclass
 
 `endif // KVIPS_AHB_SLAVE_DRIVER_SVH
-
