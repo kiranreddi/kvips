@@ -21,7 +21,10 @@
     string s;
     kvips_ahb_assert_en = !$test$plusargs("KVIPS_AHB_ASSERT_OFF");
     kvips_ahb_known_en  = !$test$plusargs("KVIPS_AHB_ASSERT_KNOWN_OFF");
-    kvips_ahb_strict_en = !$test$plusargs("KVIPS_AHB_ASSERT_STRICT_OFF");
+    // Strict checks are opt-in; many real fabrics legitimately use BUSY or have
+    // implementation-specific behavior that would otherwise flood logs.
+    kvips_ahb_strict_en = $test$plusargs("KVIPS_AHB_ASSERT_STRICT_ON") &&
+                          !$test$plusargs("KVIPS_AHB_ASSERT_STRICT_OFF");
 
     kvips_ahb_full_en = 1'b0;
     if ($value$plusargs("AHB_MODE=%s", s)) begin
@@ -59,7 +62,7 @@
     if (HRESP_W == 2) begin : g_hresp2
       property p_lite_hresp_legal;
         @(posedge HCLK) disable iff (!HRESETn || !kvips_ahb_assert_en)
-          (!kvips_ahb_full_en) |-> (HRESP inside {2'b00, 2'b01});
+          ((!kvips_ahb_full_en) && kvips_ahb_xfer_valid && HSEL && HREADY) |-> (HRESP inside {2'b00, 2'b01});
       endproperty
       a_lite_hresp_legal: assert property (p_lite_hresp_legal);
     end

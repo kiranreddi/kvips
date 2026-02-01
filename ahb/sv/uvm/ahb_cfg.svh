@@ -7,12 +7,14 @@
 class ahb_cfg #(
   int ADDR_W  = 32,
   int DATA_W  = 32,
-  int HRESP_W = 2
+  int HRESP_W = 2,
+  bit HAS_HMASTLOCK = 1'b0
 ) extends uvm_object;
 
   typedef virtual ahb_if #(
     .ADDR_W(ADDR_W),
     .DATA_W(DATA_W),
+    .HAS_HMASTLOCK(HAS_HMASTLOCK),
     .HRESP_W(HRESP_W)
   ) ahb_vif_t;
   ahb_vif_t vif;
@@ -44,10 +46,27 @@ class ahb_cfg #(
   int unsigned idle_gap_min        = 0;
   int unsigned idle_gap_max        = 0;
 
+  // Expected transfer sizes (coverage + legality knobs). These are primarily
+  // used by the monitor/coverage model to avoid "unreachable bins" when the
+  // environment intentionally restricts what a master will generate.
+  //
+  // Defaults enable all sizes up to DATA_W (set in new()).
+  bit allow_size_8  = 1'b1;
+  bit allow_size_16 = 1'b1;
+  bit allow_size_32 = 1'b1;
+  bit allow_size_64 = 1'b1;
+
+  // Advanced responses (AHB Full only). KVIPS currently supports OKAY/ERROR in
+  // the slave responder; RETRY/SPLIT are modeled as disabled by default.
+  bit          allow_retry_split   = 1'b0;
+
   // Checks/coverage/logging
   bit monitor_enable  = 1'b1;
   bit coverage_enable = 1'b0;
   bit trace_enable    = 1'b0;
+
+  // Timeouts (0 disables)
+  int unsigned handshake_timeout_cycles = 100000;
 
   // Transaction recording (optional)
   bit    tr_record_enable = 1'b0;
@@ -55,14 +74,25 @@ class ahb_cfg #(
 
   function new(string name = "ahb_cfg");
     super.new(name);
+    allow_size_8  = 1'b1;
+    allow_size_16 = (DATA_W >= 16);
+    allow_size_32 = (DATA_W >= 32);
+    allow_size_64 = (DATA_W >= 64);
   endfunction
 
   function void apply_plusargs();
     string s;
+    int unsigned v;
     if ($value$plusargs("AHB_MODE=%s", s)) begin
       if ((s == "AHB_LITE") || (s == "ahb_lite") || (s == "LITE") || (s == "lite")) mode = AHB_MODE_LITE;
       if ((s == "AHB_FULL") || (s == "ahb_full") || (s == "FULL") || (s == "full")) mode = AHB_MODE_FULL;
     end
+    if ($value$plusargs("KVIPS_AHB_COV=%d", v)) coverage_enable = (v != 0);
+    if ($value$plusargs("KVIPS_COV=%d", v)) coverage_enable = (v != 0);
+    if ($test$plusargs("KVIPS_FCOV")) coverage_enable = 1'b1;
+    if ($test$plusargs("KVIPS_AHB_TRACE")) trace_enable = 1'b1;
+    if ($test$plusargs("KVIPS_AHB_TR_RECORD")) tr_record_enable = 1'b1;
+    if ($value$plusargs("KVIPS_AHB_TIMEOUT=%d", v)) handshake_timeout_cycles = v;
   endfunction
 
   function bit is_full();
@@ -84,7 +114,7 @@ class ahb_cfg #(
     return (addr == base_addr);
   endfunction
 
-  `uvm_object_param_utils_begin(ahb_cfg#(ADDR_W, DATA_W, HRESP_W))
+  `uvm_object_param_utils_begin(ahb_cfg#(ADDR_W, DATA_W, HRESP_W, HAS_HMASTLOCK))
     `uvm_field_enum(ahb_mode_e, mode, UVM_DEFAULT)
     `uvm_field_int(single_slave_mode, UVM_DEFAULT)
     `uvm_field_int(base_addr, UVM_DEFAULT)
@@ -102,9 +132,15 @@ class ahb_cfg #(
     `uvm_field_int(insert_idles, UVM_DEFAULT)
     `uvm_field_int(idle_gap_min, UVM_DEFAULT)
     `uvm_field_int(idle_gap_max, UVM_DEFAULT)
+    `uvm_field_int(allow_size_8, UVM_DEFAULT)
+    `uvm_field_int(allow_size_16, UVM_DEFAULT)
+    `uvm_field_int(allow_size_32, UVM_DEFAULT)
+    `uvm_field_int(allow_size_64, UVM_DEFAULT)
+    `uvm_field_int(allow_retry_split, UVM_DEFAULT)
     `uvm_field_int(monitor_enable, UVM_DEFAULT)
     `uvm_field_int(coverage_enable, UVM_DEFAULT)
     `uvm_field_int(trace_enable, UVM_DEFAULT)
+    `uvm_field_int(handshake_timeout_cycles, UVM_DEFAULT)
     `uvm_field_int(tr_record_enable, UVM_DEFAULT)
     `uvm_field_string(tr_stream_name, UVM_DEFAULT)
   `uvm_object_utils_end
@@ -114,10 +150,11 @@ endclass
 class ahb_agent_cfg #(
   int ADDR_W  = 32,
   int DATA_W  = 32,
-  int HRESP_W = 2
+  int HRESP_W = 2,
+  bit HAS_HMASTLOCK = 1'b0
 ) extends uvm_object;
 
-  ahb_cfg#(ADDR_W, DATA_W, HRESP_W) cfg;
+  ahb_cfg#(ADDR_W, DATA_W, HRESP_W, HAS_HMASTLOCK) cfg;
 
   bit is_master = 1'b1;
   bit is_slave  = 1'b0;
@@ -137,7 +174,7 @@ class ahb_agent_cfg #(
     is_slave  = 1'b1;
   endfunction
 
-  `uvm_object_param_utils_begin(ahb_agent_cfg#(ADDR_W, DATA_W, HRESP_W))
+  `uvm_object_param_utils_begin(ahb_agent_cfg#(ADDR_W, DATA_W, HRESP_W, HAS_HMASTLOCK))
     `uvm_field_object(cfg, UVM_DEFAULT)
     `uvm_field_int(is_master, UVM_DEFAULT)
     `uvm_field_int(is_slave, UVM_DEFAULT)
@@ -148,20 +185,21 @@ endclass
 class ahb_env_cfg #(
   int ADDR_W  = 32,
   int DATA_W  = 32,
-  int HRESP_W = 2
+  int HRESP_W = 2,
+  bit HAS_HMASTLOCK = 1'b0
 ) extends uvm_object;
 
-  ahb_agent_cfg#(ADDR_W, DATA_W, HRESP_W) agent_cfgs[$];
+  ahb_agent_cfg#(ADDR_W, DATA_W, HRESP_W, HAS_HMASTLOCK) agent_cfgs[$];
 
   function new(string name = "ahb_env_cfg");
     super.new(name);
   endfunction
 
-  function void add_agent_cfg(ahb_agent_cfg#(ADDR_W, DATA_W, HRESP_W) c);
+  function void add_agent_cfg(ahb_agent_cfg#(ADDR_W, DATA_W, HRESP_W, HAS_HMASTLOCK) c);
     agent_cfgs.push_back(c);
   endfunction
 
-  `uvm_object_param_utils_begin(ahb_env_cfg#(ADDR_W, DATA_W, HRESP_W))
+  `uvm_object_param_utils_begin(ahb_env_cfg#(ADDR_W, DATA_W, HRESP_W, HAS_HMASTLOCK))
     `uvm_field_queue_object(agent_cfgs, UVM_DEFAULT)
   `uvm_object_utils_end
 endclass

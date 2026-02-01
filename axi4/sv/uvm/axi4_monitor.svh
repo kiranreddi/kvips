@@ -13,6 +13,7 @@ class axi4_monitor #(
 ) extends uvm_component;
 
   localparam string RID = "AXI4_MON";
+  localparam int unsigned STRB_W = (DATA_W/8);
 
   typedef virtual axi4_if #(ADDR_W, DATA_W, ID_W, USER_W) axi4_vif_t;
 
@@ -101,22 +102,72 @@ class axi4_monitor #(
     int unsigned len,
     bit          lock,
     axi4_resp_e  resp,
-    logic [3:0]  qos
+    logic [3:0]  qos,
+    logic [2:0]  prot,
+    logic [3:0]  cache,
+    logic [3:0]  region,
+    int unsigned strb_pop,
+    bit          narrow
   );
     option.per_instance = 1;
     cp_is_write: coverpoint is_write;
-    cp_burst:    coverpoint burst;
+    cp_burst:    coverpoint burst {
+      bins fixed = {AXI4_BURST_FIXED};
+      bins incr  = {AXI4_BURST_INCR};
+      bins wrap  = {AXI4_BURST_WRAP};
+    }
     cp_size:     coverpoint size { bins sizes[] = {[0:$clog2(DATA_W/8)]}; }
     cp_len:      coverpoint len  {
-      bins short_burst  = {[0:3]};
-      bins med_burst    = {[4:15]};
-      bins long_burst   = {[16:255]};
+      bins len_1    = {0};    // 1 beat (AxLEN is beats-1)
+      bins len_2    = {1};
+      bins len_4    = {3};
+      bins len_8    = {7};
+      bins len_16   = {15};
+      bins len_256  = {255};
+      bins other    = default;
     }
     cp_lock:     coverpoint lock;
-    cp_resp:     coverpoint resp;
-    cp_qos:      coverpoint qos;
+    cp_resp:     coverpoint resp {
+      bins okay   = {AXI4_RESP_OKAY};
+      bins exokay = {AXI4_RESP_EXOKAY};
+      bins slverr = {AXI4_RESP_SLVERR};
+      bins decerr = {AXI4_RESP_DECERR};
+    }
+    cp_qos:      coverpoint qos {
+      bins qos0   = {0};
+      bins qos1_3 = {[1:3]};
+      bins qos4_11 = {[4:11]};
+      bins qos12_14 = {[12:14]};
+      bins qos15  = {15};
+    }
+    cp_prot:     coverpoint prot { bins vals[] = {[0:7]}; }
+    cp_cache:    coverpoint cache {
+      bins c0  = {4'h0};
+      bins cF  = {4'hF};
+      bins c_other = default;
+    }
+    cp_region:   coverpoint region {
+      bins r0  = {0};
+      bins r15 = {15};
+      bins r_other = default;
+    }
+    cp_strb_pop: coverpoint strb_pop iff (is_write) {
+      bins none   = {0};
+      bins single = {1};
+      bins full   = {STRB_W};
+      bins some   = {[2:(STRB_W-1)]} iff (STRB_W > 2);
+    }
+    cp_narrow:   coverpoint narrow;
+
     cx_burst_size: cross cp_burst, cp_size;
     cx_write_resp: cross cp_is_write, cp_resp;
+    cx_narrow_strb: cross cp_narrow, cp_strb_pop iff (is_write) {
+      // A narrow transfer is defined by AxSIZE < $clog2(DATA_W/8). In that
+      // case, asserting all byte-lanes (full strobe) is not meaningful/legal
+      // for most AXI environments; ignore that cross bin so it doesn't become
+      // an unreachable-hole magnet.
+      ignore_bins narrow_full = binsof(cp_narrow) intersect {1} && binsof(cp_strb_pop.full);
+    }
   endgroup
 
   `uvm_component_param_utils(axi4_monitor#(ADDR_W, DATA_W, ID_W, USER_W))
@@ -340,6 +391,8 @@ class axi4_monitor #(
       if (vif.mon_cb.bvalid && vif.mon_cb.bready) begin
         logic [ID_W-1:0] bid;
         item_t trb;
+        int unsigned spop;
+        bit is_narrow;
         sum_b_hs++;
         bid = vif.mon_cb.bid;
         if (cfg.stats_enable) begin
@@ -360,7 +413,10 @@ class axi4_monitor #(
           trb = wr_wait_b[bid].pop_front();
           trb.bresp = axi4_resp_e'(vif.mon_cb.bresp);
           if (cfg.coverage_enable) begin
-            cov.sample(1'b1, trb.burst, int'(trb.size), int'(trb.len), trb.lock, trb.bresp, trb.qos);
+            spop = (trb.strb.size() != 0) ? $countones(trb.strb[0]) : STRB_W;
+            is_narrow = (int'(trb.size) < $clog2(DATA_W/8));
+            cov.sample(1'b1, trb.burst, int'(trb.size), int'(trb.len), trb.lock, trb.bresp,
+              trb.qos, trb.prot, trb.cache, trb.region, spop, is_narrow);
           end
           maybe_record(trb, "axi4_write");
           ap.write(trb);
@@ -441,15 +497,20 @@ class axi4_monitor #(
               end
             end
             maybe_record(st.tr, "axi4_read");
-            if (cfg.coverage_enable) begin
-              axi4_resp_e resp0;
-              resp0 = (st.tr.rresp.size() != 0) ? st.tr.rresp[0] : AXI4_RESP_OKAY;
-              cov.sample(1'b0, st.tr.burst, int'(st.tr.size), int'(st.tr.len), st.tr.lock, resp0, st.tr.qos);
-            end
-            ap.write(st.tr);
-            if (cfg.trace_enable) `uvm_info(RID, {"MON read:\n", st.tr.sprint()}, UVM_LOW)
+          if (cfg.coverage_enable) begin
+            axi4_resp_e resp0;
+            int unsigned spop;
+            bit is_narrow;
+            resp0 = (st.tr.rresp.size() != 0) ? st.tr.rresp[0] : AXI4_RESP_OKAY;
+            spop = STRB_W;
+            is_narrow = (int'(st.tr.size) < $clog2(DATA_W/8));
+            cov.sample(1'b0, st.tr.burst, int'(st.tr.size), int'(st.tr.len), st.tr.lock, resp0,
+              st.tr.qos, st.tr.prot, st.tr.cache, st.tr.region, spop, is_narrow);
           end
+          ap.write(st.tr);
+          if (cfg.trace_enable) `uvm_info(RID, {"MON read:\n", st.tr.sprint()}, UVM_LOW)
         end
+      end
       end
     end
   endtask

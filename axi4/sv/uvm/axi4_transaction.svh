@@ -61,10 +61,12 @@ class axi4_item #(
   constraint c_lock_default { lock == 1'b0; }
   constraint c_size_legal { (1<<size) <= STRB_W; }
   constraint c_sideband_defaults {
-    cache  == '0;
-    prot   == '0;
-    qos    == '0;
-    region == '0;
+    // Default all sideband attributes to 0, but allow sequences/tests to
+    // override (e.g. for functional coverage closure).
+    soft cache  == '0;
+    soft prot   == '0;
+    soft qos    == '0;
+    soft region == '0;
   }
   constraint c_allow_defaults {
     allow_4kb_cross     == 1'b0;

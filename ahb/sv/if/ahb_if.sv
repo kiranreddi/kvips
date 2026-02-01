@@ -92,4 +92,3 @@ interface ahb_if #(
 endinterface
 
 `endif // KVIPS_AHB_IF_SV
-

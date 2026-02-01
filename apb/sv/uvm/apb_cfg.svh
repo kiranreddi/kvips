@@ -52,10 +52,16 @@ class apb_cfg #(
 
   function void apply_plusargs();
     string s;
+    int unsigned v;
     if ($value$plusargs("APB_PROTOCOL=%s", s)) begin
       if ((s == "APB3") || (s == "apb3")) protocol = APB_PROTOCOL_APB3;
       if ((s == "APB4") || (s == "apb4")) protocol = APB_PROTOCOL_APB4;
     end
+    if ($value$plusargs("KVIPS_APB_COV=%d", v)) coverage_enable = (v != 0);
+    if ($value$plusargs("KVIPS_COV=%d", v)) coverage_enable = (v != 0);
+    if ($test$plusargs("KVIPS_FCOV")) coverage_enable = 1'b1;
+    if ($test$plusargs("KVIPS_APB_TRACE")) trace_enable = 1'b1;
+    if ($test$plusargs("KVIPS_APB_TR_RECORD")) tr_record_enable = 1'b1;
   endfunction
 
   function bit is_apb4();

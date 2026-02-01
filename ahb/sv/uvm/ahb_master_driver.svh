@@ -7,7 +7,8 @@
 class ahb_master_driver #(
   int ADDR_W  = 32,
   int DATA_W  = 32,
-  int HRESP_W = 2
+  int HRESP_W = 2,
+  bit HAS_HMASTLOCK = 1'b0
 ) extends uvm_driver #(ahb_item#(ADDR_W, DATA_W, HRESP_W));
 
   localparam string RID = "AHB_MDRV";
@@ -15,10 +16,11 @@ class ahb_master_driver #(
   typedef virtual ahb_if #(
     .ADDR_W(ADDR_W),
     .DATA_W(DATA_W),
+    .HAS_HMASTLOCK(HAS_HMASTLOCK),
     .HRESP_W(HRESP_W)
   ) ahb_vif_t;
 
-  ahb_cfg#(ADDR_W, DATA_W, HRESP_W) cfg;
+  ahb_cfg#(ADDR_W, DATA_W, HRESP_W, HAS_HMASTLOCK) cfg;
   ahb_vif_t                         vif;
 
   // State for pipelining
@@ -31,7 +33,7 @@ class ahb_master_driver #(
   int unsigned cur_beats;
   int unsigned incr_len_eff;
 
-  `uvm_component_param_utils(ahb_master_driver#(ADDR_W, DATA_W, HRESP_W))
+  `uvm_component_param_utils(ahb_master_driver#(ADDR_W, DATA_W, HRESP_W, HAS_HMASTLOCK))
 
   function new(string name, uvm_component parent);
     super.new(name, parent);
@@ -39,6 +41,34 @@ class ahb_master_driver #(
 
   function int unsigned bytes_per_beat(ahb_size_e size);
     return (1 << size);
+  endfunction
+
+  function automatic void ensure_item_payload(ref ahb_item#(ADDR_W, DATA_W, HRESP_W) t);
+    int unsigned beats;
+    logic [DATA_W-1:0] old_wdata[];
+
+    beats = t.beats;
+    if (beats == 0) begin
+      beats = (t.burst == AHB_BURST_INCR) ? ((t.len == 0) ? 1 : t.len) : t.burst_len(t.burst, t.len);
+      if (beats == 0) beats = 1;
+      t.beats = beats;
+    end
+
+    if (t.write) begin
+      if (t.wdata.size() != beats) begin
+        old_wdata = t.wdata;
+        t.wdata = new[beats];
+        for (int unsigned i = 0; i < beats; i++) begin
+          if (i < old_wdata.size()) t.wdata[i] = old_wdata[i];
+          else t.wdata[i] = '0;
+        end
+      end
+    end else begin
+      if (t.wdata.size() != 0) t.wdata = new[0];
+    end
+    if (t.rdata.size() != beats) t.rdata = new[beats];
+    if (t.wait_cycles.size() != beats) t.wait_cycles = new[beats];
+    if (t.resp.size() != beats) t.resp = new[beats];
   endfunction
 
   function logic [ADDR_W-1:0] next_addr(logic [ADDR_W-1:0] base, int unsigned beat, ahb_size_e size, ahb_burst_e burst);
@@ -77,8 +107,8 @@ class ahb_master_driver #(
     vif.cb_m.HBURST  <= AHB_BURST_SINGLE;
     vif.cb_m.HPROT   <= 4'h0;
     vif.cb_m.HWDATA  <= '0;
-    vif.cb_m.HMASTLOCK <= 1'b0;
-    vif.cb_m.HMASTER <= '0;
+    // Optional signals default inside the interface when disabled.
+    if (HAS_HMASTLOCK) vif.cb_m.HMASTLOCK <= 1'b0;
   endtask
 
   task apply_optional_idles();
@@ -88,7 +118,7 @@ class ahb_master_driver #(
     repeat (gap) begin
       @(vif.cb_m);
       if (!vif.HRESETn) return;
-      if (vif.cb_m.HREADY) drive_idle();
+      if (vif.cb_m.HREADY === 1'b1) drive_idle();
     end
   endtask
 
@@ -100,7 +130,7 @@ class ahb_master_driver #(
 
     super.run_phase(phase);
 
-    if (!uvm_config_db#(ahb_cfg#(ADDR_W, DATA_W, HRESP_W))::get(this, "", "cfg", cfg)) begin
+    if (!uvm_config_db#(ahb_cfg#(ADDR_W, DATA_W, HRESP_W, HAS_HMASTLOCK))::get(this, "", "cfg", cfg)) begin
       `uvm_fatal(RID, "Missing cfg in config DB (key: cfg)")
     end
     vif = cfg.vif;
@@ -131,6 +161,7 @@ class ahb_master_driver #(
         cur_item.len = incr_len_eff;
       end
 
+      ensure_item_payload(cur_item);
       cur_beats = cur_item.beats;
       cur_beat  = 0;
       cur_item.start_t = $time;
@@ -147,9 +178,21 @@ class ahb_master_driver #(
           break;
         end
 
-        if (!vif.cb_m.HREADY) begin
-          // Stall: hold signals stable (clocking block does this if we don't drive)
-          continue;
+        // Stall: hold signals stable (clocking block does this if we don't drive)
+        begin
+          int unsigned stall_cycles;
+          stall_cycles = 0;
+          while (vif.cb_m.HREADY !== 1'b1) begin
+            stall_cycles++;
+            if ((cfg.handshake_timeout_cycles != 0) && (stall_cycles > cfg.handshake_timeout_cycles)) begin
+              `uvm_fatal(RID,
+                $sformatf("Timeout waiting for HREADY (HREADY=%b HREADYOUT=%b HRESETn=%b HSEL=%b HTRANS=%b)",
+                  vif.cb_m.HREADY, vif.cb_m.HREADYOUT, vif.HRESETn, vif.HSEL, vif.HTRANS))
+            end
+            @(vif.cb_m);
+            if (!vif.HRESETn) break;
+          end
+          if (!vif.HRESETn) continue;
         end
 
         // Compute the next-cycle data-phase beat (based on the control we accept now).
@@ -183,7 +226,7 @@ class ahb_master_driver #(
           vif.cb_m.HSIZE  <= cur_item.size;
           vif.cb_m.HBURST <= cur_item.burst;
           vif.cb_m.HPROT  <= cur_item.prot;
-          vif.cb_m.HMASTLOCK <= cur_item.lock;
+          if (HAS_HMASTLOCK) vif.cb_m.HMASTLOCK <= cur_item.lock;
           vif.cb_m.HTRANS <= (cur_beat == 0) ? AHB_TRANS_NONSEQ : AHB_TRANS_SEQ;
 
           // This beat becomes the data-phase beat in the next cycle.
