@@ -7,7 +7,8 @@
 class ahb_slave_driver #(
   int ADDR_W  = 32,
   int DATA_W  = 32,
-  int HRESP_W = 2
+  int HRESP_W = 2,
+  bit HAS_HMASTLOCK = 1'b0
 ) extends uvm_component;
 
   localparam string RID = "AHB_SDRV";
@@ -15,10 +16,11 @@ class ahb_slave_driver #(
   typedef virtual ahb_if #(
     .ADDR_W(ADDR_W),
     .DATA_W(DATA_W),
+    .HAS_HMASTLOCK(HAS_HMASTLOCK),
     .HRESP_W(HRESP_W)
   ) ahb_vif_t;
 
-  ahb_cfg#(ADDR_W, DATA_W, HRESP_W) cfg;
+  ahb_cfg#(ADDR_W, DATA_W, HRESP_W, HAS_HMASTLOCK) cfg;
   ahb_vif_t                         vif;
 
   // Simple byte-addressed memory model
@@ -39,8 +41,9 @@ class ahb_slave_driver #(
   ctrl_t ctrl_data;   // currently in data phase (when valid)
 
   int unsigned stall_rem; // remaining wait-state cycles for current data beat
+  bit          stall_armed; // selects stall_rem once per data beat
 
-  `uvm_component_param_utils(ahb_slave_driver#(ADDR_W, DATA_W, HRESP_W))
+  `uvm_component_param_utils(ahb_slave_driver#(ADDR_W, DATA_W, HRESP_W, HAS_HMASTLOCK))
 
   function new(string name, uvm_component parent);
     super.new(name, parent);
@@ -94,7 +97,7 @@ class ahb_slave_driver #(
 
   function ctrl_t sample_ctrl();
     ctrl_t c;
-    c.valid = (vif.cb_s.HSEL && vif.cb_s.HTRANS[1] && vif.cb_s.HREADY);
+    c.valid = ((vif.cb_s.HSEL === 1'b1) && (vif.cb_s.HTRANS[1] === 1'b1) && (vif.cb_s.HREADY === 1'b1));
     c.write = vif.cb_s.HWRITE;
     c.addr  = vif.cb_s.HADDR;
     c.size  = ahb_size_e'(vif.cb_s.HSIZE);
@@ -107,7 +110,7 @@ class ahb_slave_driver #(
   task run_phase(uvm_phase phase);
     super.run_phase(phase);
 
-    if (!uvm_config_db#(ahb_cfg#(ADDR_W, DATA_W, HRESP_W))::get(this, "", "cfg", cfg)) begin
+    if (!uvm_config_db#(ahb_cfg#(ADDR_W, DATA_W, HRESP_W, HAS_HMASTLOCK))::get(this, "", "cfg", cfg)) begin
       `uvm_fatal(RID, "Missing cfg in config DB (key: cfg)")
     end
     vif = cfg.vif;
@@ -117,6 +120,7 @@ class ahb_slave_driver #(
     ctrl_pipe = '{default:'0};
     ctrl_data = '{default:'0};
     stall_rem = 0;
+    stall_armed = 0;
 
     vif.cb_s.HREADYOUT <= 1'b1;
     vif.cb_s.HRESP     <= resp_okay();
@@ -131,6 +135,7 @@ class ahb_slave_driver #(
       ctrl_pipe = '{default:'0};
       ctrl_data = '{default:'0};
       stall_rem = 0;
+      stall_armed = 0;
     end
 
     forever begin
@@ -140,6 +145,7 @@ class ahb_slave_driver #(
         ctrl_pipe = '{default:'0};
         ctrl_data = '{default:'0};
         stall_rem = 0;
+        stall_armed = 0;
         vif.cb_s.HREADYOUT <= 1'b1;
         vif.cb_s.HRESP     <= resp_okay();
         vif.cb_s.HRDATA    <= '0;
@@ -147,10 +153,9 @@ class ahb_slave_driver #(
       end
 
       // Manage wait-state insertion for the current data-phase beat.
-      if (ctrl_data.valid && cfg.allow_wait_states) begin
-        if (stall_rem == 0) begin
-          stall_rem = (cfg.max_wait >= cfg.min_wait) ? $urandom_range(cfg.min_wait, cfg.max_wait) : cfg.min_wait;
-        end
+      if (ctrl_data.valid && cfg.allow_wait_states && !stall_armed) begin
+        stall_rem = (cfg.max_wait >= cfg.min_wait) ? $urandom_range(cfg.min_wait, cfg.max_wait) : cfg.min_wait;
+        stall_armed = 1'b1;
       end
 
       if (ctrl_data.valid && (stall_rem != 0)) begin
@@ -184,7 +189,13 @@ class ahb_slave_driver #(
       ctrl_data = ctrl_pipe;
       ctrl_pipe = sample_ctrl();
 
-      if (!ctrl_data.valid) stall_rem = 0;
+      if (!ctrl_data.valid) begin
+        stall_rem = 0;
+        stall_armed = 0;
+      end else begin
+        // New data beat started; choose wait-state policy fresh.
+        stall_armed = 0;
+      end
     end
   endtask
 

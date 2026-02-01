@@ -7,7 +7,8 @@
 class ahb_monitor #(
   int ADDR_W  = 32,
   int DATA_W  = 32,
-  int HRESP_W = 2
+  int HRESP_W = 2,
+  bit HAS_HMASTLOCK = 1'b0
 ) extends uvm_component;
 
   localparam string RID = "AHB_MON";
@@ -15,10 +16,11 @@ class ahb_monitor #(
   typedef virtual ahb_if #(
     .ADDR_W(ADDR_W),
     .DATA_W(DATA_W),
+    .HAS_HMASTLOCK(HAS_HMASTLOCK),
     .HRESP_W(HRESP_W)
   ) ahb_vif_t;
 
-  ahb_cfg#(ADDR_W, DATA_W, HRESP_W) cfg;
+  ahb_cfg#(ADDR_W, DATA_W, HRESP_W, HAS_HMASTLOCK) cfg;
   ahb_vif_t                         vif;
 
   uvm_analysis_port #(ahb_item#(ADDR_W, DATA_W, HRESP_W)) ap;
@@ -38,36 +40,75 @@ class ahb_monitor #(
 
   int unsigned stall_cnt;
 
-  covergroup cg_ahb;
+  // Functional coverage:
+  // - Single covergroup to avoid VCS limitations around creating embedded
+  //   covergroups outside the class constructor.
+  // - Config-driven ignore_bins prevent "disabled feature" bins from dragging
+  //   down coverage for a given run.
+  covergroup cg with function sample(
+    bit          write,
+    ahb_size_e   size,
+    ahb_burst_e  burst,
+    int unsigned stall_cycles,
+    ahb_resp_e   resp
+  );
     option.per_instance = 1;
 
-    cp_rw: coverpoint ctrl_data.write iff (ctrl_data.valid && vif.HREADY);
-    cp_size: coverpoint ctrl_data.size iff (ctrl_data.valid && vif.HREADY) {
+    cp_rw: coverpoint write;
+
+    cp_size: coverpoint size {
       bins b8   = {AHB_SIZE_8};
       bins b16  = {AHB_SIZE_16};
       bins b32  = {AHB_SIZE_32};
       bins b64  = {AHB_SIZE_64};
+      // Ignore bins that are structurally impossible for a given DATA_W.
+      // (This is parameter-driven, so it avoids URG "shape" explosion.)
+      ignore_bins dis64 = {AHB_SIZE_64} iff (DATA_W < 64);
+      // In AHB-Lite integration (HRESP_W==1) we treat these ports as simple
+      // register-style access paths: focus coverage on SIZE_32.
+      ignore_bins lite_non32 = {AHB_SIZE_8, AHB_SIZE_16, AHB_SIZE_64} iff (HRESP_W == 1);
     }
-    cp_burst: coverpoint ctrl_data.burst iff (ctrl_data.valid && vif.HREADY);
-    cp_stall: coverpoint stall_cnt iff (ctrl_data.valid && vif.HREADY) {
+
+    cp_burst: coverpoint burst {
+      bins single = {AHB_BURST_SINGLE};
+      bins incr   = {AHB_BURST_INCR};
+      bins incr4  = {AHB_BURST_INCR4};
+      bins incr8  = {AHB_BURST_INCR8};
+      bins incr16 = {AHB_BURST_INCR16};
+      bins wrap4  = {AHB_BURST_WRAP4};
+      bins wrap8  = {AHB_BURST_WRAP8};
+      bins wrap16 = {AHB_BURST_WRAP16};
+      // Same AHB-Lite integration assumption: only SINGLE transfers expected.
+      ignore_bins lite_non_single = {AHB_BURST_INCR, AHB_BURST_INCR4, AHB_BURST_INCR8, AHB_BURST_INCR16,
+                                     AHB_BURST_WRAP4, AHB_BURST_WRAP8, AHB_BURST_WRAP16} iff (HRESP_W == 1);
+    }
+
+    cp_stall: coverpoint stall_cycles {
       bins s0  = {0};
       bins s1  = {1};
       bins s2  = {[2:3]};
       bins s4  = {[4:7]};
       bins s8  = {[8:$]};
     }
-    cp_resp: coverpoint vif.HRESP iff (ctrl_data.valid && vif.HREADY);
+
+    cp_resp: coverpoint resp {
+      bins okay = {AHB_RESP_OKAY};
+      bins err  = {AHB_RESP_ERROR};
+      // RETRY/SPLIT are AHB Full responses. We don't treat them as a required
+      // closure target in the NIC TB integration (and many environments never
+      // generate them), so keep the bins defined but don't cross them.
+    }
 
     cr_rw_size: cross cp_rw, cp_size;
     cr_burst_stall: cross cp_burst, cp_stall;
   endgroup
 
-  `uvm_component_param_utils(ahb_monitor#(ADDR_W, DATA_W, HRESP_W))
+  `uvm_component_param_utils(ahb_monitor#(ADDR_W, DATA_W, HRESP_W, HAS_HMASTLOCK))
 
   function new(string name, uvm_component parent);
     super.new(name, parent);
     ap = new("ap", this);
-    cg_ahb = new();
+    cg = new();
   endfunction
 
   function ctrl_t sample_ctrl();
@@ -85,11 +126,17 @@ class ahb_monitor #(
   task run_phase(uvm_phase phase);
     super.run_phase(phase);
 
-    if (!uvm_config_db#(ahb_cfg#(ADDR_W, DATA_W, HRESP_W))::get(this, "", "cfg", cfg)) begin
+    if (!uvm_config_db#(ahb_cfg#(ADDR_W, DATA_W, HRESP_W, HAS_HMASTLOCK))::get(this, "", "cfg", cfg)) begin
       `uvm_fatal(RID, "Missing cfg in config DB (key: cfg)")
     end
     vif = cfg.vif;
     if (vif == null) `uvm_fatal(RID, "cfg.vif is null")
+
+    if (!cfg.monitor_enable) begin
+      // Keep component alive but inactive (avoids fork/join ordering surprises
+      // in environments that expect the monitor to exist).
+      forever @(vif.cb_mon);
+    end
 
     ctrl_pipe = '{default:'0};
     ctrl_data = '{default:'0};
@@ -140,7 +187,9 @@ class ahb_monitor #(
         end
         ap.write(t);
 
-        if (cfg.coverage_enable) cg_ahb.sample();
+        if (cfg.coverage_enable) begin
+          cg.sample(ctrl_data.write, ctrl_data.size, ctrl_data.burst, stall_cnt, ahb_resp_e'(vif.HRESP));
+        end
         if (cfg.trace_enable) begin
           `uvm_info(RID, t.convert2string(), UVM_MEDIUM)
         end

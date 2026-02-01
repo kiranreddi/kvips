@@ -86,6 +86,7 @@ class apb_random_stress_seq #(
   rand int unsigned span_bytes = 4096;
   rand int unsigned wr_pct = 50; // 0..100
   rand bit enable_apb4 = 1'b1;
+  rand bit allow_zero_strobes = 1'b0;
 
   function new(string name = "apb_random_stress_seq");
     super.new(name);
@@ -96,7 +97,7 @@ class apb_random_stress_seq #(
     s = '1;
     if (!enable_apb4) return s;
     s = $urandom();
-    if (s == '0) s = '1;
+    if (!allow_zero_strobes && (s == '0)) s = '1;
     return s;
   endfunction
 

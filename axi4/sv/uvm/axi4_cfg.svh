@@ -95,6 +95,15 @@ class axi4_agent_cfg #(
     super.new(name);
   endfunction
 
+  function void apply_plusargs();
+    int unsigned v;
+    if ($value$plusargs("KVIPS_AXI4_COV=%d", v)) coverage_enable = (v != 0);
+    if ($value$plusargs("KVIPS_COV=%d", v)) coverage_enable = (v != 0);
+    if ($test$plusargs("KVIPS_FCOV")) coverage_enable = 1'b1;
+    if ($test$plusargs("KVIPS_AXI4_TRACE")) trace_enable = 1'b1;
+    if ($test$plusargs("KVIPS_AXI4_TR_RECORD")) tr_record_enable = 1'b1;
+  endfunction
+
   function void set_role_master();
     is_master = 1'b1;
     is_slave  = 1'b0;

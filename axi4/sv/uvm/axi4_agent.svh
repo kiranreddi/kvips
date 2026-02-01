@@ -32,9 +32,12 @@ class axi4_agent #(
     if (!uvm_config_db#(axi4_agent_cfg#(ADDR_W, DATA_W, ID_W, USER_W))::get(this, "", "cfg", cfg)) begin
       `uvm_fatal(RID, "Missing cfg in config DB (key: cfg)")
     end
+    cfg.apply_plusargs();
 
-    monitor = axi4_monitor#(ADDR_W, DATA_W, ID_W, USER_W)::type_id::create("monitor", this);
-    uvm_config_db#(axi4_agent_cfg#(ADDR_W, DATA_W, ID_W, USER_W))::set(this, "monitor", "cfg", cfg);
+    if (cfg.monitor_enable) begin
+      monitor = axi4_monitor#(ADDR_W, DATA_W, ID_W, USER_W)::type_id::create("monitor", this);
+      uvm_config_db#(axi4_agent_cfg#(ADDR_W, DATA_W, ID_W, USER_W))::set(this, "monitor", "cfg", cfg);
+    end
 
     if (cfg.is_master) begin
       sequencer = axi4_sequencer#(ADDR_W, DATA_W, ID_W, USER_W)::type_id::create("sequencer", this);

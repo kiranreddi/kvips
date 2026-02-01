@@ -98,6 +98,47 @@ Explore our collection of professional-grade SystemVerilog UVM verification IPs,
   </div>
 </div>
 
+<!-- AHB VIP -->
+<div class="card">
+  <div class="card-header">
+    <div class="card-icon">🔗</div>
+    <div>
+      <h3 class="card-title" style="margin: 0;">AHB (AHB-Lite/Full)</h3>
+      <div style="margin-top: 0.5rem;">
+        <span class="badge badge-warning">Beta v0.1</span>
+        <span class="badge badge-primary">UVM 1.2</span>
+      </div>
+    </div>
+  </div>
+  <div class="card-body">
+    <h4>Advanced High-performance Bus</h4>
+    <p>Master/slave VIP for AMBA AHB-Lite and AHB Full, supporting burst transfers and pipelined operation.</p>
+    
+    <h5>Key Features:</h5>
+    <ul>
+      <li>Single-image AHB-Lite/Full support (runtime switch)</li>
+      <li>INCR4/8/16 and WRAP4/8/16 burst transfers</li>
+      <li>Variable HSIZE (byte to double-word)</li>
+      <li>Configurable wait states and stall handling</li>
+      <li>Error response injection (OKAY/ERROR)</li>
+      <li>Protocol compliance checking with SVA</li>
+      <li>Monitor-based scoreboard with coverage</li>
+    </ul>
+    
+    <h5>Validated On:</h5>
+    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem;">
+      <span class="badge badge-info">Questa 2025.3_2</span>
+      <span class="badge badge-info">VCS 2025.06_1</span>
+      <span class="badge badge-info">Xcelium 25.03.007</span>
+    </div>
+
+    <div style="display: flex; gap: 0.5rem; margin-top: 1.5rem;">
+      <a href="/docs/ahb-vip/" class="btn btn-primary" style="font-size: 0.875rem; padding: 0.5rem 1rem;">Documentation</a>
+      <a href="/docs/getting-started/" class="btn btn-secondary" style="font-size: 0.875rem; padding: 0.5rem 1rem;">Quick Start</a>
+    </div>
+  </div>
+</div>
+
 </div>
 
 ---

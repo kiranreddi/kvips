@@ -33,7 +33,18 @@ class ahb_base_seq #(
   endfunction
 
   function ahb_size_e rand_size();
-    int unsigned r = $urandom_range(0, 99);
+    int unsigned r;
+    int unsigned max_sz;
+    r = $urandom_range(0, 99);
+    max_sz = $clog2(DATA_W/8);
+    if (max_sz == 0) return AHB_SIZE_8;
+    if (max_sz == 1) return (r < 50) ? AHB_SIZE_8 : AHB_SIZE_16;
+    if (max_sz == 2) begin
+      if (r < 30) return AHB_SIZE_8;
+      if (r < 55) return AHB_SIZE_16;
+      return AHB_SIZE_32;
+    end
+    // DATA_W >= 64
     if (r < 30) return AHB_SIZE_8;
     if (r < 55) return AHB_SIZE_16;
     if (r < 90) return AHB_SIZE_32;

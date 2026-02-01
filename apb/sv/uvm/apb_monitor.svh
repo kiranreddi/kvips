@@ -31,25 +31,46 @@ class apb_monitor #(
   int unsigned cur_wait;
   item_t       cur_tr;
 
-  covergroup cov with function sample(bit write, int unsigned wait_cycles, bit slverr, logic [STRB_W-1:0] strb, logic [2:0] prot);
+  // Functional coverage:
+  // - Single covergroup supports both APB3 and APB4.
+  // - APB4-only coverpoints are sampled only when is_apb4==1, so APB3 runs
+  //   don't drag those bins down to 0%.
+  covergroup cov with function sample(
+    bit          is_apb4,
+    bit          write,
+    int unsigned wait_cycles,
+    bit          slverr,
+    int unsigned strb_pop,
+    logic [2:0]  prot
+  );
     option.per_instance = 1;
-    cp_wr: coverpoint write;
+
+    cp_mode: coverpoint is_apb4 {
+      option.weight = 0; // informational only; don't force APB3+APB4 in one instance
+      bins apb3 = {0};
+      bins apb4 = {1};
+    }
+    cp_wr:   coverpoint write;
     cp_wait: coverpoint wait_cycles {
-      bins w0  = {0};
-      bins w1  = {1};
+      bins w0   = {0};
+      bins w1   = {1};
       bins w2_3 = {[2:3]};
       bins w4_7 = {[4:7]};
       bins w8p  = {[8:$]};
     }
     cp_err: coverpoint slverr;
-    cp_strb_pop: coverpoint $countones(strb) {
+
+    cp_strb_pop: coverpoint strb_pop iff (is_apb4) {
       bins none   = {0};
       bins single = {1};
       bins some   = {[2:(STRB_W > 1) ? (STRB_W-1) : 1]};
       bins full   = {STRB_W};
     }
-    cp_prot: coverpoint prot;
-    cx_wr_err: cross cp_wr, cp_err;
+    cp_prot: coverpoint prot iff (is_apb4) {
+      bins all[] = {[0:7]};
+    }
+
+    cx_mode_wr_err: cross cp_mode, cp_wr, cp_err;
   endgroup
 
   `uvm_component_param_utils(apb_monitor#(ADDR_W, DATA_W, NSEL))
@@ -151,7 +172,14 @@ class apb_monitor #(
           if (cur_tr.write) sum_wr++; else sum_rd++;
           if (cur_tr.slverr) sum_err++;
 
-          if (cfg.coverage_enable) cov.sample(cur_tr.write, cur_tr.wait_cycles, cur_tr.slverr, cur_tr.strb, cur_tr.prot);
+          if (cfg.coverage_enable) begin
+            bit is_apb4;
+            int unsigned strb_pop;
+            is_apb4 = cfg.is_apb4();
+            // In APB3 mode, treat PSTRB as implicitly full.
+            strb_pop = is_apb4 ? $countones(cur_tr.strb) : STRB_W;
+            cov.sample(is_apb4, cur_tr.write, cur_tr.wait_cycles, cur_tr.slverr, strb_pop, cur_tr.prot);
+          end
           maybe_record(cur_tr, cur_tr.write ? "apb_write" : "apb_read");
           ap.write(cur_tr);
           if (cfg.trace_enable) `uvm_info(RID, {"MON txn:\n", cur_tr.sprint()}, UVM_LOW)

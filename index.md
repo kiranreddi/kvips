@@ -11,7 +11,7 @@ description: Industry-grade SystemVerilog UVM Verification IP Library. Protocol 
         <p class="hero-subtitle">Industry-grade SystemVerilog UVM verification components for modern semiconductor design verification</p>
         <div class="hero-buttons">
             <a href="{{ '/pages/docs/getting-started' | relative_url }}" class="btn btn-primary">Get Started</a>
-            <a href="{{ '/pages/docs/axi4-vip' | relative_url }}" class="btn btn-outline">Browse VIPs</a>
+            <a href="{{ '/pages/docs/vips' | relative_url }}" class="btn btn-outline">Browse VIPs</a>
             <a href="https://github.com/kiranreddi/kvips" class="btn btn-secondary" target="_blank" rel="noopener">View on GitHub</a>
         </div>
     </div>
@@ -104,6 +104,66 @@ description: Industry-grade SystemVerilog UVM Verification IP Library. Protocol 
                 </div>
             </div>
 
+            <!-- APB VIP Card -->
+            <div class="vip-card">
+                <div class="vip-card-header">
+                    <div class="vip-icon">📡</div>
+                    <div>
+                        <h3 class="vip-title">APB (APB3/APB4)</h3>
+                        <div class="badge-group">
+                            <span class="badge badge-warning">Beta</span>
+                            <span class="badge badge-gray">v0.1</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="vip-card-body">
+                    <p class="vip-description"><strong>AMBA APB3/APB4 Protocol VIP</strong></p>
+                    <ul class="vip-features">
+                        <li>Master & Slave agents for register access</li>
+                        <li>Single-image APB3/APB4 with runtime switch</li>
+                        <li>Configurable wait states (PREADY control)</li>
+                        <li>PPROT & PSTRB support (APB4)</li>
+                        <li>Error injection (PSLVERR)</li>
+                        <li>Byte-lane selective writes (APB4)</li>
+                        <li>Protocol assertions & scoreboard</li>
+                    </ul>
+                    <div class="vip-actions">
+                        <a href="{{ '/pages/docs/apb-vip' | relative_url }}" class="btn btn-primary btn-sm">Documentation</a>
+                        <a href="{{ '/pages/docs/getting-started' | relative_url }}" class="btn btn-secondary btn-sm">Quick Start</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AHB VIP Card -->
+            <div class="vip-card">
+                <div class="vip-card-header">
+                    <div class="vip-icon">🔗</div>
+                    <div>
+                        <h3 class="vip-title">AHB (AHB-Lite/Full)</h3>
+                        <div class="badge-group">
+                            <span class="badge badge-warning">Beta</span>
+                            <span class="badge badge-gray">v0.1</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="vip-card-body">
+                    <p class="vip-description"><strong>AMBA AHB-Lite/Full Protocol VIP</strong></p>
+                    <ul class="vip-features">
+                        <li>Master & Slave agents with burst support</li>
+                        <li>Runtime AHB-Lite/Full mode selection</li>
+                        <li>INCR/WRAP bursts with stall handling</li>
+                        <li>Variable HSIZE (byte to dword)</li>
+                        <li>Error injection (OKAY/ERROR responses)</li>
+                        <li>Configurable wait states</li>
+                        <li>Comprehensive assertions & coverage</li>
+                    </ul>
+                    <div class="vip-actions">
+                        <a href="{{ '/pages/docs/ahb-vip' | relative_url }}" class="btn btn-primary btn-sm">Documentation</a>
+                        <a href="{{ '/pages/docs/getting-started' | relative_url }}" class="btn btn-secondary btn-sm">Quick Start</a>
+                    </div>
+                </div>
+            </div>
+
             <!-- Placeholder for Future VIPs -->
             <div class="vip-card vip-card-coming-soon">
                 <div class="vip-card-header">
@@ -116,10 +176,11 @@ description: Industry-grade SystemVerilog UVM Verification IP Library. Protocol 
                 <div class="vip-card-body">
                     <p class="vip-description"><strong>Roadmap:</strong></p>
                     <ul class="vip-features">
-                        <li>PCIe (PCI Express)</li>
-                        <li>USB 2.0 / 3.0</li>
-                        <li>Ethernet (MAC/PHY)</li>
-                        <li>I2C, SPI, UART</li>
+                        <li>AXI-Lite (Q2 2026)</li>
+                        <li>AXI-Stream (Q3 2026)</li>
+                        <li>PCIe Gen3/4/5 (Q4 2026)</li>
+                        <li>USB 2.0/3.0 (2027)</li>
+                        <li>I2C, SPI, UART (Q3-Q4 2026)</li>
                     </ul>
                     <p class="contribution-note">
                         Contributions welcome! Check our <a href="https://github.com/kiranreddi/kvips/blob/main/CONTRIBUTING.md" target="_blank" rel="noopener">contribution guidelines</a>.
