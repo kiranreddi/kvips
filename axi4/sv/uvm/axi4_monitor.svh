@@ -15,10 +15,8 @@ class axi4_monitor #(
   localparam string RID = "AXI4_MON";
   localparam int unsigned STRB_W = (DATA_W/8);
 
-  typedef virtual interface axi4_if #(ADDR_W, DATA_W, ID_W, USER_W) axi4_vif_t;
-
   axi4_agent_cfg#(ADDR_W, DATA_W, ID_W, USER_W) cfg;
-  axi4_vif_t vif;
+  virtual interface axi4_if #(ADDR_W, DATA_W, ID_W, USER_W) vif;
 
 `ifdef VERILATOR
 `define AXI4_MON_CB  vif
