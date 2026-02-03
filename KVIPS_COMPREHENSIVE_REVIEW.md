@@ -231,7 +231,7 @@ endclass
 
 #### Documentation
 
-- **Main Documentation:** [pages/docs/axi4-vip.md](./pages/docs/axi4-vip.md)
+- **Main Documentation:** [pages/docs/axi4-vip.md](./docs/axi4-vip.md)
 - **Source Location:** `kvips/axi4/`
 - **Examples:** `kvips/axi4/examples/uvm_back2back/`
 - **Detailed Guides:**
@@ -343,7 +343,7 @@ endclass
 
 #### Documentation
 
-- **Main Documentation:** [pages/docs/apb-vip.md](./pages/docs/apb-vip.md)
+- **Main Documentation:** [pages/docs/apb-vip.md](./docs/apb-vip.md)
 - **Source Location:** `kvips/apb/`
 - **Examples:** `kvips/apb/examples/uvm_back2back/`
 - **Detailed Guides:**
@@ -454,7 +454,7 @@ endclass
 
 #### Documentation
 
-- **Main Documentation:** [pages/docs/ahb-vip.md](./pages/docs/ahb-vip.md)
+- **Main Documentation:** [pages/docs/ahb-vip.md](./docs/ahb-vip.md)
 - **Source Location:** `kvips/ahb/`
 - **Examples:** `kvips/ahb/examples/uvm_back2back/`
 - **Detailed Guides:**

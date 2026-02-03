@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ROOT="$(cd "$(dirname "$0")/../../../../.." && pwd)"
-SIM_DIR="${ROOT}/kvips/axi4/examples/uvm_back2back/sim"
+ROOT="$(cd "$(dirname "$0")" && git rev-parse --show-toplevel)"
+SIM_DIR="${ROOT}/axi4/examples/uvm_back2back/sim"
 OUT_DIR="${SIM_DIR}/out/verilator"
 TESTLIST="${SIM_DIR}/tests_questa.list"
 

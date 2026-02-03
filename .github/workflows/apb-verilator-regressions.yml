@@ -1,0 +1,51 @@
+name: APB Verilator Regressions
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'apb/**'
+      - 'common/**'
+      - 'third_party/uvm/**'
+      - '.github/workflows/apb-verilator-regressions.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'apb/**'
+      - 'common/**'
+      - 'third_party/uvm/**'
+
+jobs:
+  apb-regressions:
+    name: APB Regressions (Verilator)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Verilator
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y verilator ccache make autoconf g++ flex bison
+          verilator --version
+
+      - name: Run APB Regressions
+        run: |
+          cd apb/examples/uvm_back2back/sim
+          chmod +x run_verilator.sh regress_verilator.sh
+          # Make sure ROOT logic works. 
+          # In GHA, checkout usually puts things in $GITHUB_WORKSPACE.
+          # The scripts use relative paths up 5 times.
+          # If we are in apb/examples/uvm_back2back/sim, 5 times up is parent of $GITHUB_WORKSPACE.
+          # We need to fix the scripts or set ROOT.
+          
+          export VERILATOR_JOBS=$(nproc)
+          ./regress_verilator.sh
+
+      - name: Archive Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: apb-verilator-results
+          path: apb/examples/uvm_back2back/sim/out/verilator/

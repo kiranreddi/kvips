@@ -34,13 +34,13 @@ KVIPS is a comprehensive, production-ready verification IP suite built with Syst
 
 | Protocol | Status | Version | Description | Documentation |
 |----------|--------|---------|-------------|---------------|
-| **AXI4 Full** | ✅ Stable | v1.0 | Complete AMBA AXI4 master/slave agents with pipelined transactions, assertions, and scoreboard | [📖 AXI4 VIP Guide](https://kiranreddi.github.io/kvips/pages/docs/axi4-vip/) |
-| **APB** | 🧪 Beta | v0.1 | AMBA APB3/APB4 master/slave agents for register access (single-image, runtime APB3/APB4 switch) | [📖 APB VIP Guide](https://kiranreddi.github.io/kvips/pages/docs/apb-vip/) |
-| **AHB** | 🧪 Beta | v0.1 | AMBA AHB-Lite/AHB Full master/slave agents with stalls, bursts, assertions, coverage, scoreboard | [📖 AHB VIP Guide](https://kiranreddi.github.io/kvips/pages/docs/ahb-vip/) |
+| **AXI4 Full** | ✅ Stable | v1.0 | Complete AMBA AXI4 master/slave agents with pipelined transactions, assertions, and scoreboard | [📖 AXI4 VIP Guide](https://kiranreddi.github.io/kvips/docs/axi4-vip/) |
+| **APB** | 🧪 Beta | v0.1 | AMBA APB3/APB4 master/slave agents for register access (single-image, runtime APB3/APB4 switch) | [📖 APB VIP Guide](https://kiranreddi.github.io/kvips/docs/apb-vip/) |
+| **AHB** | 🧪 Beta | v0.1 | AMBA AHB-Lite/AHB Full master/slave agents with stalls, bursts, assertions, coverage, scoreboard | [📖 AHB VIP Guide](https://kiranreddi.github.io/kvips/docs/ahb-vip/) |
 | **PCIe** | 📋 Planned | - | PCIe Gen3/Gen4/Gen5 with TLP generation | - |
 | **USB 3.x** | 📋 Planned | - | USB 3.0/3.1/3.2 protocol layers | - |
 
-> 🗺️ Full roadmap available in [VIP Catalog](https://kiranreddi.github.io/kvips/pages/docs/vips/)
+> 🗺️ Full roadmap available in [VIP Catalog](https://kiranreddi.github.io/kvips/docs/vips/)
 
 ---
 
