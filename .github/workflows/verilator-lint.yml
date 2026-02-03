@@ -33,9 +33,11 @@ jobs:
           # Verilator does not fully support UVM; lint a portable subset (types/IF/assertions).
           docker run --rm -v "$PWD":/work -w /work verilator/verilator:v5.026 \
             verilator --lint-only --sv --language 1800-2017 -Wall -Wno-fatal -Wno-DECLFILENAME --bbox-unsup \
+              --top-module axi4_lint_top \
               -Icommon/sv \
               -Iaxi4/sv/pkg \
               -Iaxi4/sv/if \
+              common/sv/lint/axi4_lint_top.sv \
               axi4/sv/pkg/axi4_types_pkg.sv \
               axi4/sv/if/axi4_if.sv
 
