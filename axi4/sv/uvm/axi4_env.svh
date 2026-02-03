@@ -44,7 +44,9 @@ class axi4_env #(
   function void connect_phase(uvm_phase phase);
     super.connect_phase(phase);
     foreach (agents[i]) begin
-      agents[i].monitor.ap.connect(ap);
+      if (agents[i].monitor != null) begin
+        agents[i].monitor.ap.connect(ap);
+      end
     end
   endfunction
 

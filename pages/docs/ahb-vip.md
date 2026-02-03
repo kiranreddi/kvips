@@ -117,9 +117,17 @@ make vcs TEST=ahb_wait_state_test
 # Run stress test on Xcelium
 make xcelium TEST=ahb_random_stress_test
 
+# Run on Verilator
+make verilator TEST=ahb_smoke_test
+
+# Full Verilator regression
+make regress-verilator
+
 # Run with LSF (if tools require job scheduler)
 make questa USE_LSF=1 TEST=ahb_smoke_test
 ```
+
+> 📝 Note: SVA assertions are skipped under Verilator.
 
 ### Available Test Cases
 

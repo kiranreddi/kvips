@@ -54,7 +54,7 @@ class apb_master_driver #(
     logic [2:0] v;
     if (!cfg.is_apb4()) return 3'b000;
     v = cfg.default_pprot;
-    if (cfg.randomize_pprot) v = $urandom_range(0, 7);
+    if (cfg.randomize_pprot) v = $urandom_range(0, 7)[2:0];
     if (tr.prot !== 'x) v = tr.prot;
     return v;
   endfunction
@@ -64,7 +64,7 @@ class apb_master_driver #(
     v = '1;
     if (!cfg.is_apb4()) return v;
     v = cfg.default_pstrb;
-    if (cfg.randomize_pstrb) v = $urandom();
+    if (cfg.randomize_pstrb) v = $urandom()[STRB_W-1:0];
     if (tr.strb !== 'x) v = tr.strb;
     return v;
   endfunction

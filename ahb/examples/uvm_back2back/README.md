@@ -10,6 +10,7 @@ From `kvips/ahb/examples/`:
 - Run (Questa): `make questa TEST=ahb_smoke_test SEED=1`
 - Run (VCS): `make vcs TEST=ahb_smoke_test SEED=1`
 - Run (Xcelium): `make xcelium TEST=ahb_smoke_test SEED=1`
+- Run (Verilator): `make verilator TEST=ahb_smoke_test`
 
 ## Protocol mode
 
@@ -21,4 +22,10 @@ Select mode at runtime:
 
 - This example instantiates one master agent and one slave agent on a single `ahb_if`.
 - Data integrity is checked with a lightweight scoreboard (monitor-based reference model).
+
+## Verilator regression
+
+From `kvips/ahb/examples/`:
+
+- `make regress-verilator`
 

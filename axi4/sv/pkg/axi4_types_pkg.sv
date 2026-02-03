@@ -58,7 +58,7 @@ package axi4_types_pkg;
   );
     longint unsigned offset;
     longint unsigned total;
-    offset = start_addr & 12'hFFF;
+    offset = start_addr & longint'(12'hFFF);
     total  = axi4_total_bytes(size, len);
     return ((offset + total) > 4096);
   endfunction

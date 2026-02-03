@@ -95,6 +95,9 @@ class axi4_monitor #(
   // -------------------------
   // Optional functional coverage (portable subset)
   // -------------------------
+`ifdef VERILATOR
+  /* verilator lint_off COVERIGN */
+`endif
   covergroup cov with function sample(
     bit          is_write,
     axi4_burst_e burst,
@@ -169,6 +172,9 @@ class axi4_monitor #(
       ignore_bins narrow_full = binsof(cp_narrow) intersect {1} && binsof(cp_strb_pop.full);
     }
   endgroup
+`ifdef VERILATOR
+  /* verilator lint_on COVERIGN */
+`endif
 
   `uvm_component_param_utils(axi4_monitor#(ADDR_W, DATA_W, ID_W, USER_W))
 
@@ -294,8 +300,11 @@ class axi4_monitor #(
       if (vif.mon_cb.arvalid && !vif.mon_cb.arready) stat_ar_stall++;
       if (vif.mon_cb.rvalid  && !vif.mon_cb.rready)  stat_r_stall++;
 
-      if ((cfg.stats_window_cycles != 0) && ((stat_cycles % cfg.stats_window_cycles) == 0)) begin
+      if (cfg.stats_window_cycles != 0) begin
+        longint unsigned win_size;
         longint unsigned win_cycles;
+        win_size = longint'(cfg.stats_window_cycles);
+        if ((stat_cycles % win_size) == 0) begin
         win_cycles = stat_cycles - last_cycles;
         `uvm_info(RID,
           $sformatf("AXI4 STATS WINDOW cycles=%0d AW=%0d W=%0d B=%0d AR=%0d R=%0d | stalls AW=%0d W=%0d B=%0d AR=%0d R=%0d",
@@ -316,6 +325,7 @@ class axi4_monitor #(
         last_b_stall  = stat_b_stall;
         last_ar_stall = stat_ar_stall;
         last_r_stall  = stat_r_stall;
+        end
       end
     end
   endtask

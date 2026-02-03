@@ -43,7 +43,7 @@ class apb_scoreboard #(
   endfunction
 
   function automatic longint unsigned word_idx(logic [ADDR_W-1:0] addr);
-    return longint'(addr) / STRB_W;
+    return longint'(addr) / longint'(STRB_W);
   endfunction
 
   function automatic logic [DATA_W-1:0] apply_strb(

@@ -21,6 +21,11 @@ class apb_base_seq #(
   task automatic apb_write(input logic [ADDR_W-1:0] addr, input logic [DATA_W-1:0] data,
                            input logic [STRB_W-1:0] strb = '1, input logic [2:0] prot = 3'b000);
     apb_item#(ADDR_W, DATA_W) tr;
+`ifdef VERILATOR
+    /* verilator lint_off WIDTHEXPAND */
+    /* verilator lint_off WIDTHTRUNC */
+    /* verilator lint_off CASTCONST */
+`endif
     `uvm_create(tr)
     tr.write = 1'b1;
     tr.addr  = addr;
@@ -28,17 +33,32 @@ class apb_base_seq #(
     tr.strb  = strb;
     tr.prot  = prot;
     `uvm_send(tr)
+`ifdef VERILATOR
+    /* verilator lint_on CASTCONST */
+    /* verilator lint_on WIDTHTRUNC */
+    /* verilator lint_on WIDTHEXPAND */
+`endif
   endtask
 
   task automatic apb_read(input logic [ADDR_W-1:0] addr, output logic [DATA_W-1:0] data,
                           input logic [2:0] prot = 3'b000);
     apb_item#(ADDR_W, DATA_W) tr;
+`ifdef VERILATOR
+    /* verilator lint_off WIDTHEXPAND */
+    /* verilator lint_off WIDTHTRUNC */
+    /* verilator lint_off CASTCONST */
+`endif
     `uvm_create(tr)
     tr.write = 1'b0;
     tr.addr  = addr;
     tr.prot  = prot;
     `uvm_send(tr)
     data = tr.rdata;
+`ifdef VERILATOR
+    /* verilator lint_on CASTCONST */
+    /* verilator lint_on WIDTHTRUNC */
+    /* verilator lint_on WIDTHEXPAND */
+`endif
   endtask
 
   `uvm_object_param_utils(apb_base_seq#(ADDR_W, DATA_W))
@@ -50,6 +70,8 @@ class apb_smoke_rw_seq #(
   int DATA_W = 32
 ) extends apb_base_seq#(ADDR_W, DATA_W);
   localparam int STRB_W = (DATA_W/8);
+  typedef logic [ADDR_W-1:0] addr_t;
+  typedef logic [DATA_W-1:0] data_t;
 
   rand int unsigned num_txns = 10;
   rand logic [ADDR_W-1:0] base_addr = '0;
@@ -63,8 +85,8 @@ class apb_smoke_rw_seq #(
       logic [ADDR_W-1:0] a;
       logic [DATA_W-1:0] w;
       logic [DATA_W-1:0] r;
-      a = base_addr + (i * STRB_W);
-      w = $urandom();
+      a = base_addr + addr_t'(i * STRB_W);
+      w = data_t'($urandom());
       apb_write(a, w, '1, 3'b000);
       apb_read(a, r, 3'b000);
       if (r !== w) `uvm_error("APB_SCB", $sformatf("SMOKE mismatch addr=0x%0h exp=0x%0h got=0x%0h", a, w, r))
@@ -80,6 +102,10 @@ class apb_random_stress_seq #(
   int DATA_W = 32
 ) extends apb_base_seq#(ADDR_W, DATA_W);
   localparam int STRB_W = (DATA_W/8);
+  typedef logic [ADDR_W-1:0] addr_t;
+  typedef logic [DATA_W-1:0] data_t;
+  typedef logic [STRB_W-1:0] strb_t;
+  typedef logic [2:0] prot_t;
 
   rand int unsigned num_txns = 1000;
   rand logic [ADDR_W-1:0] base_addr = '0;
@@ -96,7 +122,7 @@ class apb_random_stress_seq #(
     logic [STRB_W-1:0] s;
     s = '1;
     if (!enable_apb4) return s;
-    s = $urandom();
+    s = strb_t'($urandom());
     if (!allow_zero_strobes && (s == '0)) s = '1;
     return s;
   endfunction
@@ -110,13 +136,13 @@ class apb_random_stress_seq #(
       int unsigned off;
       off = $urandom_range(0, (span_bytes > STRB_W) ? (span_bytes-STRB_W) : 0);
       off = (off / STRB_W) * STRB_W;
-      a = base_addr + off;
+      a = base_addr + addr_t'(off);
       do_wr = ($urandom_range(0, 99) < wr_pct);
       if (do_wr) begin
-        w = $urandom();
-        apb_write(a, w, rand_strb(), $urandom_range(0, 7));
+        w = data_t'($urandom());
+        apb_write(a, w, rand_strb(), prot_t'($urandom_range(0, 7)));
       end else begin
-        apb_read(a, r, $urandom_range(0, 7));
+        apb_read(a, r, prot_t'($urandom_range(0, 7)));
       end
     end
   endtask

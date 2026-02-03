@@ -18,6 +18,7 @@ Before you begin, ensure you have:
 <li>Siemens Questa 2024.1 or later (validated: 2025.3_2)</li>
 <li>Synopsys VCS 2024.12 or later (validated: 2025.06_1)</li>
 <li>Cadence Xcelium 24.09 or later (validated: 25.03.007)</li>
+<li>Verilator 5.0 or later (validated: 5.045)</li>
 </ul>
 </div>
 
@@ -97,6 +98,21 @@ cd axi4/examples/uvm_back2back/sim
 # With waveforms (VCD)
 ./run_xcelium.sh +UVM_TESTNAME=axi4_b2b_test +KVIPS_WAVES
 ```
+
+#### Option D: Verilator (Open Source)
+
+```bash
+cd axi4/examples/uvm_back2back/sim
+
+# Single test
+./run_verilator.sh +UVM_TESTNAME=axi4_b2b_test
+
+# Full regression
+cd ../../..
+make -C kvips/axi4/examples regress-verilator
+```
+
+> 📝 Note: SVA assertions are skipped under Verilator.
 
 ### Step 3: Verify Success
 

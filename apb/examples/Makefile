@@ -1,4 +1,4 @@
-.PHONY: help list-tests questa questa-waves vcs xcelium regress-questa regress-vcs regress-xcelium fsdbreport clean
+.PHONY: help list-tests questa questa-waves vcs xcelium verilator regress-questa regress-vcs regress-xcelium regress-verilator fsdbreport clean
 
 SIM_DIR := uvm_back2back/sim
 SIM_DIR_ABS := $(abspath $(SIM_DIR))
@@ -32,9 +32,11 @@ help:
 	@echo "  make questa-waves   (Questa FSDB) same vars as 'questa' [USE_LSF=1]"
 	@echo "  make vcs            TEST=<name> SEED=<n> ... [USE_LSF=1]"
 	@echo "  make xcelium        TEST=<name> SEED=<n> ... [USE_LSF=1]"
+	@echo "  make verilator      TEST=<name> SEED=<n> ..."
 	@echo "  make regress-questa PLUSARGS='<...>'"
 	@echo "  make regress-vcs    PLUSARGS='<...>'"
 	@echo "  make regress-xcelium PLUSARGS='<...>'"
+	@echo "  make regress-verilator PLUSARGS='<...>'"
 	@echo "  make fsdbreport     FSDB=<path> [BT=<time>] [ET=<time>]"
 	@echo "  make clean"
 
@@ -53,6 +55,9 @@ vcs:
 xcelium:
 	@$(RUN_PREFIX) $(SIM_DIR_ABS)/run_xcelium.sh $(COMMON_PLUSARGS)
 
+verilator:
+	@$(SIM_DIR_ABS)/run_verilator.sh $(COMMON_PLUSARGS)
+
 regress-questa:
 	@$(RUN_PREFIX) $(SIM_DIR_ABS)/regress_questa_lsf.sh $(PLUSARGS)
 
@@ -61,6 +66,9 @@ regress-vcs:
 
 regress-xcelium:
 	@$(RUN_PREFIX) $(SIM_DIR_ABS)/regress_xcelium_lsf.sh $(PLUSARGS)
+
+regress-verilator:
+	@$(SIM_DIR_ABS)/regress_verilator.sh $(PLUSARGS)
 
 fsdbreport:
 	@if [ -z "$(FSDB)" ]; then echo "ERROR: FSDB=<path> required"; exit 2; fi

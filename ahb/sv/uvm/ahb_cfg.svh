@@ -114,6 +114,10 @@ class ahb_cfg #(
     return (addr == base_addr);
   endfunction
 
+`ifdef VERILATOR
+  /* verilator lint_off WIDTHEXPAND */
+  /* verilator lint_off WIDTHTRUNC */
+`endif
   `uvm_object_param_utils_begin(ahb_cfg#(ADDR_W, DATA_W, HRESP_W, HAS_HMASTLOCK))
     `uvm_field_enum(ahb_mode_e, mode, UVM_DEFAULT)
     `uvm_field_int(single_slave_mode, UVM_DEFAULT)
@@ -144,6 +148,10 @@ class ahb_cfg #(
     `uvm_field_int(tr_record_enable, UVM_DEFAULT)
     `uvm_field_string(tr_stream_name, UVM_DEFAULT)
   `uvm_object_utils_end
+`ifdef VERILATOR
+  /* verilator lint_on WIDTHTRUNC */
+  /* verilator lint_on WIDTHEXPAND */
+`endif
 endclass
 
 // Agent config wrapper (role + active/passive)
@@ -174,12 +182,20 @@ class ahb_agent_cfg #(
     is_slave  = 1'b1;
   endfunction
 
+`ifdef VERILATOR
+  /* verilator lint_off WIDTHEXPAND */
+  /* verilator lint_off WIDTHTRUNC */
+`endif
   `uvm_object_param_utils_begin(ahb_agent_cfg#(ADDR_W, DATA_W, HRESP_W, HAS_HMASTLOCK))
     `uvm_field_object(cfg, UVM_DEFAULT)
     `uvm_field_int(is_master, UVM_DEFAULT)
     `uvm_field_int(is_slave, UVM_DEFAULT)
     `uvm_field_enum(uvm_active_passive_enum, is_active, UVM_DEFAULT)
   `uvm_object_utils_end
+`ifdef VERILATOR
+  /* verilator lint_on WIDTHTRUNC */
+  /* verilator lint_on WIDTHEXPAND */
+`endif
 endclass
 
 class ahb_env_cfg #(
@@ -199,9 +215,17 @@ class ahb_env_cfg #(
     agent_cfgs.push_back(c);
   endfunction
 
+`ifdef VERILATOR
+  /* verilator lint_off WIDTHEXPAND */
+  /* verilator lint_off WIDTHTRUNC */
+`endif
   `uvm_object_param_utils_begin(ahb_env_cfg#(ADDR_W, DATA_W, HRESP_W, HAS_HMASTLOCK))
     `uvm_field_queue_object(agent_cfgs, UVM_DEFAULT)
   `uvm_object_utils_end
+`ifdef VERILATOR
+  /* verilator lint_on WIDTHTRUNC */
+  /* verilator lint_on WIDTHEXPAND */
+`endif
 endclass
 
 `endif // KVIPS_AHB_CFG_SVH

@@ -149,7 +149,9 @@ interface axi4_if #(
   // Assertions (included here for widest simulator compatibility)
   // -------------------------
 `ifndef KVIPS_AXI4_NO_ASSERTIONS
+  `ifndef VERILATOR
   `include "axi4_if_sva.svh"
+  `endif
 `endif
 
 endinterface

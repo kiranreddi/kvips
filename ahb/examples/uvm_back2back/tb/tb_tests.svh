@@ -1,6 +1,19 @@
 `ifndef KVIPS_AHB_EX_TB_TESTS_SVH
 `define KVIPS_AHB_EX_TB_TESTS_SVH
 
+class ahb_objtn_clear_catcher extends uvm_report_catcher;
+  function new(string name = "ahb_objtn_clear_catcher");
+    super.new(name);
+  endfunction
+
+  virtual function action_e catch();
+    if (get_id() == "OBJTN_CLEAR") begin
+      return CAUGHT;
+    end
+    return THROW;
+  endfunction
+endclass
+
 class ahb_b2b_base_test extends uvm_test;
   `uvm_component_utils(ahb_b2b_base_test)
 
@@ -27,6 +40,30 @@ class ahb_b2b_base_test extends uvm_test;
 
   function void build_phase(uvm_phase phase);
     super.build_phase(phase);
+
+`ifdef VERILATOR
+    uvm_root::get().set_report_severity_id_action(UVM_WARNING, "OBJTN_CLEAR", UVM_NO_ACTION);
+  uvm_root::get().set_report_id_action("OBJTN_CLEAR", UVM_NO_ACTION);
+    begin
+      uvm_phase run_phase;
+      uvm_objection run_obj;
+      run_phase = uvm_run_phase::get();
+      run_obj = (run_phase == null) ? null : run_phase.get_objection();
+      if (run_obj != null) begin
+        run_obj.set_report_severity_id_action(UVM_WARNING, "OBJTN_CLEAR", UVM_NO_ACTION);
+        run_obj.set_report_id_action("OBJTN_CLEAR", UVM_NO_ACTION);
+      end
+    end
+    begin
+      ahb_objtn_clear_catcher c;
+      c = new();
+      uvm_report_cb::add(null, c);
+    end
+`endif
+  `ifdef UVM_NO_DPI
+    uvm_root::get().set_report_severity_id_action(UVM_WARNING, "UVM/COMP/NAME", UVM_NO_ACTION);
+    uvm_root::get().set_report_severity_id_action(UVM_INFO, "UVM/COMP/NAMECHECK", UVM_NO_ACTION);
+  `endif
 
     if (!uvm_config_db#(ahb_vif_t)::get(this, "", "vif", vif)) begin
       `uvm_fatal("AHB_TB", "Missing vif in config DB (key: vif)")

@@ -74,6 +74,10 @@ class ahb_item #(
                      write ? "WRITE" : "READ", addr, size, burst, beats);
   endfunction
 
+`ifdef VERILATOR
+  /* verilator lint_off WIDTHEXPAND */
+  /* verilator lint_off WIDTHTRUNC */
+`endif
   `uvm_object_param_utils_begin(ahb_item#(ADDR_W, DATA_W, HRESP_W))
     `uvm_field_int(write, UVM_DEFAULT)
     `uvm_field_int(addr, UVM_DEFAULT)
@@ -87,6 +91,10 @@ class ahb_item #(
     `uvm_field_array_int(wait_cycles, UVM_DEFAULT | UVM_NOCOMPARE)
     `uvm_field_array_int(resp, UVM_DEFAULT | UVM_NOCOMPARE)
   `uvm_object_utils_end
+`ifdef VERILATOR
+  /* verilator lint_on WIDTHTRUNC */
+  /* verilator lint_on WIDTHEXPAND */
+`endif
 endclass
 
 `endif // KVIPS_AHB_TRANSACTION_SVH

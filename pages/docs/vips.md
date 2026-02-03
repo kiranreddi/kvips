@@ -50,6 +50,7 @@ Explore our collection of professional-grade SystemVerilog UVM verification IPs,
       <span class="badge badge-info">Questa 2025.3_2</span>
       <span class="badge badge-info">VCS 2025.06_1</span>
       <span class="badge badge-info">Xcelium 25.03.007</span>
+      <span class="badge badge-info">Verilator 5.x</span>
     </div>
     
     <div style="display: flex; gap: 0.5rem; margin-top: 1.5rem;">
@@ -89,6 +90,7 @@ Explore our collection of professional-grade SystemVerilog UVM verification IPs,
       <span class="badge badge-info">Questa 2025.3_2</span>
       <span class="badge badge-info">VCS 2025.06_1</span>
       <span class="badge badge-info">Xcelium 25.03.007</span>
+      <span class="badge badge-info">Verilator 5.x</span>
     </div>
 
     <div style="display: flex; gap: 0.5rem; margin-top: 1.5rem;">
@@ -130,6 +132,7 @@ Explore our collection of professional-grade SystemVerilog UVM verification IPs,
       <span class="badge badge-info">Questa 2025.3_2</span>
       <span class="badge badge-info">VCS 2025.06_1</span>
       <span class="badge badge-info">Xcelium 25.03.007</span>
+      <span class="badge badge-info">Verilator 5.x</span>
     </div>
 
     <div style="display: flex; gap: 0.5rem; margin-top: 1.5rem;">

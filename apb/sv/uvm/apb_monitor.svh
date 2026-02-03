@@ -35,6 +35,9 @@ class apb_monitor #(
   // - Single covergroup supports both APB3 and APB4.
   // - APB4-only coverpoints are sampled only when is_apb4==1, so APB3 runs
   //   don't drag those bins down to 0%.
+`ifdef VERILATOR
+  /* verilator lint_off COVERIGN */
+`endif
   covergroup cov with function sample(
     bit          is_apb4,
     bit          write,
@@ -72,6 +75,9 @@ class apb_monitor #(
 
     cx_mode_wr_err: cross cp_mode, cp_wr, cp_err;
   endgroup
+`ifdef VERILATOR
+  /* verilator lint_on COVERIGN */
+`endif
 
   `uvm_component_param_utils(apb_monitor#(ADDR_W, DATA_W, NSEL))
 

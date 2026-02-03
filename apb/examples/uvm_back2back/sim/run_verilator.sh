@@ -1,0 +1,126 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "$0")/../../../../.." && pwd)"
+OUT="${ROOT}/kvips/apb/examples/uvm_back2back/sim/out/verilator"
+mkdir -p "${OUT}"
+
+ORIG_FILELIST="${ROOT}/kvips/apb/examples/uvm_back2back/sim/filelist.f"
+ABS_FILELIST="${OUT}/filelist.abs.f"
+
+UVM_TARBALL_URL="https://www.accellera.org/images/downloads/standards/uvm/Accellera-1800.2-2017-1.0.tar.gz"
+UVM_BASE="${ROOT}/kvips/third_party/uvm"
+UVM_SRC_DEFAULT="${UVM_BASE}/1800.2-2017-1.0/src"
+
+make_abs_filelist() {
+  local in="$1"
+  local out="$2"
+  : >"${out}"
+  while IFS= read -r line || [[ -n "${line}" ]]; do
+    case "${line}" in
+      ""|\#*)
+        printf '%s\n' "${line}" >>"${out}"
+        ;;
+      +incdir+*)
+        p="${line#'+incdir+'}"
+        if [[ "${p}" = /* ]]; then
+          printf '%s\n' "${line}" >>"${out}"
+        else
+          printf '+incdir+%s\n' "${ROOT}/${p}" >>"${out}"
+        fi
+        ;;
+      +*|-*)
+        printf '%s\n' "${line}" >>"${out}"
+        ;;
+      *)
+        if [[ "${line}" = /* ]]; then
+          printf '%s\n' "${line}" >>"${out}"
+        else
+          printf '%s\n' "${ROOT}/${line}" >>"${out}"
+        fi
+        ;;
+    esac
+  done <"${in}"
+}
+
+ensure_uvm() {
+  if [[ -n "${UVM_HOME:-}" ]]; then
+    return 0
+  fi
+  if [[ -d "${UVM_SRC_DEFAULT}" ]]; then
+    export UVM_HOME="${UVM_SRC_DEFAULT}"
+    return 0
+  fi
+
+  mkdir -p "${UVM_BASE}"
+  local tarball="${UVM_BASE}/Accellera-1800.2-2017-1.0.tar.gz"
+  if [[ ! -f "${tarball}" ]]; then
+    echo "Downloading UVM from ${UVM_TARBALL_URL}" >&2
+    curl -L -o "${tarball}" "${UVM_TARBALL_URL}"
+  fi
+  echo "Extracting UVM into ${UVM_BASE}" >&2
+  tar -xvzf "${tarball}" -C "${UVM_BASE}"
+  export UVM_HOME="${UVM_SRC_DEFAULT}"
+}
+
+if [[ ! -f "${ORIG_FILELIST}" ]]; then
+  echo "ERROR: missing filelist: ${ORIG_FILELIST}"
+  exit 2
+fi
+
+ensure_uvm
+if [[ ! -d "${UVM_HOME}" ]]; then
+  echo "ERROR: UVM_HOME not found: ${UVM_HOME}" >&2
+  exit 2
+fi
+
+make_abs_filelist "${ORIG_FILELIST}" "${ABS_FILELIST}"
+
+VERILATOR_BIN="${VERILATOR_BIN:-verilator}"
+if ! command -v "${VERILATOR_BIN}" >/dev/null 2>&1; then
+  echo "ERROR: '${VERILATOR_BIN}' not found on PATH." >&2
+  exit 127
+fi
+
+if [[ -z "${VERILATOR_ROOT:-}" ]]; then
+  VERILATOR_ROOT="$(cd "$(dirname "${VERILATOR_BIN}")/.." && pwd)"
+  export VERILATOR_ROOT
+fi
+
+cd "${OUT}"
+
+REUSE_BUILD="${VERILATOR_REUSE_BUILD:-0}"
+if [[ "${REUSE_BUILD}" != "1" ]]; then
+  rm -rf obj_dir *.log 2>/dev/null || true
+fi
+
+JOBS="${VERILATOR_JOBS:-1}"
+
+BIN="${OUT}/obj_dir/Vtb_top"
+if [[ "${REUSE_BUILD}" != "1" || ! -x "${BIN}" ]]; then
+  ${VERILATOR_BIN} -sv -Wno-fatal -Wno-TIMESCALEMOD --timing --binary -j "${JOBS}" \
+    -CFLAGS "-Wno-deprecated-declarations" \
+    --top-module tb_top \
+    +incdir+"${UVM_HOME}" \
+    +define+UVM_NO_DPI \
+    "${UVM_HOME}/uvm_pkg.sv" \
+    -f "${ABS_FILELIST}" \
+    -o Vtb_top 2>&1 | tee "${OUT}/compile.log"
+fi
+
+if [[ ! -x "${BIN}" ]]; then
+  echo "ERROR: Vtb_top not produced; see ${OUT}/compile.log" >&2
+  exit 2
+fi
+
+EXTRA_ARGS=("$@")
+HAVE_TESTNAME=0
+HAVE_VERBOSITY=0
+for a in "${EXTRA_ARGS[@]}"; do
+  [[ "$a" == +UVM_TESTNAME=* ]] && HAVE_TESTNAME=1
+  [[ "$a" == +UVM_VERBOSITY=* ]] && HAVE_VERBOSITY=1
+done
+[[ "$HAVE_TESTNAME" -eq 0 ]] && EXTRA_ARGS+=("+UVM_TESTNAME=apb_b2b_smoke_test")
+[[ "$HAVE_VERBOSITY" -eq 0 ]] && EXTRA_ARGS+=("+UVM_VERBOSITY=UVM_LOW")
+
+"${BIN}" "${EXTRA_ARGS[@]}" | tee "${OUT}/run.log"

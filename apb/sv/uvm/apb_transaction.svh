@@ -29,6 +29,10 @@ class apb_item #(
     super.new(name);
   endfunction
 
+`ifdef VERILATOR
+  /* verilator lint_off WIDTHEXPAND */
+  /* verilator lint_off WIDTHTRUNC */
+`endif
   `uvm_object_param_utils_begin(apb_item#(ADDR_W, DATA_W))
     `uvm_field_int(write, UVM_DEFAULT)
     `uvm_field_int(addr,  UVM_DEFAULT)
@@ -40,6 +44,10 @@ class apb_item #(
     `uvm_field_enum(apb_resp_e, resp, UVM_DEFAULT)
     `uvm_field_int(wait_cycles, UVM_DEFAULT)
   `uvm_object_utils_end
+`ifdef VERILATOR
+  /* verilator lint_on WIDTHTRUNC */
+  /* verilator lint_on WIDTHEXPAND */
+`endif
 
 endclass
 
