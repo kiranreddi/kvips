@@ -13,7 +13,7 @@ permalink: /docs/apb-vip/
 Professional-grade AMBA APB3/APB4 verification component for low-bandwidth peripheral and register access verification
 </p>
 <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 1.5rem;">
-<span class="badge badge-warning">Beta v0.1</span>
+<span class="badge badge-success">Stable v1.0</span>
 <span class="badge badge-info">UVM 1.1d/1.2</span>
 <span class="badge badge-primary">IEEE 1800</span>
 <span class="badge badge-success">Single Image APB3/APB4</span>

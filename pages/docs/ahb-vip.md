@@ -13,10 +13,10 @@ permalink: /docs/ahb-vip/
 Professional-grade AMBA AHB verification component supporting both AHB-Lite and AHB Full with master/slave agents, protocol checkers, and built-in scoreboard
 </p>
 <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 1.5rem;">
-<span class="badge badge-warning">Beta v0.1</span>
+<span class="badge badge-success">Stable v1.0</span>
 <span class="badge badge-info">UVM 1.1d/1.2</span>
 <span class="badge badge-primary">IEEE 1800</span>
-<span class="badge badge-success">Single Image APB3/APB4</span>
+<span class="badge badge-success">Single Image AHB-Lite/AHB Full</span>
 </div>
 </div>
 </div>

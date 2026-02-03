@@ -4,9 +4,39 @@ title: Getting Started with KVIPS
 permalink: /docs/getting-started/
 ---
 
-# Getting Started with KVIPS
+<section class="hero" style="padding: 2.5rem 0; margin: -2rem -2rem 2rem -2rem;">
+  <div class="hero-content hero-content--wide">
+    <p class="hero-eyebrow">Getting Started</p>
+    <h1 class="hero-title">Launch KVIPS in minutes</h1>
+    <p class="hero-subtitle">Premium SystemVerilog UVM VIPs with clean APIs, production regressions, and Verilator-ready scripts.</p>
+    <div class="hero-buttons">
+      <a href="{{ '/vips/' | relative_url }}" class="btn btn-outline">VIP Catalog</a>
+      <a href="https://github.com/kiranreddi/kvips" class="btn btn-secondary" target="_blank" rel="noopener">GitHub</a>
+    </div>
+  </div>
+</section>
 
-Welcome to KVIPS - your comprehensive SystemVerilog UVM verification IP library! This guide will help you get up and running quickly.
+<section class="section-padding bg-secondary" style="margin: 0 -2rem 2rem -2rem;">
+  <div class="container">
+    <div class="feature-grid">
+      <div class="feature-item">
+        <div class="feature-icon">1</div>
+        <h3 class="feature-title">Clone the repo</h3>
+        <p class="feature-description">Grab the latest release and verify the layout.</p>
+      </div>
+      <div class="feature-item">
+        <div class="feature-icon">2</div>
+        <h3 class="feature-title">Pick your simulator</h3>
+        <p class="feature-description">Questa, VCS, Xcelium, or Verilator — all supported.</p>
+      </div>
+      <div class="feature-item">
+        <div class="feature-icon">3</div>
+        <h3 class="feature-title">Run the sample</h3>
+        <p class="feature-description">Launch AXI4 back-to-back and confirm the pass banner.</p>
+      </div>
+    </div>
+  </div>
+</section>
 
 ## 📋 Prerequisites
 
@@ -139,6 +169,10 @@ KVIPS APB VIP supports APB3 and APB4 in a **single compiled image** with a runti
 make -C kvips/apb/examples list-tests
 make -C kvips/apb/examples questa TEST=apb_b2b_smoke_test PLUSARGS='+APB_PROTOCOL=APB4'
 make -C kvips/apb/examples questa TEST=apb_b2b_smoke_test PLUSARGS='+APB_PROTOCOL=APB3'
+
+# Verilator (open source)
+make -C kvips/apb/examples verilator TEST=apb_b2b_smoke_test PLUSARGS='+APB_PROTOCOL=APB4'
+make -C kvips/apb/examples regress-verilator
 ```
 
 ---
@@ -168,7 +202,7 @@ kvips/
 │       └── uvm_back2back/
 │           ├── tb/           # Testbench code
 │           └── sim/          # Simulation scripts
-├── apb/                       # APB3/APB4 VIP (beta)
+├── apb/                       # APB3/APB4 VIP (stable)
 │   ├── sv/
 │   ├── docs/
 │   └── examples/

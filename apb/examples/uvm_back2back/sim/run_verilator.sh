@@ -93,7 +93,7 @@ JOBS="${VERILATOR_JOBS:-1}"
 
 BIN="${OUT}/obj_dir/Vtb_top"
 if [[ "${REUSE_BUILD}" != "1" || ! -x "${BIN}" ]]; then
-  ${VERILATOR_BIN} -sv -Wno-fatal \
+  ${VERILATOR_BIN} -sv --language 1800-2017 -Wno-fatal \
     -Wno-PKGNODECL -Wno-UNDRIVEN -Wno-TIMESCALEMOD -Wno-SYNCASYNCNET \
     --timing --binary -j "${JOBS}" \
     -CFLAGS "-Wno-deprecated-declarations" \

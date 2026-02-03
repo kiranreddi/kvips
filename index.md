@@ -6,12 +6,27 @@ description: Industry-grade SystemVerilog UVM Verification IP Library. Protocol 
 
 <!-- Hero Section -->
 <section class="hero">
-    <div class="hero-content">
-        <h1 class="hero-title">🚀 Premium Verification IP Library</h1>
-        <p class="hero-subtitle">Industry-grade SystemVerilog UVM verification components for modern semiconductor design verification</p>
+    <div class="hero-content hero-content--wide">
+        <p class="hero-eyebrow">KVIPS — Verification IP Suite</p>
+        <h1 class="hero-title">Verification IP that ships silicon</h1>
+        <p class="hero-subtitle">Enterprise-grade SystemVerilog UVM VIPs with production-ready regressions, built-in checkers, and Verilator-compatible flows.</p>
+        <div class="hero-metrics">
+            <div class="hero-metric">
+                <span class="hero-metric-value">3</span>
+                <span class="hero-metric-label">Core VIPs</span>
+            </div>
+            <div class="hero-metric">
+                <span class="hero-metric-value">4</span>
+                <span class="hero-metric-label">EDA Tools</span>
+            </div>
+            <div class="hero-metric">
+                <span class="hero-metric-value">100%</span>
+                <span class="hero-metric-label">UVM Compliant</span>
+            </div>
+        </div>
         <div class="hero-buttons">
             <a href="{{ '/docs/getting-started' | relative_url }}" class="btn btn-primary">Get Started</a>
-            <a href="{{ '/docs/vips' | relative_url }}" class="btn btn-outline">Browse VIPs</a>
+            <a href="{{ '/vips/' | relative_url }}" class="btn btn-outline">VIP Catalog</a>
             <a href="https://github.com/kiranreddi/kvips" class="btn btn-secondary" target="_blank" rel="noopener">View on GitHub</a>
         </div>
     </div>
@@ -112,8 +127,8 @@ description: Industry-grade SystemVerilog UVM Verification IP Library. Protocol 
                     <div>
                         <h3 class="vip-title">APB (APB3/APB4)</h3>
                         <div class="badge-group">
-                            <span class="badge badge-warning">Beta</span>
-                            <span class="badge badge-gray">v0.1</span>
+                            <span class="badge badge-success">Stable</span>
+                            <span class="badge badge-gray">v1.0</span>
                         </div>
                     </div>
                 </div>
@@ -142,8 +157,8 @@ description: Industry-grade SystemVerilog UVM Verification IP Library. Protocol 
                     <div>
                         <h3 class="vip-title">AHB (AHB-Lite/Full)</h3>
                         <div class="badge-group">
-                            <span class="badge badge-warning">Beta</span>
-                            <span class="badge badge-gray">v0.1</span>
+                            <span class="badge badge-success">Stable</span>
+                            <span class="badge badge-gray">v1.0</span>
                         </div>
                     </div>
                 </div>
@@ -331,11 +346,11 @@ seq.start(env.get_master_sequencer(0));</code></pre>
         <h2 class="section-title">By the Numbers</h2>
         <div class="stats-grid">
             <div class="stat-item">
-                <div class="stat-number stat-primary">1+</div>
+                <div class="stat-number stat-primary">3</div>
                 <div class="stat-label">Protocol VIPs</div>
             </div>
             <div class="stat-item">
-                <div class="stat-number stat-secondary">3</div>
+                <div class="stat-number stat-secondary">4</div>
                 <div class="stat-label">EDA Tools</div>
             </div>
             <div class="stat-item">
@@ -353,12 +368,12 @@ seq.start(env.get_master_sequencer(0));</code></pre>
 <!-- Call to Action -->
 <section class="section-padding">
     <div class="container">
-        <div class="cta-box">
-            <h2 class="cta-title">Ready to Accelerate Your Verification?</h2>
-            <p class="cta-subtitle">Start using KVIPS today and experience professional-grade verification IPs.</p>
+        <div class="cta-box cta-box--premium">
+            <h2 class="cta-title">Launch your verification stack in minutes</h2>
+            <p class="cta-subtitle">Curated quick starts, clean APIs, and battle-hardened regressions — ready for production.</p>
             <div class="cta-buttons">
                 <a href="{{ '/docs/getting-started' | relative_url }}" class="btn btn-primary btn-lg">Get Started Now</a>
-                <a href="{{ '/pages/docs' | relative_url }}" class="btn btn-outline btn-lg">Read the Docs</a>
+                <a href="{{ '/vips/' | relative_url }}" class="btn btn-outline btn-lg">Explore Documentation</a>
             </div>
         </div>
     </div>

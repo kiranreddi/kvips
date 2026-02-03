@@ -67,7 +67,7 @@ Explore our collection of professional-grade SystemVerilog UVM verification IPs,
     <div>
       <h3 class="card-title" style="margin: 0;">APB</h3>
       <div style="margin-top: 0.5rem;">
-        <span class="badge badge-warning">Beta v0.1</span>
+        <span class="badge badge-success">Stable v1.0</span>
         <span class="badge badge-primary">UVM 1.2</span>
       </div>
     </div>
@@ -130,14 +130,14 @@ For the engineering checklist and directory/template expectations, see `kvips/do
 </tr>
 <tr>
 <td><strong>APB</strong></td>
-<td><span class="badge badge-warning">🧪 Beta</span></td>
-<td>v0.1</td>
+<td><span class="badge badge-success">✅ Stable</span></td>
+<td>v1.0</td>
 <td>High</td>
 </tr>
 <tr>
 <td><strong>AHB</strong></td>
-<td><span class="badge badge-warning">📋 Planned</span></td>
-<td>Q3 2026</td>
+<td><span class="badge badge-success">✅ Stable</span></td>
+<td>v1.0</td>
 <td>Medium</td>
 </tr>
 <tr>
@@ -260,9 +260,9 @@ For high-bandwidth data transfer and DMA operations
 <h3>📝 Register Access</h3>
 <p><strong>Recommended VIPs:</strong></p>
 <ul>
-<li>APB (coming soon)</li>
+<li>APB (stable)</li>
 <li>AXI-Lite (coming soon)</li>
-<li>AHB-Lite (coming soon)</li>
+<li>AHB-Lite (stable)</li>
 </ul>
 <p style="margin-top: 1rem; font-size: 0.875rem; color: var(--text-secondary);">
 For configuration registers and low-bandwidth control
@@ -302,57 +302,57 @@ For sensor interfaces and debug communications
 <tr>
 <td><strong>Master Agent</strong></td>
 <td>✅</td>
-<td>📋</td>
-<td>📋</td>
+<td>✅</td>
+<td>✅</td>
 <td>📋</td>
 </tr>
 <tr>
 <td><strong>Slave Agent</strong></td>
 <td>✅</td>
-<td>📋</td>
-<td>📋</td>
+<td>✅</td>
+<td>✅</td>
 <td>📋</td>
 </tr>
 <tr>
 <td><strong>Monitor</strong></td>
 <td>✅</td>
-<td>📋</td>
-<td>📋</td>
+<td>✅</td>
+<td>✅</td>
 <td>📋</td>
 </tr>
 <tr>
 <td><strong>Protocol Assertions</strong></td>
 <td>✅</td>
-<td>📋</td>
-<td>📋</td>
+<td>✅</td>
+<td>✅</td>
 <td>📋</td>
 </tr>
 <tr>
 <td><strong>Scoreboard</strong></td>
 <td>✅</td>
-<td>📋</td>
-<td>📋</td>
+<td>✅</td>
+<td>✅</td>
 <td>📋</td>
 </tr>
 <tr>
 <td><strong>Coverage</strong></td>
 <td>✅</td>
-<td>📋</td>
-<td>📋</td>
+<td>✅</td>
+<td>✅</td>
 <td>📋</td>
 </tr>
 <tr>
 <td><strong>Error Injection</strong></td>
 <td>✅</td>
-<td>📋</td>
-<td>📋</td>
+<td>✅</td>
+<td>✅</td>
 <td>📋</td>
 </tr>
 <tr>
 <td><strong>Performance Stats</strong></td>
 <td>✅</td>
-<td>📋</td>
-<td>📋</td>
+<td>✅</td>
+<td>✅</td>
 <td>📋</td>
 </tr>
 </tbody>

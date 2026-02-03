@@ -45,9 +45,7 @@ class ahb_monitor #(
   //   covergroups outside the class constructor.
   // - Config-driven ignore_bins prevent "disabled feature" bins from dragging
   //   down coverage for a given run.
-`ifdef VERILATOR
-  /* verilator lint_off COVERIGN */
-`endif
+`ifndef VERILATOR
   covergroup cg with function sample(
     bit          write,
     ahb_size_e   size,
@@ -105,8 +103,6 @@ class ahb_monitor #(
     cr_rw_size: cross cp_rw, cp_size;
     cr_burst_stall: cross cp_burst, cp_stall;
   endgroup
-`ifdef VERILATOR
-  /* verilator lint_on COVERIGN */
 `endif
 
   `uvm_component_param_utils(ahb_monitor#(ADDR_W, DATA_W, HRESP_W, HAS_HMASTLOCK))
@@ -114,7 +110,9 @@ class ahb_monitor #(
   function new(string name, uvm_component parent);
     super.new(name, parent);
     ap = new("ap", this);
+`ifndef VERILATOR
     cg = new();
+`endif
   endfunction
 
   function ctrl_t sample_ctrl();
@@ -206,7 +204,9 @@ class ahb_monitor #(
         ap.write(t);
 
         if (cfg.coverage_enable) begin
+`ifndef VERILATOR
           cg.sample(ctrl_data.write, ctrl_data.size, ctrl_data.burst, stall_cnt, ahb_resp_e'(vif.HRESP));
+`endif
         end
         if (cfg.trace_enable) begin
           `uvm_info(RID, t.convert2string(), UVM_MEDIUM)
