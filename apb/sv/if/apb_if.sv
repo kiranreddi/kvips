@@ -35,6 +35,7 @@ interface apb_if #(
   logic [STRB_W-1:0] PSTRB;
 
   // Clocking blocks (all sampled on posedge PCLK)
+`ifndef VERILATOR
   clocking cb_m @(posedge PCLK);
     // Avoid race between drivers/monitors: drive at #0, sample at #1step.
     default input #1step output #0;
@@ -52,6 +53,7 @@ interface apb_if #(
     default input #1step output #0;
     input PADDR, PSEL, PENABLE, PWRITE, PWDATA, PRDATA, PREADY, PSLVERR, PPROT, PSTRB;
   endclocking
+`endif
 
 `ifndef VERILATOR
   modport master (clocking cb_m, input PCLK, input PRESETn);
