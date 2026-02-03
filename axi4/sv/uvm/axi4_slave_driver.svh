@@ -181,7 +181,11 @@ class axi4_slave_driver #(
   function automatic int unsigned rand_in_range(int unsigned lo, int unsigned hi);
     int unsigned v;
     if (hi <= lo) return lo;
+`ifdef VERILATOR
+    v = $urandom_range(hi, lo);
+`else
     void'(std::randomize(v) with { v inside {[lo:hi]}; });
+`endif
     return v;
   endfunction
 

@@ -27,7 +27,13 @@ jobs:
       - name: Setup Verilator
         run: |
           sudo apt-get update
-          sudo apt-get install -y verilator ccache make autoconf g++ flex bison
+          sudo apt-get install -y ccache make autoconf g++ flex bison git perl
+          git clone --depth 1 --branch v5.026 https://github.com/verilator/verilator.git /tmp/verilator
+          cd /tmp/verilator
+          autoconf
+          ./configure
+          make -j$(nproc)
+          sudo make install
           verilator --version
 
       - name: Run AXI4 Regressions

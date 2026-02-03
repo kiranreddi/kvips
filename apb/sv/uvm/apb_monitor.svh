@@ -21,6 +21,14 @@ class apb_monitor #(
 
   uvm_analysis_port #(item_t) ap;
 
+`ifdef VERILATOR
+  `define APB_MON_CB vif
+  `define APB_MON_EVT @(posedge vif.PCLK)
+`else
+  `define APB_MON_CB vif.cb_mon
+  `define APB_MON_EVT @(vif.cb_mon)
+`endif
+
   // Summary counters
   longint unsigned sum_wr;
   longint unsigned sum_rd;
@@ -124,10 +132,10 @@ class apb_monitor #(
 
   task run_phase(uvm_phase phase);
     if (!cfg.monitor_enable) return;
-    while (vif.PRESETn !== 1'b1) @(vif.cb_mon);
+    while (vif.PRESETn !== 1'b1) `APB_MON_EVT;
 
     forever begin
-      @(vif.cb_mon);
+      `APB_MON_EVT;
 
       if (vif.PRESETn !== 1'b1) begin
         in_access = 0;
@@ -137,43 +145,43 @@ class apb_monitor #(
       end
 
       // Setup phase seen: allocate a new transaction.
-      if ((|vif.cb_mon.PSEL) && (vif.cb_mon.PENABLE === 1'b0)) begin
+      if ((|`APB_MON_CB.PSEL) && (`APB_MON_CB.PENABLE === 1'b0)) begin
         cur_tr = new("apb_mon_tr");
-        cur_tr.addr  = vif.cb_mon.PADDR;
-        cur_tr.write = (vif.cb_mon.PWRITE === 1'b1);
-        cur_tr.wdata = vif.cb_mon.PWDATA;
-        cur_tr.prot  = vif.cb_mon.PPROT;
-        cur_tr.strb  = cfg.is_apb4() ? vif.cb_mon.PSTRB : '1;
+        cur_tr.addr  = `APB_MON_CB.PADDR;
+        cur_tr.write = (`APB_MON_CB.PWRITE === 1'b1);
+        cur_tr.wdata = `APB_MON_CB.PWDATA;
+        cur_tr.prot  = `APB_MON_CB.PPROT;
+        cur_tr.strb  = cfg.is_apb4() ? `APB_MON_CB.PSTRB : '1;
         cur_tr.start_t = $time;
         cur_wait = 0;
         in_access = 1;
       end
 
       // Access phase: count wait cycles.
-      if ((|vif.cb_mon.PSEL) && (vif.cb_mon.PENABLE === 1'b1)) begin
+      if ((|`APB_MON_CB.PSEL) && (`APB_MON_CB.PENABLE === 1'b1)) begin
         // Defensive: if we missed the setup phase (PSEL && !PENABLE), recover by
         // creating the transaction from the access phase. This makes the monitor
         // robust to DUT protocol bugs and avoids false scoreboard mismatches.
         if (!in_access) begin
           cur_tr = new("apb_mon_tr");
-          cur_tr.addr  = vif.cb_mon.PADDR;
-          cur_tr.write = (vif.cb_mon.PWRITE === 1'b1);
-          cur_tr.wdata = vif.cb_mon.PWDATA;
-          cur_tr.prot  = vif.cb_mon.PPROT;
-          cur_tr.strb  = cfg.is_apb4() ? vif.cb_mon.PSTRB : '1;
+          cur_tr.addr  = `APB_MON_CB.PADDR;
+          cur_tr.write = (`APB_MON_CB.PWRITE === 1'b1);
+          cur_tr.wdata = `APB_MON_CB.PWDATA;
+          cur_tr.prot  = `APB_MON_CB.PPROT;
+          cur_tr.strb  = cfg.is_apb4() ? `APB_MON_CB.PSTRB : '1;
           cur_tr.start_t = $time;
           cur_wait = 0;
           in_access = 1;
         end
 
-        if (vif.cb_mon.PREADY !== 1'b1) begin
+        if (`APB_MON_CB.PREADY !== 1'b1) begin
           cur_wait++;
         end else begin
           // Completion cycle.
           cur_tr.wait_cycles = cur_wait;
-          cur_tr.slverr = (vif.cb_mon.PSLVERR === 1'b1);
+          cur_tr.slverr = (`APB_MON_CB.PSLVERR === 1'b1);
           cur_tr.resp   = cur_tr.slverr ? APB_RESP_ERR : APB_RESP_OK;
-          if (!cur_tr.write) cur_tr.rdata = vif.cb_mon.PRDATA;
+          if (!cur_tr.write) cur_tr.rdata = `APB_MON_CB.PRDATA;
           cur_tr.end_t = $time;
 
           if (cur_tr.write) sum_wr++; else sum_rd++;
@@ -210,5 +218,8 @@ class apb_monitor #(
   endfunction
 
 endclass
+
+`undef APB_MON_CB
+`undef APB_MON_EVT
 
 `endif // KVIPS_APB_MONITOR_SVH

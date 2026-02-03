@@ -5,6 +5,26 @@
 `ifndef KVIPS_AXI4_MASTER_DRIVER_SVH
 `define KVIPS_AXI4_MASTER_DRIVER_SVH
 
+class axi4_req_ctx #(
+  int ADDR_W = 32,
+  int DATA_W = 64,
+  int ID_W   = 4,
+  int USER_W = 1
+) extends uvm_object;
+  typedef axi4_item#(ADDR_W, DATA_W, ID_W, USER_W) item_t;
+
+  item_t            tr;
+  uvm_sequence_item id_info;
+  int unsigned      beats;
+  int unsigned      beat_idx;
+
+  `uvm_object_param_utils(axi4_req_ctx#(ADDR_W, DATA_W, ID_W, USER_W))
+
+  function new(string name = "axi4_req_ctx");
+    super.new(name);
+  endfunction
+endclass
+
 class axi4_master_driver #(
   int ADDR_W = 32,
   int DATA_W = 64,
@@ -19,6 +39,12 @@ class axi4_master_driver #(
 
   axi4_agent_cfg#(ADDR_W, DATA_W, ID_W, USER_W) cfg;
   axi4_vif_t vif;
+
+`ifdef VERILATOR
+`define AXI4_M_EVT posedge vif.aclk
+`else
+`define AXI4_M_EVT vif.m_cb
+`endif
 
   `uvm_component_param_utils(axi4_master_driver#(ADDR_W, DATA_W, ID_W, USER_W))
 
@@ -52,7 +78,11 @@ class axi4_master_driver #(
   function automatic int unsigned rand_in_range(int unsigned lo, int unsigned hi);
     int unsigned v;
     if (hi <= lo) return lo;
+`ifdef VERILATOR
+    v = $urandom_range(hi, lo);
+`else
     void'(std::randomize(v) with { v inside {[lo:hi]}; });
+`endif
     return v;
   endfunction
 
@@ -76,8 +106,8 @@ class axi4_master_driver #(
 
         if (cfg.inter_txn_gap_max != 0) begin
           int unsigned gap;
-          void'(std::randomize(gap) with { gap inside {[cfg.inter_txn_gap_min:cfg.inter_txn_gap_max]}; });
-          repeat (gap) @(vif.m_cb);
+          gap = rand_in_range(cfg.inter_txn_gap_min, cfg.inter_txn_gap_max);
+          repeat (gap) @(`AXI4_M_EVT);
         end
       end
     end else begin
@@ -97,24 +127,14 @@ class axi4_master_driver #(
   // -------------------------
 
   typedef axi4_item#(ADDR_W, DATA_W, ID_W, USER_W) item_t;
+  typedef axi4_req_ctx#(ADDR_W, DATA_W, ID_W, USER_W) axi4_req_ctx_t;
 
-  class axi4_req_ctx extends uvm_object;
-    item_t            tr;
-    uvm_sequence_item id_info;
-    int unsigned      beats;
-    int unsigned      beat_idx;
+  axi4_req_ctx_t wr_issue_q[$];
+  axi4_req_ctx_t wr_w_q[$];
+  axi4_req_ctx_t wr_wait_b[logic [ID_W-1:0]][$];
 
-    function new(string name = "axi4_req_ctx");
-      super.new(name);
-    endfunction
-  endclass
-
-  axi4_req_ctx wr_issue_q[$];
-  axi4_req_ctx wr_w_q[$];
-  axi4_req_ctx wr_wait_b[logic [ID_W-1:0]][$];
-
-  axi4_req_ctx rd_issue_q[$];
-  axi4_req_ctx rd_wait_r[logic [ID_W-1:0]][$];
+  axi4_req_ctx_t rd_issue_q[$];
+  axi4_req_ctx_t rd_wait_r[logic [ID_W-1:0]][$];
 
   int unsigned outstanding_w;
   int unsigned outstanding_r;
@@ -135,7 +155,7 @@ class axi4_master_driver #(
       end
 
       begin
-        axi4_req_ctx ctx;
+        axi4_req_ctx_t ctx;
         ctx = new("ctx");
         ctx.tr = new("req_tr");
         ctx.tr.copy(req);
@@ -159,7 +179,7 @@ class axi4_master_driver #(
   endtask
 
   task automatic pipelined_aw_loop();
-    axi4_req_ctx ctx;
+    axi4_req_ctx_t ctx;
     wait_reset_release();
     forever begin
       if (wr_issue_q.size() == 0) begin
@@ -202,7 +222,7 @@ class axi4_master_driver #(
   endtask
 
   task automatic pipelined_w_loop();
-    axi4_req_ctx ctx;
+    axi4_req_ctx_t ctx;
     wait_reset_release();
     forever begin
       if (wr_w_q.size() == 0) begin
@@ -233,7 +253,7 @@ class axi4_master_driver #(
   endtask
 
   task automatic pipelined_b_loop();
-    axi4_req_ctx ctx;
+    axi4_req_ctx_t ctx;
     wait_reset_release();
     forever begin
       // Drive BREADY whenever we have outstanding writes.
@@ -265,7 +285,7 @@ class axi4_master_driver #(
   endtask
 
   task automatic pipelined_ar_loop();
-    axi4_req_ctx ctx;
+    axi4_req_ctx_t ctx;
     wait_reset_release();
     forever begin
       if (rd_issue_q.size() == 0) begin
@@ -339,7 +359,7 @@ class axi4_master_driver #(
       end
 
       if (rd_wait_r.exists(vif.rid) && (rd_wait_r[vif.rid].size() != 0)) begin
-        axi4_req_ctx ctx;
+        axi4_req_ctx_t ctx;
         ctx = rd_wait_r[vif.rid][0];
 
         if (ctx.beat_idx < ctx.beats) begin
@@ -530,5 +550,7 @@ class axi4_master_driver #(
   endtask
 
 endclass
+
+`undef AXI4_M_EVT
 
 `endif // KVIPS_AXI4_MASTER_DRIVER_SVH

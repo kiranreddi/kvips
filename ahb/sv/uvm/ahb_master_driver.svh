@@ -25,6 +25,14 @@ class ahb_master_driver #(
 
   typedef logic [ADDR_W-1:0] addr_t;
 
+`ifdef VERILATOR
+`define AHB_M_CB  vif
+`define AHB_M_EVT posedge vif.HCLK
+`else
+`define AHB_M_CB  vif.cb_m
+`define AHB_M_EVT vif.cb_m
+`endif
+
   // State for pipelining
   bit          data_valid;
   bit          data_write;
@@ -103,16 +111,16 @@ class ahb_master_driver #(
   endfunction
 
   task drive_idle();
-    vif.cb_m.HSEL    <= 1'b1;
-    vif.cb_m.HTRANS  <= AHB_TRANS_IDLE;
-    vif.cb_m.HADDR   <= '0;
-    vif.cb_m.HWRITE  <= 1'b0;
-    vif.cb_m.HSIZE   <= AHB_SIZE_32;
-    vif.cb_m.HBURST  <= AHB_BURST_SINGLE;
-    vif.cb_m.HPROT   <= 4'h0;
-    vif.cb_m.HWDATA  <= '0;
+    `AHB_M_CB.HSEL    <= 1'b1;
+    `AHB_M_CB.HTRANS  <= AHB_TRANS_IDLE;
+    `AHB_M_CB.HADDR   <= '0;
+    `AHB_M_CB.HWRITE  <= 1'b0;
+    `AHB_M_CB.HSIZE   <= AHB_SIZE_32;
+    `AHB_M_CB.HBURST  <= AHB_BURST_SINGLE;
+    `AHB_M_CB.HPROT   <= 4'h0;
+    `AHB_M_CB.HWDATA  <= '0;
     // Optional signals default inside the interface when disabled.
-    if (HAS_HMASTLOCK) vif.cb_m.HMASTLOCK <= 1'b0;
+    if (HAS_HMASTLOCK) `AHB_M_CB.HMASTLOCK <= 1'b0;
   endtask
 
   task apply_optional_idles();
@@ -120,9 +128,9 @@ class ahb_master_driver #(
     if (!cfg.insert_idles) return;
     gap = (cfg.idle_gap_max >= cfg.idle_gap_min) ? $urandom_range(cfg.idle_gap_min, cfg.idle_gap_max) : cfg.idle_gap_min;
     repeat (gap) begin
-      @(vif.cb_m);
+      @(`AHB_M_EVT);
       if (!vif.HRESETn) return;
-      if (vif.cb_m.HREADY === 1'b1) drive_idle();
+      if (`AHB_M_CB.HREADY === 1'b1) drive_idle();
     end
   endtask
 
@@ -174,7 +182,7 @@ class ahb_master_driver #(
       apply_optional_idles();
 
       while (cur_beat < cur_beats || data_valid) begin
-        @(vif.cb_m);
+        @(`AHB_M_EVT);
 
         if (!vif.HRESETn) begin
           drive_idle();
@@ -186,14 +194,14 @@ class ahb_master_driver #(
         begin
           int unsigned stall_cycles;
           stall_cycles = 0;
-          while (vif.cb_m.HREADY !== 1'b1) begin
+          while (`AHB_M_CB.HREADY !== 1'b1) begin
             stall_cycles++;
             if ((cfg.handshake_timeout_cycles != 0) && (stall_cycles > cfg.handshake_timeout_cycles)) begin
               `uvm_fatal(RID,
                 $sformatf("Timeout waiting for HREADY (HREADY=%b HREADYOUT=%b HRESETn=%b HSEL=%b HTRANS=%b)",
-                  vif.cb_m.HREADY, vif.cb_m.HREADYOUT, vif.HRESETn, vif.HSEL, vif.HTRANS))
+                  `AHB_M_CB.HREADY, `AHB_M_CB.HREADYOUT, vif.HRESETn, vif.HSEL, vif.HTRANS))
             end
-            @(vif.cb_m);
+            @(`AHB_M_EVT);
             if (!vif.HRESETn) break;
           end
           if (!vif.HRESETn) continue;
@@ -206,17 +214,17 @@ class ahb_master_driver #(
 
         // Drive HWDATA for the beat in the data phase now (accepted previously).
         if (data_valid && data_write && (data_beat < cur_item.wdata.size())) begin
-          vif.cb_m.HWDATA <= cur_item.wdata[data_beat];
+          `AHB_M_CB.HWDATA <= cur_item.wdata[data_beat];
         end
 
         // Complete previous beat (data phase) if one is pending.
         if (data_valid) begin
           if (data_beat < cur_item.resp.size()) begin
-            cur_item.resp[data_beat] = vif.cb_m.HRESP;
+            cur_item.resp[data_beat] = `AHB_M_CB.HRESP;
           end
           if (!data_write) begin
             if (data_beat < cur_item.rdata.size()) begin
-              cur_item.rdata[data_beat] = vif.cb_m.HRDATA;
+              cur_item.rdata[data_beat] = `AHB_M_CB.HRDATA;
             end
           end
         end
@@ -224,14 +232,14 @@ class ahb_master_driver #(
         // Issue next control beat (address/control phase) if any.
         if (cur_beat < cur_beats) begin
           next_a = next_addr(cur_item.addr, cur_beat, cur_item.size, cur_item.burst);
-          vif.cb_m.HSEL   <= 1'b1;
-          vif.cb_m.HADDR  <= next_a;
-          vif.cb_m.HWRITE <= cur_item.write;
-          vif.cb_m.HSIZE  <= cur_item.size;
-          vif.cb_m.HBURST <= cur_item.burst;
-          vif.cb_m.HPROT  <= cur_item.prot;
-          if (HAS_HMASTLOCK) vif.cb_m.HMASTLOCK <= cur_item.lock;
-          vif.cb_m.HTRANS <= (cur_beat == 0) ? AHB_TRANS_NONSEQ : AHB_TRANS_SEQ;
+          `AHB_M_CB.HSEL   <= 1'b1;
+          `AHB_M_CB.HADDR  <= next_a;
+          `AHB_M_CB.HWRITE <= cur_item.write;
+          `AHB_M_CB.HSIZE  <= cur_item.size;
+          `AHB_M_CB.HBURST <= cur_item.burst;
+          `AHB_M_CB.HPROT  <= cur_item.prot;
+          if (HAS_HMASTLOCK) `AHB_M_CB.HMASTLOCK <= cur_item.lock;
+          `AHB_M_CB.HTRANS <= (cur_beat == 0) ? AHB_TRANS_NONSEQ : AHB_TRANS_SEQ;
 
           // This beat becomes the data-phase beat in the next cycle.
           next_data_valid = 1;
@@ -253,5 +261,8 @@ class ahb_master_driver #(
   endtask
 
 endclass
+
+`undef AHB_M_CB
+`undef AHB_M_EVT
 
 `endif // KVIPS_AHB_MASTER_DRIVER_SVH
