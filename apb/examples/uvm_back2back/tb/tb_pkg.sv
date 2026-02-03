@@ -10,6 +10,19 @@ package tb_pkg;
   import apb_types_pkg::*;
   import apb_uvm_pkg::*;
 
+  class apb_objtn_clear_catcher extends uvm_report_catcher;
+    function new(string name = "apb_objtn_clear_catcher");
+      super.new(name);
+    endfunction
+
+    virtual function action_e catch();
+      if (get_id() == "OBJTN_CLEAR") begin
+        return CAUGHT;
+      end
+      return THROW;
+    endfunction
+  endclass
+
   class apb_b2b_base_test extends uvm_test;
     `uvm_component_utils(apb_b2b_base_test)
 
@@ -39,6 +52,15 @@ package tb_pkg;
 
     function void build_phase(uvm_phase phase);
       super.build_phase(phase);
+
+`ifdef VERILATOR
+  uvm_root::get().set_report_severity_id_action(UVM_WARNING, "OBJTN_CLEAR", UVM_NO_ACTION);
+  begin
+    apb_objtn_clear_catcher c;
+    c = new();
+    uvm_report_cb::add(null, c);
+  end
+`endif
 
       if (!uvm_config_db#(apb_vif_t)::get(this, "", "vif", vif)) begin
         `uvm_fatal("APB_TB", "Missing vif in config DB (key: vif)")
