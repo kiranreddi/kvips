@@ -1,0 +1,46 @@
+name: AXI4 Verilator Regressions
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'axi4/**'
+      - 'common/**'
+      - 'third_party/uvm/**'
+      - '.github/workflows/axi4-verilator-regressions.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'axi4/**'
+      - 'common/**'
+      - 'third_party/uvm/**'
+
+jobs:
+  axi4-regressions:
+    name: AXI4 Regressions (Verilator)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Verilator
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y verilator ccache make autoconf g++ flex bison
+          verilator --version
+
+      - name: Run AXI4 Regressions
+        run: |
+          cd axi4/examples/uvm_back2back/sim
+          chmod +x run_verilator.sh regress_verilator.sh
+
+          export VERILATOR_JOBS=$(nproc)
+          ./regress_verilator.sh
+
+      - name: Archive Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: axi4-verilator-results
+          path: axi4/examples/uvm_back2back/sim/out/verilator/

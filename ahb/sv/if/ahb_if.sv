@@ -66,11 +66,9 @@ interface ahb_if #(
     input HADDR, HTRANS, HWRITE, HSIZE, HBURST, HPROT, HWDATA, HSEL, HMASTLOCK, HMASTER, HREADY, HREADYOUT, HRESP, HRDATA;
   endclocking
 
-`ifndef VERILATOR
   modport master (clocking cb_m, input HCLK, input HRESETn);
   modport slave  (clocking cb_s, input HCLK, input HRESETn);
   modport mon    (clocking cb_mon, input HCLK, input HRESETn);
-`endif
 
   // Reasonable defaults for optional signals when not used
   generate

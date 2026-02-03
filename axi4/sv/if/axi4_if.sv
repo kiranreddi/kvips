@@ -130,7 +130,6 @@ interface axi4_if #(
   // -------------------------
   // Modports
   // -------------------------
-`ifndef VERILATOR
   modport master_mp (
     input  aclk, areset_n,
     clocking m_cb
@@ -145,7 +144,6 @@ interface axi4_if #(
     input  aclk, areset_n,
     clocking mon_cb
   );
-`endif
 
   // -------------------------
   // Assertions (included here for widest simulator compatibility)

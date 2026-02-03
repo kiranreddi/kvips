@@ -53,11 +53,9 @@ interface apb_if #(
     input PADDR, PSEL, PENABLE, PWRITE, PWDATA, PRDATA, PREADY, PSLVERR, PPROT, PSTRB;
   endclocking
 
-`ifndef VERILATOR
   modport master (clocking cb_m, input PCLK, input PRESETn);
   modport slave  (clocking cb_s, input PCLK, input PRESETn);
   modport mon    (clocking cb_mon, input PCLK, input PRESETn);
-`endif
 
   // Optional assertions (bound into the interface for portability)
   `include "apb_if_sva.svh"
