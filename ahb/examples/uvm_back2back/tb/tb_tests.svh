@@ -21,7 +21,7 @@ class ahb_b2b_base_test extends uvm_test;
   localparam int DATA_W  = 32;
   localparam int HRESP_W = 2;
 
-  typedef virtual interface ahb_if #(ADDR_W, DATA_W, .HRESP_W(HRESP_W)) ahb_vif_t;
+  typedef virtual ahb_if #(ADDR_W, DATA_W, .HRESP_W(HRESP_W)) ahb_vif_t;
 
   ahb_vif_t vif;
 

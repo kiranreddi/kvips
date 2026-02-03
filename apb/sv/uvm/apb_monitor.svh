@@ -13,7 +13,7 @@ class apb_monitor #(
   localparam int STRB_W = (DATA_W/8);
   localparam string RID = "APB_MON";
 
-  typedef virtual interface apb_if #(ADDR_W, DATA_W, NSEL) apb_vif_t;
+  typedef virtual apb_if #(ADDR_W, DATA_W, NSEL) apb_vif_t;
   typedef apb_item#(ADDR_W, DATA_W) item_t;
 
   apb_cfg#(ADDR_W, DATA_W, NSEL) cfg;

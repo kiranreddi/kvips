@@ -10,7 +10,7 @@ class apb_cfg #(
   int NSEL   = 1
 ) extends uvm_object;
 
-  typedef virtual interface apb_if #(ADDR_W, DATA_W, NSEL) apb_vif_t;
+  typedef virtual apb_if #(ADDR_W, DATA_W, NSEL) apb_vif_t;
 
   apb_vif_t vif;
 
