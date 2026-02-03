@@ -14,12 +14,14 @@ From the repo root:
 - Questa (FSDB): `kvips/axi4/examples/uvm_back2back/sim/run_questa_fsdb.sh`
 - VCS: `kvips/axi4/examples/uvm_back2back/sim/run_vcs.sh`
 - Xcelium: `kvips/axi4/examples/uvm_back2back/sim/run_xcelium.sh`
+- Verilator: `kvips/axi4/examples/uvm_back2back/sim/run_verilator.sh`
 
 ## Regressions via LSF (bsub)
 From the repo root:
 - Questa: `module load lsf && make -C kvips/axi4/examples regress-questa USE_LSF=1`
 - VCS: `module load lsf && make -C kvips/axi4/examples regress-vcs USE_LSF=1`
 - Xcelium: `module load lsf && make -C kvips/axi4/examples regress-xcelium USE_LSF=1`
+- Verilator: `make -C kvips/axi4/examples regress-verilator`
 
 ## FSDB report (Verdi)
 After generating an FSDB (see `run_questa_fsdb.sh`), you can dump key AXI signals with `fsdbreport`:
@@ -35,6 +37,7 @@ After generating an FSDB (see `run_questa_fsdb.sh`), you can dump key AXI signal
 - Enable waves: `+KVIPS_WAVES` (VCD by default; FSDB where available)
 - Stats (monitor): `+VIP_STATS` (prints a summary in `report_phase`)
 - Assertions:
+  - Note: SVA assertions are skipped under Verilator.
   - Disable: `+KVIPS_AXI4_ASSERT_OFF`
   - Known-value checks: `+KVIPS_AXI4_ASSERT_KNOWN`
   - Disable burst legality: `+KVIPS_AXI4_ASSERT_BURST_OFF`

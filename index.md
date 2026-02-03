@@ -1,7 +1,7 @@
 ---
 layout: default
 title: KVIPS - Premium Verification IP Library
-description: Industry-grade SystemVerilog UVM Verification IP Library. Protocol VIPs tested with Siemens Questa, Synopsys VCS, and Cadence Xcelium.
+description: Industry-grade SystemVerilog UVM Verification IP Library. Protocol VIPs tested with Siemens Questa, Synopsys VCS, Cadence Xcelium, and Verilator.
 ---
 
 <!-- Hero Section -->
@@ -25,6 +25,7 @@ description: Industry-grade SystemVerilog UVM Verification IP Library. Protocol 
             <span class="badge badge-primary">Siemens Questa 2025.3_2</span>
             <span class="badge badge-info">Synopsys VCS 2025.06_1</span>
             <span class="badge badge-success">Cadence Xcelium 25.03.007</span>
+            <span class="badge badge-dark">Verilator 5.x</span>
         </div>
     </div>
 </section>
@@ -62,7 +63,7 @@ description: Industry-grade SystemVerilog UVM Verification IP Library. Protocol 
             <div class="feature-item">
                 <div class="feature-icon">🔓</div>
                 <h3 class="feature-title">Vendor Neutral</h3>
-                <p class="feature-description">No vendor lock-in. Pure SystemVerilog implementation works across Questa, VCS, and Xcelium without modification.</p>
+                <p class="feature-description">No vendor lock-in. Pure SystemVerilog implementation works across Questa, VCS, Xcelium, and Verilator without modification.</p>
             </div>
         </div>
     </div>

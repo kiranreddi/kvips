@@ -45,6 +45,9 @@ class ahb_monitor #(
   //   covergroups outside the class constructor.
   // - Config-driven ignore_bins prevent "disabled feature" bins from dragging
   //   down coverage for a given run.
+`ifdef VERILATOR
+  /* verilator lint_off COVERIGN */
+`endif
   covergroup cg with function sample(
     bit          write,
     ahb_size_e   size,
@@ -102,6 +105,9 @@ class ahb_monitor #(
     cr_rw_size: cross cp_rw, cp_size;
     cr_burst_stall: cross cp_burst, cp_stall;
   endgroup
+`ifdef VERILATOR
+  /* verilator lint_on COVERIGN */
+`endif
 
   `uvm_component_param_utils(ahb_monitor#(ADDR_W, DATA_W, HRESP_W, HAS_HMASTLOCK))
 
@@ -123,6 +129,18 @@ class ahb_monitor #(
     return c;
   endfunction
 
+  function automatic ctrl_t clear_ctrl();
+    ctrl_t c;
+    c.valid = 1'b0;
+    c.write = 1'b0;
+    c.addr  = '0;
+    c.size  = AHB_SIZE_8;
+    c.burst = AHB_BURST_SINGLE;
+    c.prot  = '0;
+    c.lock  = 1'b0;
+    return c;
+  endfunction
+
   task run_phase(uvm_phase phase);
     super.run_phase(phase);
 
@@ -138,15 +156,15 @@ class ahb_monitor #(
       forever @(vif.cb_mon);
     end
 
-    ctrl_pipe = '{default:'0};
-    ctrl_data = '{default:'0};
+    ctrl_pipe = clear_ctrl();
+    ctrl_data = clear_ctrl();
     stall_cnt = 0;
 
     @(posedge vif.HCLK);
     while (!vif.HRESETn) begin
       @(posedge vif.HCLK);
-      ctrl_pipe = '{default:'0};
-      ctrl_data = '{default:'0};
+      ctrl_pipe = clear_ctrl();
+      ctrl_data = clear_ctrl();
       stall_cnt = 0;
     end
 
@@ -154,8 +172,8 @@ class ahb_monitor #(
       @(vif.cb_mon);
 
       if (!vif.HRESETn) begin
-        ctrl_pipe = '{default:'0};
-        ctrl_data = '{default:'0};
+        ctrl_pipe = clear_ctrl();
+        ctrl_data = clear_ctrl();
         stall_cnt = 0;
         continue;
       end

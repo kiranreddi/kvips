@@ -125,10 +125,18 @@ make vcs TEST=apb_b2b_smoke_test PLUSARGS='+APB_PROTOCOL=APB4'
 # Run on Xcelium
 make xcelium TEST=apb_b2b_smoke_test PLUSARGS='+APB_PROTOCOL=APB4'
 
+# Run on Verilator
+make verilator TEST=apb_b2b_smoke_test PLUSARGS='+APB_PROTOCOL=APB4'
+
+# Full Verilator regression
+make regress-verilator
+
 # Run with LSF (if tools require job scheduler)
 source /tools/lsf/conf/profile.lsf
 make questa USE_LSF=1 TEST=apb_b2b_smoke_test PLUSARGS='+APB_PROTOCOL=APB4'
 ```
+
+> 📝 Note: SVA assertions are skipped under Verilator.
 
 ### Available Test Cases
 

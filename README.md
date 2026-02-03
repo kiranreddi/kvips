@@ -24,7 +24,7 @@ KVIPS is a comprehensive, production-ready verification IP suite built with Syst
 - ✅ **Industry-standard compliance** — Full protocol adherence with built-in assertions
 - 🔧 **Highly configurable** — Extensive parameterization for diverse DUT scenarios  
 - 📊 **Rich diagnostics** — Transaction logging, coverage, and debug features
-- 🚀 **Multi-simulator support** — Tested on Siemens Questa, Synopsys VCS, Cadence Xcelium
+- 🚀 **Multi-simulator support** — Tested on Siemens Questa, Synopsys VCS, Cadence Xcelium, and Verilator (example regressions)
 - 🎓 **Well-documented** — Comprehensive guides, examples, and best practices
 - 🧪 **Battle-tested** — Used in real silicon projects at leading semiconductor companies
 
@@ -76,7 +76,7 @@ KVIPS is a comprehensive, production-ready verification IP suite built with Syst
 - Siemens Questa 2025.3_2
 - Synopsys VCS 2025.06_1
 - Cadence Xcelium 25.03.007
-- Verilator pre-commit linting
+- Verilator 5.x (simulation + lint)
 - GitHub Actions CI/CD
 
 </td>
@@ -145,6 +145,21 @@ cd axi4/examples
 make xcelium TEST=axi4_b2b_test SEED=1
 make xcelium TEST=axi4_b2b_test SEED=1 PLUSARGS='+KVIPS_WAVES'
 ```
+
+### Run Your First Test (Verilator)
+
+```bash
+cd axi4/examples/uvm_back2back/sim
+
+# Single test
+./run_verilator.sh +UVM_TESTNAME=axi4_b2b_test
+
+# Full regression
+cd ../../..
+make -C kvips/axi4/examples regress-verilator
+```
+
+> 📝 Note: SVA assertions are skipped under Verilator.
 
 ---
 

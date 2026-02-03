@@ -79,10 +79,22 @@ interface ahb_if #(
       always_comb HREADYOUT = 1'b1;
     end
     if (!HAS_HMASTLOCK) begin : g_no_hmastlock
+    `ifdef VERILATOR
+      /* verilator lint_off MULTIDRIVEN */
+    `endif
       always_comb HMASTLOCK = 1'b0;
+    `ifdef VERILATOR
+      /* verilator lint_on MULTIDRIVEN */
+    `endif
     end
     if (!HAS_HMASTER) begin : g_no_hmaster
+    `ifdef VERILATOR
+      /* verilator lint_off MULTIDRIVEN */
+    `endif
       always_comb HMASTER = '0;
+    `ifdef VERILATOR
+      /* verilator lint_on MULTIDRIVEN */
+    `endif
     end
   endgenerate
 

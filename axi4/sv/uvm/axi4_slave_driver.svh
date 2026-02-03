@@ -33,17 +33,25 @@ class axi4_slave_mem #(
 
   function void write_beat(logic [ADDR_W-1:0] addr, logic [DATA_W-1:0] data, logic [STRB_W-1:0] strb);
     longint unsigned base;
+    longint unsigned stride;
+    longint unsigned mem_bytes_l;
     base = longint'(addr);
-    base = (base / STRB_W) * STRB_W; // align to data-bus word
+    stride = longint'(STRB_W);
+    mem_bytes_l = longint'(mem_bytes);
+    base = (base / stride) * stride; // align to data-bus word
     for (int unsigned b = 0; b < STRB_W; b++) begin
       if (strb[b]) begin
         longint unsigned idx_l;
         longint unsigned a;
-        a = base + b;
+        int unsigned idx;
+        a = base + longint'(b);
         if (a < mem_base) continue;
         idx_l = a - mem_base;
-        if (mem_wrap && (mem_bytes != 0)) idx_l = idx_l % mem_bytes;
-        if (idx_l < mem_bytes) mem[int'(idx_l)] = data[8*b +: 8];
+        if (mem_wrap && (mem_bytes_l != 0)) idx_l = idx_l % mem_bytes_l;
+        if (idx_l < mem_bytes_l) begin
+          idx = int'(idx_l);
+          mem[idx] = data[8*b +: 8];
+        end
       end
     end
   endfunction
@@ -51,17 +59,25 @@ class axi4_slave_mem #(
   function logic [DATA_W-1:0] read_beat(logic [ADDR_W-1:0] addr);
     logic [DATA_W-1:0] data;
     longint unsigned base;
+    longint unsigned stride;
+    longint unsigned mem_bytes_l;
     base = longint'(addr);
-    base = (base / STRB_W) * STRB_W; // align to data-bus word
+    stride = longint'(STRB_W);
+    mem_bytes_l = longint'(mem_bytes);
+    base = (base / stride) * stride; // align to data-bus word
     data = '0;
     for (int unsigned b = 0; b < STRB_W; b++) begin
       longint unsigned idx_l;
       longint unsigned a;
-      a = base + b;
+      int unsigned idx;
+      a = base + longint'(b);
       if (a < mem_base) continue;
       idx_l = a - mem_base;
-      if (mem_wrap && (mem_bytes != 0)) idx_l = idx_l % mem_bytes;
-      if (idx_l < mem_bytes) data[8*b +: 8] = mem[int'(idx_l)];
+      if (mem_wrap && (mem_bytes_l != 0)) idx_l = idx_l % mem_bytes_l;
+      if (idx_l < mem_bytes_l) begin
+        idx = int'(idx_l);
+        data[8*b +: 8] = mem[idx];
+      end
     end
     return data;
   endfunction
@@ -177,12 +193,12 @@ class axi4_slave_driver #(
   function automatic bit exclusive_req_legal(logic [ADDR_W-1:0] addr, logic [7:0] len, logic [2:0] size, axi4_burst_e burst);
     longint unsigned bytes_per_beat;
     longint unsigned total_bytes;
-    bytes_per_beat = axi4_size_to_bytes(int'(size));
-    total_bytes    = axi4_total_bytes(int'(size), int'(len));
+    bytes_per_beat = longint'(axi4_size_to_bytes(int'(size)));
+    total_bytes    = longint'(axi4_total_bytes(int'(size), int'(len)));
     if (!cfg.slave_exclusive_enable) return 1'b0;
     if (burst != AXI4_BURST_INCR) return 1'b0;
     if (total_bytes == 0) return 1'b0;
-    if (total_bytes > cfg.slave_exclusive_max_bytes) return 1'b0;
+    if (total_bytes > longint'(cfg.slave_exclusive_max_bytes)) return 1'b0;
     if ((longint'(addr) % bytes_per_beat) != 0) return 1'b0;
     if (axi4_crosses_4kb(longint'(addr), int'(size), int'(len))) return 1'b0;
     return 1'b1;

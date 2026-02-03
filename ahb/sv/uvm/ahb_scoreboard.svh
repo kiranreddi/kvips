@@ -58,12 +58,12 @@ class ahb_scoreboard #(
 
   function void exp_write(logic [ADDR_W-1:0] addr, ahb_size_e size, logic [DATA_W-1:0] wdata);
     int unsigned sb = size_bytes(size);
-    int unsigned lane = addr % data_bus_bytes();
+    int unsigned lane = int'(addr) % data_bus_bytes();
     for (int unsigned i = 0; i < sb; i++) begin
       int unsigned byte_lane = lane + i;
       if (byte_lane < data_bus_bytes()) begin
-        exp_mem[longint'(addr + i)] = wdata[(8*byte_lane) +: 8];
-        exp_valid[longint'(addr + i)] = 1'b1;
+        exp_mem[longint'(addr) + longint'(i)] = wdata[(8*byte_lane) +: 8];
+        exp_valid[longint'(addr) + longint'(i)] = 1'b1;
       end
     end
   endfunction
@@ -71,14 +71,14 @@ class ahb_scoreboard #(
   function logic [DATA_W-1:0] exp_read(logic [ADDR_W-1:0] addr, ahb_size_e size, output bit init_ok);
     logic [DATA_W-1:0] r;
     int unsigned sb = size_bytes(size);
-    int unsigned lane = addr % data_bus_bytes();
+    int unsigned lane = int'(addr) % data_bus_bytes();
     init_ok = 1'b1;
     r = '0;
     for (int unsigned i = 0; i < sb; i++) begin
       int unsigned byte_lane = lane + i;
       if (byte_lane < data_bus_bytes()) begin
-        if (!exp_valid.exists(longint'(addr + i)) || !exp_valid[longint'(addr + i)]) init_ok = 1'b0;
-        r[(8*byte_lane) +: 8] = exp_mem.exists(longint'(addr + i)) ? exp_mem[longint'(addr + i)] : 8'h00;
+        if (!exp_valid.exists(longint'(addr) + longint'(i)) || !exp_valid[longint'(addr) + longint'(i)]) init_ok = 1'b0;
+        r[(8*byte_lane) +: 8] = exp_mem.exists(longint'(addr) + longint'(i)) ? exp_mem[longint'(addr) + longint'(i)] : 8'h00;
       end
     end
     return r;

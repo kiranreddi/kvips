@@ -23,6 +23,8 @@ class ahb_slave_driver #(
   ahb_cfg#(ADDR_W, DATA_W, HRESP_W, HAS_HMASTLOCK) cfg;
   ahb_vif_t                         vif;
 
+  typedef logic [HRESP_W-1:0] hresp_t;
+
   // Simple byte-addressed memory model
   byte unsigned mem[longint unsigned];
 
@@ -53,17 +55,29 @@ class ahb_slave_driver #(
     return (DATA_W/8);
   endfunction
 
+  function automatic ctrl_t clear_ctrl();
+    ctrl_t c;
+    c.valid = 1'b0;
+    c.write = 1'b0;
+    c.addr  = '0;
+    c.size  = AHB_SIZE_8;
+    c.burst = AHB_BURST_SINGLE;
+    c.prot  = '0;
+    c.lock  = 1'b0;
+    return c;
+  endfunction
+
   function int unsigned size_bytes(ahb_size_e size);
     return (1 << size);
   endfunction
 
   function void write_bytes(logic [ADDR_W-1:0] addr, ahb_size_e size, logic [DATA_W-1:0] wdata);
     int unsigned sb = size_bytes(size);
-    int unsigned lane = addr % data_bus_bytes();
+    int unsigned lane = int'(addr) % data_bus_bytes();
     for (int unsigned i = 0; i < sb; i++) begin
       int unsigned byte_lane = lane + i;
       if (byte_lane < data_bus_bytes()) begin
-        mem[longint'(addr + i)] = wdata[(8*byte_lane) +: 8];
+        mem[longint'(addr) + longint'(i)] = wdata[(8*byte_lane) +: 8];
       end
     end
   endfunction
@@ -71,13 +85,13 @@ class ahb_slave_driver #(
   function logic [DATA_W-1:0] read_bytes(logic [ADDR_W-1:0] addr, ahb_size_e size);
     logic [DATA_W-1:0] r;
     int unsigned sb = size_bytes(size);
-    int unsigned lane = addr % data_bus_bytes();
+    int unsigned lane = int'(addr) % data_bus_bytes();
     r = '0;
     for (int unsigned i = 0; i < sb; i++) begin
       int unsigned byte_lane = lane + i;
       if (byte_lane < data_bus_bytes()) begin
-        if (mem.exists(longint'(addr + i)))
-          r[(8*byte_lane) +: 8] = mem[longint'(addr + i)];
+        if (mem.exists(longint'(addr) + longint'(i)))
+          r[(8*byte_lane) +: 8] = mem[longint'(addr) + longint'(i)];
         else
           r[(8*byte_lane) +: 8] = 8'h00;
       end
@@ -86,13 +100,13 @@ class ahb_slave_driver #(
   endfunction
 
   function logic [HRESP_W-1:0] resp_okay();
-    if (HRESP_W == 1) return logic'(1'b0);
-    return logic'(2'b00);
+    if (HRESP_W == 1) return hresp_t'(1'b0);
+    return hresp_t'(2'b00);
   endfunction
 
   function logic [HRESP_W-1:0] resp_error();
-    if (HRESP_W == 1) return logic'(1'b1);
-    return logic'(2'b01);
+    if (HRESP_W == 1) return hresp_t'(1'b1);
+    return hresp_t'(2'b01);
   endfunction
 
   function ctrl_t sample_ctrl();
@@ -117,8 +131,8 @@ class ahb_slave_driver #(
     if (vif == null) `uvm_fatal(RID, "cfg.vif is null")
 
     // Defaults
-    ctrl_pipe = '{default:'0};
-    ctrl_data = '{default:'0};
+    ctrl_pipe = clear_ctrl();
+    ctrl_data = clear_ctrl();
     stall_rem = 0;
     stall_armed = 0;
 
@@ -132,8 +146,8 @@ class ahb_slave_driver #(
       vif.cb_s.HREADYOUT <= 1'b1;
       vif.cb_s.HRESP     <= resp_okay();
       vif.cb_s.HRDATA    <= '0;
-      ctrl_pipe = '{default:'0};
-      ctrl_data = '{default:'0};
+      ctrl_pipe = clear_ctrl();
+      ctrl_data = clear_ctrl();
       stall_rem = 0;
       stall_armed = 0;
     end
@@ -142,8 +156,8 @@ class ahb_slave_driver #(
       @(vif.cb_s);
 
       if (!vif.HRESETn) begin
-        ctrl_pipe = '{default:'0};
-        ctrl_data = '{default:'0};
+        ctrl_pipe = clear_ctrl();
+        ctrl_data = clear_ctrl();
         stall_rem = 0;
         stall_armed = 0;
         vif.cb_s.HREADYOUT <= 1'b1;

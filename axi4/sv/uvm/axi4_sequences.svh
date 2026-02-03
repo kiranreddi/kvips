@@ -5,6 +5,11 @@
 `ifndef KVIPS_AXI4_SEQUENCES_SVH
 `define KVIPS_AXI4_SEQUENCES_SVH
 
+`ifdef VERILATOR
+  /* verilator lint_off WIDTHEXPAND */
+  /* verilator lint_off WIDTHTRUNC */
+`endif
+
 class axi4_base_seq #(
   int ADDR_W = 32,
   int DATA_W = 64,
@@ -353,6 +358,8 @@ class axi4_pipelined_stress_seq #(
     int unsigned num_reads;
     int unsigned wr_rsp_seen;
     int unsigned rd_rsp_seen;
+    bit stop_rsp_drain;
+    bit rsp_drain_done;
     axi4_item#(ADDR_W, DATA_W, ID_W, USER_W) wrs[$];
     axi4_item#(ADDR_W, DATA_W, ID_W, USER_W) rsp;
 
@@ -360,18 +367,21 @@ class axi4_pipelined_stress_seq #(
     num_reads  = num_pairs;
     wr_rsp_seen = 0;
     rd_rsp_seen = 0;
+    stop_rsp_drain = 0;
+    rsp_drain_done = 0;
 
     // Background drain of responses to avoid sequencer response queue overflow.
     fork
       begin : rsp_drain
         int unsigned total_needed;
         total_needed = num_writes + num_reads;
-        while ((wr_rsp_seen + rd_rsp_seen) < total_needed) begin
+        while (!stop_rsp_drain && ((wr_rsp_seen + rd_rsp_seen) < total_needed)) begin
           get_response(rsp);
           if (rsp == null) continue;
           if (rsp.is_write) wr_rsp_seen++;
           else              rd_rsp_seen++;
         end
+        rsp_drain_done = 1'b1;
       end
     join_none
 
@@ -470,7 +480,8 @@ class axi4_pipelined_stress_seq #(
     end
 
     wait (rd_rsp_seen >= num_reads);
-    disable rsp_drain;
+    stop_rsp_drain = 1'b1;
+    wait (rsp_drain_done);
   endtask
 
 endclass
@@ -1223,10 +1234,12 @@ class axi4_concurrent_rw_seq #(
     int unsigned issued_total;
     int unsigned rsp_seen;
     bit send_done;
+    bit rsp_drain_done;
 
     issued_total = 0;
     rsp_seen = 0;
     send_done = 0;
+    rsp_drain_done = 0;
 
     fork
       begin : rsp_drain
@@ -1235,6 +1248,7 @@ class axi4_concurrent_rw_seq #(
           get_response(rsp);
           if (rsp != null) rsp_seen++;
         end
+        rsp_drain_done = 1'b1;
       end
     join_none
 
@@ -1333,9 +1347,14 @@ class axi4_concurrent_rw_seq #(
 
     send_done = 1'b1;
     wait (rsp_seen >= issued_total);
-    disable rsp_drain;
+    wait (rsp_drain_done);
   endtask
 
 endclass
+
+`ifdef VERILATOR
+  /* verilator lint_on WIDTHTRUNC */
+  /* verilator lint_on WIDTHEXPAND */
+`endif
 
 `endif // KVIPS_AXI4_SEQUENCES_SVH

@@ -87,11 +87,13 @@ class axi4_scoreboard #(
     logic [STRB_W-1:0] strb
   );
     longint unsigned aligned;
-    aligned = (base_addr / STRB_W) * STRB_W;
+    longint unsigned stride;
+    stride = longint'(STRB_W);
+    aligned = (base_addr / stride) * stride;
     for (int unsigned b = 0; b < STRB_W; b++) begin
       if (strb[b]) begin
-        exp_mem[aligned + b] = data[8*b +: 8];
-        exp_mem_valid[aligned + b] = 1'b1;
+        exp_mem[aligned + longint'(b)] = data[8*b +: 8];
+        exp_mem_valid[aligned + longint'(b)] = 1'b1;
       end
     end
   endfunction
@@ -99,12 +101,14 @@ class axi4_scoreboard #(
   function automatic logic [DATA_W-1:0] build_expected_beat(longint unsigned base_addr, output bit any_uninit);
     logic [DATA_W-1:0] exp;
     longint unsigned aligned;
+    longint unsigned stride;
     any_uninit = 1'b0;
     exp = '0;
-    aligned = (base_addr / STRB_W) * STRB_W;
+    stride = longint'(STRB_W);
+    aligned = (base_addr / stride) * stride;
     for (int unsigned b = 0; b < STRB_W; b++) begin
-      if (exp_mem_valid.exists(aligned + b) && exp_mem_valid[aligned + b]) begin
-        exp[8*b +: 8] = exp_mem[aligned + b];
+      if (exp_mem_valid.exists(aligned + longint'(b)) && exp_mem_valid[aligned + longint'(b)]) begin
+        exp[8*b +: 8] = exp_mem[aligned + longint'(b)];
       end else begin
         // Matches default slave mem init (0). Optionally warn for visibility.
         any_uninit = 1'b1;

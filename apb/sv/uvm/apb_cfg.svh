@@ -68,6 +68,10 @@ class apb_cfg #(
     return (protocol == APB_PROTOCOL_APB4);
   endfunction
 
+`ifdef VERILATOR
+  /* verilator lint_off WIDTHEXPAND */
+  /* verilator lint_off WIDTHTRUNC */
+`endif
   `uvm_object_param_utils_begin(apb_cfg#(ADDR_W, DATA_W, NSEL))
     `uvm_field_enum(apb_protocol_e, protocol, UVM_DEFAULT)
     `uvm_field_int(sel_index, UVM_DEFAULT)
@@ -89,6 +93,10 @@ class apb_cfg #(
     `uvm_field_int(tr_record_enable, UVM_DEFAULT)
     `uvm_field_string(tr_stream_name, UVM_DEFAULT)
   `uvm_object_utils_end
+`ifdef VERILATOR
+  /* verilator lint_on WIDTHTRUNC */
+  /* verilator lint_on WIDTHEXPAND */
+`endif
 
 endclass
 
@@ -119,12 +127,20 @@ class apb_agent_cfg #(
     is_slave  = 1'b1;
   endfunction
 
+`ifdef VERILATOR
+  /* verilator lint_off WIDTHEXPAND */
+  /* verilator lint_off WIDTHTRUNC */
+`endif
   `uvm_object_param_utils_begin(apb_agent_cfg#(ADDR_W, DATA_W, NSEL))
     `uvm_field_object(cfg, UVM_DEFAULT)
     `uvm_field_int(is_master, UVM_DEFAULT)
     `uvm_field_int(is_slave, UVM_DEFAULT)
     `uvm_field_enum(uvm_active_passive_enum, is_active, UVM_DEFAULT)
   `uvm_object_utils_end
+`ifdef VERILATOR
+  /* verilator lint_on WIDTHTRUNC */
+  /* verilator lint_on WIDTHEXPAND */
+`endif
 endclass
 
 class apb_env_cfg #(
@@ -143,9 +159,17 @@ class apb_env_cfg #(
     agent_cfgs.push_back(c);
   endfunction
 
+`ifdef VERILATOR
+  /* verilator lint_off WIDTHEXPAND */
+  /* verilator lint_off WIDTHTRUNC */
+`endif
   `uvm_object_param_utils_begin(apb_env_cfg#(ADDR_W, DATA_W, NSEL))
     `uvm_field_queue_object(agent_cfgs, UVM_DEFAULT)
   `uvm_object_utils_end
+`ifdef VERILATOR
+  /* verilator lint_on WIDTHTRUNC */
+  /* verilator lint_on WIDTHEXPAND */
+`endif
 endclass
 
 `endif // KVIPS_APB_CFG_SVH

@@ -18,14 +18,18 @@ module top;
     HRESETn = 1'b1;
   end
 
+  localparam int ADDR_W  = 16;
+  localparam int DATA_W  = 32;
+  localparam int HRESP_W = 2;
+
   // Single-bus back-to-back: one master + one slave
-  ahb_if #(32, 32) ahb_if0 (.HCLK(HCLK), .HRESETn(HRESETn));
+  ahb_if #(.ADDR_W(ADDR_W), .DATA_W(DATA_W), .HRESP_W(HRESP_W)) ahb_if0 (.HCLK(HCLK), .HRESETn(HRESETn));
 
   // For a single-slave example, HREADY is just the slave's HREADYOUT.
   always_comb ahb_if0.HREADY = ahb_if0.HREADYOUT;
 
   initial begin
-    uvm_config_db#(virtual ahb_if)::set(null, "*", "vif", ahb_if0);
+    uvm_config_db#(virtual ahb_if #(.ADDR_W(ADDR_W), .DATA_W(DATA_W), .HRESP_W(HRESP_W)))::set(null, "*", "vif", ahb_if0);
     run_test();
   end
 endmodule

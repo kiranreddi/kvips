@@ -114,6 +114,10 @@ class axi4_agent_cfg #(
     is_slave  = 1'b1;
   endfunction
 
+`ifdef VERILATOR
+  /* verilator lint_off WIDTHEXPAND */
+  /* verilator lint_off WIDTHTRUNC */
+`endif
   `uvm_object_param_utils_begin(axi4_agent_cfg#(ADDR_W, DATA_W, ID_W, USER_W))
     `uvm_field_int(is_master, UVM_DEFAULT)
     `uvm_field_int(is_slave,  UVM_DEFAULT)
@@ -158,6 +162,10 @@ class axi4_agent_cfg #(
     `uvm_field_int(stats_window_cycles, UVM_DEFAULT)
     `uvm_field_int(coverage_enable, UVM_DEFAULT)
   `uvm_object_utils_end
+`ifdef VERILATOR
+  /* verilator lint_on WIDTHTRUNC */
+  /* verilator lint_on WIDTHEXPAND */
+`endif
 
 endclass
 
@@ -178,9 +186,17 @@ class axi4_env_cfg #(
     agent_cfgs.push_back(cfg);
   endfunction
 
+`ifdef VERILATOR
+  /* verilator lint_off WIDTHEXPAND */
+  /* verilator lint_off WIDTHTRUNC */
+`endif
   `uvm_object_param_utils_begin(axi4_env_cfg#(ADDR_W, DATA_W, ID_W, USER_W))
     `uvm_field_queue_object(agent_cfgs, UVM_DEFAULT)
   `uvm_object_utils_end
+`ifdef VERILATOR
+  /* verilator lint_on WIDTHTRUNC */
+  /* verilator lint_on WIDTHEXPAND */
+`endif
 
 endclass
 

@@ -1,4 +1,4 @@
-.PHONY: help list-tests questa vcs xcelium clean
+.PHONY: help list-tests questa vcs xcelium verilator regress-verilator clean
 
 SIM_DIR := uvm_back2back/sim
 SIM_DIR_ABS := $(abspath $(SIM_DIR))
@@ -27,6 +27,8 @@ help:
 	@echo "  make questa         TEST=<name> SEED=<n> UVM_VERBOSITY=<lvl> PLUSARGS='<...>' [USE_LSF=1]"
 	@echo "  make vcs            TEST=<name> SEED=<n> ... [USE_LSF=1]"
 	@echo "  make xcelium        TEST=<name> SEED=<n> ... [USE_LSF=1]"
+	@echo "  make verilator      TEST=<name> SEED=<n> ..."
+	@echo "  make regress-verilator PLUSARGS='<...>'"
 	@echo "  make clean"
 
 list-tests:
@@ -40,6 +42,12 @@ vcs:
 
 xcelium:
 	@$(RUN_PREFIX) $(SIM_DIR_ABS)/run_xcelium.sh $(COMMON_PLUSARGS)
+
+verilator:
+	@$(SIM_DIR_ABS)/run_verilator.sh $(COMMON_PLUSARGS)
+
+regress-verilator:
+	@$(SIM_DIR_ABS)/regress_verilator.sh $(PLUSARGS)
 
 clean:
 	@rm -rf $(SIM_DIR)/out

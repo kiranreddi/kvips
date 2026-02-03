@@ -17,6 +17,7 @@ make -C kvips/apb/examples questa-waves TEST=apb_b2b_smoke_test PLUSARGS='+APB_P
 make -C kvips/apb/examples vcs TEST=apb_b2b_smoke_test PLUSARGS='+APB_PROTOCOL=APB4'
 make -C kvips/apb/examples vcs TEST=apb_b2b_smoke_test PLUSARGS='+APB_PROTOCOL=APB3'
 make -C kvips/apb/examples xcelium TEST=apb_b2b_smoke_test PLUSARGS='+APB_PROTOCOL=APB4'
+make -C kvips/apb/examples verilator TEST=apb_b2b_smoke_test PLUSARGS='+APB_PROTOCOL=APB4'
 ```
 
 LSF:
@@ -26,6 +27,7 @@ source /tools/lsf/conf/profile.lsf
 make -C kvips/apb/examples questa  USE_LSF=1 TEST=apb_b2b_smoke_test PLUSARGS='+APB_PROTOCOL=APB4'
 make -C kvips/apb/examples vcs    USE_LSF=1 TEST=apb_b2b_smoke_test PLUSARGS='+APB_PROTOCOL=APB4'
 make -C kvips/apb/examples xcelium USE_LSF=1 TEST=apb_b2b_smoke_test PLUSARGS='+APB_PROTOCOL=APB4'
+make -C kvips/apb/examples regress-verilator
 ```
 
 ## Waves

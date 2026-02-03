@@ -38,7 +38,7 @@ class ahb_txn_logger #(
   virtual function void write(ahb_item#(ADDR_W, DATA_W, HRESP_W) t);
     if (t == null) return;
     if (t.write) sum_wr++; else sum_rd++;
-    if (t.wait_cycles.size() != 0) sum_stall += t.wait_cycles[0];
+    if (t.wait_cycles.size() != 0) sum_stall += longint'(t.wait_cycles[0]);
     if ((HRESP_W == 1) && (t.resp.size() != 0) && t.resp[0][0]) sum_err++;
     if ((HRESP_W == 2) && (t.resp.size() != 0) && (t.resp[0] == 2'b01)) sum_err++;
 

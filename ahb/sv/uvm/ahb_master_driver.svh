@@ -23,6 +23,8 @@ class ahb_master_driver #(
   ahb_cfg#(ADDR_W, DATA_W, HRESP_W, HAS_HMASTLOCK) cfg;
   ahb_vif_t                         vif;
 
+  typedef logic [ADDR_W-1:0] addr_t;
+
   // State for pipelining
   bit          data_valid;
   bit          data_write;
@@ -75,11 +77,13 @@ class ahb_master_driver #(
     int unsigned bpb;
     int unsigned blen;
     int unsigned boundary;
+    int unsigned base_i;
     logic [ADDR_W-1:0] region_base;
     logic [ADDR_W-1:0] offset;
     logic [ADDR_W-1:0] a;
     bpb = bytes_per_beat(size);
-    a = base + beat * bpb;
+    base_i = int'(base);
+    a = addr_t'(base_i + beat * bpb);
 
     case (burst)
       AHB_BURST_WRAP4, AHB_BURST_WRAP8, AHB_BURST_WRAP16: begin
@@ -89,8 +93,8 @@ class ahb_master_driver #(
           default:          blen = 16;
         endcase
         boundary = blen * bpb;
-        region_base = base & ~(boundary-1);
-        offset = (base + beat * bpb) & (boundary-1);
+        region_base = addr_t'(base_i & ~(boundary-1));
+        offset = addr_t'((base_i + beat * bpb) & (boundary-1));
         a = region_base | offset;
       end
       default: begin end

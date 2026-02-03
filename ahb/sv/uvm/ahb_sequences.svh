@@ -10,6 +10,9 @@ class ahb_base_seq #(
   int HRESP_W = 2
 ) extends uvm_sequence #(ahb_item#(ADDR_W, DATA_W, HRESP_W));
 
+  typedef logic [ADDR_W-1:0] addr_t;
+  typedef logic [3:0] prot_t;
+
   rand int unsigned num_txns = 100;
   rand int unsigned wr_pct   = 50;
   rand logic [ADDR_W-1:0] base_addr = '0;
@@ -73,7 +76,7 @@ class ahb_smoke_seq #(
       tr.write = ($urandom_range(0, 99) < wr_pct);
       tr.size  = rand_size();
       tr.burst = AHB_BURST_SINGLE;
-      tr.addr  = base_addr + $urandom_range(0, span_bytes-1);
+      tr.addr  = addr_t'(int'(base_addr) + $urandom_range(0, span_bytes-1));
       tr.prot  = 4'h0;
       tr.lock  = 0;
       tr.len   = 1;
@@ -103,8 +106,8 @@ class ahb_single_rw_seq #(
       tr.burst = AHB_BURST_SINGLE;
       tr.size  = rand_size();
       tr.write = ($urandom_range(0, 99) < wr_pct);
-      tr.addr  = base_addr + $urandom_range(0, span_bytes-1);
-      tr.prot  = $urandom();
+      tr.addr  = addr_t'(int'(base_addr) + $urandom_range(0, span_bytes-1));
+      tr.prot  = prot_t'($urandom());
       tr.lock  = 0;
       tr.len   = 1;
       if (tr.write) begin
@@ -143,8 +146,8 @@ class ahb_incr_burst_seq #(
       tr.write = ($urandom_range(0, 99) < wr_pct);
       tr.size  = AHB_SIZE_32;
       tr.burst = (i % 3 == 0) ? AHB_BURST_INCR16 : ((i % 3 == 1) ? AHB_BURST_INCR8 : AHB_BURST_INCR4);
-      tr.addr  = base_addr + ($urandom_range(0, span_bytes-1) & ~32'h3);
-      tr.prot  = $urandom();
+      tr.addr  = addr_t'(int'(base_addr) + ($urandom_range(0, span_bytes-1) & ~32'h3));
+      tr.prot  = prot_t'($urandom());
       tr.lock  = 0;
       tr.len   = (tr.burst == AHB_BURST_INCR4) ? 4 : (tr.burst == AHB_BURST_INCR8) ? 8 : 16;
       beats = tr.len;
@@ -175,12 +178,12 @@ class ahb_wrap_burst_seq #(
       tr.write = ($urandom_range(0, 99) < wr_pct);
       tr.size  = AHB_SIZE_32;
       tr.burst = (i % 3 == 0) ? AHB_BURST_WRAP16 : ((i % 3 == 1) ? AHB_BURST_WRAP8 : AHB_BURST_WRAP4);
-      tr.prot  = $urandom();
+      tr.prot  = prot_t'($urandom());
       tr.lock  = 0;
       tr.len   = (tr.burst == AHB_BURST_WRAP4) ? 4 : (tr.burst == AHB_BURST_WRAP8) ? 8 : 16;
       beats = tr.len;
       // Choose start address inside the wrap boundary.
-      tr.addr = base_addr + ($urandom_range(0, span_bytes-1) & ~32'h3);
+      tr.addr = addr_t'(int'(base_addr) + ($urandom_range(0, span_bytes-1) & ~32'h3));
       if (tr.write) begin
         tr.wdata = new[beats];
         foreach (tr.wdata[j]) tr.wdata[j] = $urandom();
@@ -206,8 +209,8 @@ class ahb_back_to_back_seq #(
       tr.write = ($urandom_range(0, 99) < wr_pct);
       tr.size  = rand_size();
       tr.burst = rand_burst();
-      tr.addr  = base_addr + $urandom_range(0, span_bytes-1);
-      tr.prot  = $urandom();
+      tr.addr  = addr_t'(int'(base_addr) + $urandom_range(0, span_bytes-1));
+      tr.prot  = prot_t'($urandom());
       tr.lock  = 0;
       tr.len   = (tr.burst == AHB_BURST_INCR) ? $urandom_range(1, 16) : ((tr.burst inside {AHB_BURST_INCR4,AHB_BURST_WRAP4}) ? 4 :
                 (tr.burst inside {AHB_BURST_INCR8,AHB_BURST_WRAP8}) ? 8 :
@@ -249,8 +252,8 @@ class ahb_random_stress_seq #(
       tr.write = ($urandom_range(0, 99) < wr_pct);
       tr.size  = rand_size();
       tr.burst = rand_burst();
-      tr.addr  = base_addr + $urandom_range(0, span_bytes-1);
-      tr.prot  = $urandom();
+      tr.addr  = addr_t'(int'(base_addr) + $urandom_range(0, span_bytes-1));
+      tr.prot  = prot_t'($urandom());
       tr.lock  = ($urandom_range(0, 99) < 2);
       tr.len   = (tr.burst == AHB_BURST_INCR) ? $urandom_range(1, 16) : ((tr.burst inside {AHB_BURST_INCR4,AHB_BURST_WRAP4}) ? 4 :
                 (tr.burst inside {AHB_BURST_INCR8,AHB_BURST_WRAP8}) ? 8 :

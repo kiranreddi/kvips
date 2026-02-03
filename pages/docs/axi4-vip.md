@@ -133,7 +133,12 @@ cd kvips/axi4/examples/uvm_back2back/sim
 
 # Xcelium
 ./run_xcelium.sh +UVM_TESTNAME=axi4_b2b_test
+
+# Verilator
+./run_verilator.sh +UVM_TESTNAME=axi4_b2b_test
 ```
+
+> 📝 Note: SVA assertions are skipped under Verilator.
 
 ---
 

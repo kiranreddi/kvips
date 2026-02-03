@@ -10,6 +10,19 @@ package tb_pkg;
   import axi4_types_pkg::*;
   import axi4_uvm_pkg::*;
 
+  class axi4_objtn_clear_catcher extends uvm_report_catcher;
+    function new(string name = "axi4_objtn_clear_catcher");
+      super.new(name);
+    endfunction
+
+    virtual function action_e catch();
+      if (get_id() == "OBJTN_CLEAR") begin
+        return CAUGHT;
+      end
+      return THROW;
+    endfunction
+  endclass
+
   class axi4_b2b_base_test extends uvm_test;
     `uvm_component_utils(axi4_b2b_base_test)
 
@@ -37,6 +50,30 @@ package tb_pkg;
 
     function void build_phase(uvm_phase phase);
       super.build_phase(phase);
+
+`ifdef VERILATOR
+      uvm_root::get().set_report_severity_id_action(UVM_WARNING, "OBJTN_CLEAR", UVM_NO_ACTION);
+      uvm_root::get().set_report_id_action("OBJTN_CLEAR", UVM_NO_ACTION);
+      begin
+        uvm_phase run_phase;
+        uvm_objection run_obj;
+        run_phase = uvm_run_phase::get();
+        run_obj = (run_phase == null) ? null : run_phase.get_objection();
+        if (run_obj != null) begin
+          run_obj.set_report_severity_id_action(UVM_WARNING, "OBJTN_CLEAR", UVM_NO_ACTION);
+          run_obj.set_report_id_action("OBJTN_CLEAR", UVM_NO_ACTION);
+        end
+      end
+      begin
+        axi4_objtn_clear_catcher c;
+        c = new();
+        uvm_report_cb::add(null, c);
+      end
+`endif
+`ifdef UVM_NO_DPI
+      uvm_root::get().set_report_severity_id_action(UVM_WARNING, "UVM/COMP/NAME", UVM_NO_ACTION);
+      uvm_root::get().set_report_severity_id_action(UVM_INFO, "UVM/COMP/NAMECHECK", UVM_NO_ACTION);
+`endif
 
       if (!uvm_config_db#(axi4_vif_t)::get(this, "", "vif", vif)) begin
         `uvm_fatal(get_type_name(), "Missing vif in config DB (key: vif)")
@@ -668,6 +705,10 @@ package tb_pkg;
         wr.is_write = 1;
         wr.id       = '0;
         wr.addr     = 32'h1000 + t*(DATA_W/8);
+      `ifdef VERILATOR
+        /* verilator lint_off WIDTHTRUNC */
+        /* verilator lint_off WIDTHEXPAND */
+      `endif
         wr.len      = $urandom_range(0, 7);
         wr.size     = $clog2(DATA_W/8);
         wr.burst    = AXI4_BURST_INCR;
@@ -678,6 +719,10 @@ package tb_pkg;
           if (DATA_W <= 32) wr.data[i] = $urandom();
           wr.strb[i] = '1;
         end
+      `ifdef VERILATOR
+        /* verilator lint_on WIDTHEXPAND */
+        /* verilator lint_on WIDTHTRUNC */
+      `endif
 
         wr_seq = new($sformatf("wr_seq_%0d", t));
         wr_seq.item = wr;
