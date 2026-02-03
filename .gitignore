@@ -24,6 +24,8 @@ obj_dir/
 **/out/
 **/sim/out/
 *.abs.f
+third_party/uvm_verilator/
+third_party/uvm_verilator/*.tar.gz
 cp_dir/
 work/
 work_ovm/

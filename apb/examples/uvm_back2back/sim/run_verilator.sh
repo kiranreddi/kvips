@@ -12,6 +12,10 @@ UVM_TARBALL_URL="https://www.accellera.org/images/downloads/standards/uvm/Accell
 UVM_BASE="${ROOT}/third_party/uvm"
 UVM_SRC_DEFAULT="${UVM_BASE}/1800.2-2017-1.0/src"
 
+VERILATOR_UVM_URL="${VERILATOR_UVM_URL:-https://github.com/verilator/uvm/archive/refs/heads/master.tar.gz}"
+VERILATOR_UVM_BASE="${ROOT}/third_party/uvm_verilator"
+VERILATOR_UVM_SRC_DEFAULT="${VERILATOR_UVM_BASE}/uvm-master/src"
+
 make_abs_filelist() {
   local in="$1"
   local out="$2"
@@ -45,6 +49,22 @@ make_abs_filelist() {
 
 ensure_uvm() {
   if [[ -n "${UVM_HOME:-}" ]]; then
+    return 0
+  fi
+  if [[ "${UVM_USE_VERILATOR:-1}" == "1" ]]; then
+    if [[ -d "${VERILATOR_UVM_SRC_DEFAULT}" ]]; then
+      export UVM_HOME="${VERILATOR_UVM_SRC_DEFAULT}"
+      return 0
+    fi
+    mkdir -p "${VERILATOR_UVM_BASE}"
+    local vtarball="${VERILATOR_UVM_BASE}/uvm-master.tar.gz"
+    if [[ ! -f "${vtarball}" ]]; then
+      echo "Downloading Verilator UVM from ${VERILATOR_UVM_URL}" >&2
+      curl -L -o "${vtarball}" "${VERILATOR_UVM_URL}"
+    fi
+    echo "Extracting Verilator UVM into ${VERILATOR_UVM_BASE}" >&2
+    tar -xvzf "${vtarball}" -C "${VERILATOR_UVM_BASE}"
+    export UVM_HOME="${VERILATOR_UVM_SRC_DEFAULT}"
     return 0
   fi
   if [[ -d "${UVM_SRC_DEFAULT}" ]]; then
