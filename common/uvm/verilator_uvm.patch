@@ -1,0 +1,22 @@
+diff --git a/uvm-master/src/tlm1/uvm_sqr_connections.svh b/uvm-master/src/tlm1/uvm_sqr_connections.svh
+index 2cd8e9b..7e5f9c1 100644
+--- a/uvm-master/src/tlm1/uvm_sqr_connections.svh
++++ b/uvm-master/src/tlm1/uvm_sqr_connections.svh
+@@ -83,4 +83,15 @@ class uvm_seq_item_pull_imp #(type REQ=int, type RSP=REQ, type IMP=int)
+   extends uvm_port_base #(uvm_sqr_if_base #(REQ, RSP));
+    // Function -- NODOCS -- new
+-  `UVM_IMP_COMMON(`UVM_SEQ_ITEM_PULL_MASK, "uvm_seq_item_pull_imp",IMP)
+-  `UVM_SEQ_ITEM_PULL_IMP(m_imp, REQ, RSP, t, t)
++`ifdef VERILATOR
++  local IMP m_imp;
++  function new (string name, uvm_component imp);
++    super.new (name, imp, UVM_IMPLEMENTATION, 1, 1);
++    if (!$cast(m_imp, imp)) m_imp = null;
++    m_if_mask = `UVM_SEQ_ITEM_PULL_MASK;
++  endfunction
++  `UVM_TLM_GET_TYPE_NAME("uvm_seq_item_pull_imp")
++  `UVM_SEQ_ITEM_PULL_IMP(m_imp, REQ, RSP, t, t)
++`else
++  `UVM_IMP_COMMON(`UVM_SEQ_ITEM_PULL_MASK, "uvm_seq_item_pull_imp",IMP)
++  `UVM_SEQ_ITEM_PULL_IMP(m_imp, REQ, RSP, t, t)
++`endif
