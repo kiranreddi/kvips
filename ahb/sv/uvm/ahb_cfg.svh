@@ -11,7 +11,7 @@ class ahb_cfg #(
   bit HAS_HMASTLOCK = 1'b0
 ) extends uvm_object;
 
-  typedef virtual ahb_if #(
+  typedef virtual interface ahb_if #(
     .ADDR_W(ADDR_W),
     .DATA_W(DATA_W),
     .HAS_HMASTLOCK(HAS_HMASTLOCK),

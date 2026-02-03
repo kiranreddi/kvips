@@ -29,7 +29,7 @@ module top;
   always_comb ahb_if0.HREADY = ahb_if0.HREADYOUT;
 
   initial begin
-    uvm_config_db#(virtual ahb_if #(.ADDR_W(ADDR_W), .DATA_W(DATA_W), .HRESP_W(HRESP_W)))::set(null, "*", "vif", ahb_if0);
+    uvm_config_db#(virtual interface ahb_if #(.ADDR_W(ADDR_W), .DATA_W(DATA_W), .HRESP_W(HRESP_W)))::set(null, "*", "vif", ahb_if0);
     run_test();
   end
 endmodule

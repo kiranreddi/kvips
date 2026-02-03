@@ -36,7 +36,7 @@ module tb_top;
   end
 
   initial begin
-    uvm_config_db#(virtual apb_if #(ADDR_W, DATA_W, NSEL))::set(null, "*", "vif", apb);
+    uvm_config_db#(virtual interface apb_if #(ADDR_W, DATA_W, NSEL))::set(null, "*", "vif", apb);
     run_test();
   end
 
