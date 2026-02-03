@@ -377,18 +377,18 @@ Now that you have KVIPS running, explore these resources:
 <div class="card">
 <h3>📖 VIP Documentation</h3>
 <ul>
-<li><a href="/vips/axi4/">AXI4 User Guide</a></li>
-<li><a href="/docs/axi4/api/">API Reference</a></li>
-<li><a href="/docs/axi4/integration/">Integration Guide</a></li>
+<li><a href="{{ site.baseurl }}/vips/axi4/">AXI4 User Guide</a></li>
+<li><a href="{{ site.baseurl }}/docs/axi4/api/">API Reference</a></li>
+<li><a href="{{ site.baseurl }}/docs/axi4/integration/">Integration Guide</a></li>
 </ul>
 </div>
 
 <div class="card">
 <h3>🔧 Advanced Topics</h3>
 <ul>
-<li><a href="/docs/best-practices/">Best Practices</a></li>
-<li><a href="/docs/debugging/">Debugging Tips</a></li>
-<li><a href="/docs/performance/">Performance Tuning</a></li>
+<li><a href="{{ site.baseurl }}/docs/best-practices/">Best Practices</a></li>
+<li><a href="{{ site.baseurl }}/docs/debugging/">Debugging Tips</a></li>
+<li><a href="{{ site.baseurl }}/docs/performance/">Performance Tuning</a></li>
 </ul>
 </div>
 </div>
@@ -430,7 +430,7 @@ uvm_config_db#(virtual axi4_if#(...))::set(null, "*.axi_agent*", "vif", axi_if);
 
 ### Getting Help
 
-- 📚 [FAQ](/docs/faq/)
+- 📚 [FAQ]({{ site.baseurl }}/docs/faq/)
 - 🐛 [Issue Tracker](https://github.com/kiranreddi/kvips/issues)
 - 💬 [Discussions](https://github.com/kiranreddi/kvips/discussions)
 

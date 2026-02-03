@@ -57,7 +57,7 @@ Yes, KVIPS assumes basic familiarity with UVM methodology. If you're new to UVM,
 <ul>
 <li><a href="https://www.accellera.org/downloads/standards/uvm">UVM 1.2 User Guide</a></li>
 <li>Online UVM tutorials</li>
-<li>Our <a href="/docs/getting-started/">Getting Started Guide</a></li>
+<li>Our <a href="{{ site.baseurl }}/docs/getting-started/">Getting Started Guide</a></li>
 </ul>
 </p>
 </details>
@@ -65,7 +65,7 @@ Yes, KVIPS assumes basic familiarity with UVM methodology. If you're new to UVM,
 <details>
 <summary><strong>How do I integrate KVIPS into my existing testbench?</strong></summary>
 <p>
-See our <a href="/docs/getting-started/">Getting Started Guide</a> and <a href="/docs/axi4/integration/">Integration Guide</a> for step-by-step instructions. The basic steps are:
+See our <a href="{{ site.baseurl }}/docs/getting-started/">Getting Started Guide</a> and <a href="{{ site.baseurl }}/docs/axi4/integration/">Integration Guide</a> for step-by-step instructions. The basic steps are:
 <ol>
 <li>Add KVIPS to your compilation</li>
 <li>Instantiate the interface in your top module</li>

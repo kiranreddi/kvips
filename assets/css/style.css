@@ -126,7 +126,8 @@
     transition: var(--transition-fast);
 }
 
-.nav-link:hover, .nav-link.active {
+.nav-link:hover,
+.nav-link.active {
     color: var(--primary);
 }
 
@@ -154,12 +155,14 @@
 }
 
 /* Premium Card Hover Effects */
-.vip-card, .feature-item {
+.vip-card,
+.feature-item {
     transition: transform var(--transition-base), box-shadow var(--transition-base);
     border: 1px solid var(--border-color);
 }
 
-.vip-card:hover, .feature-item:hover {
+.vip-card:hover,
+.feature-item:hover {
     transform: translateY(-4px);
     box-shadow: var(--shadow-xl);
     border-color: var(--primary-light);
@@ -184,8 +187,15 @@
 }
 
 @keyframes pulse-slow {
-    from { transform: scale(1); opacity: 0.3; }
-    to { transform: scale(1.1); opacity: 0.5; }
+    from {
+        transform: scale(1);
+        opacity: 0.3;
+    }
+
+    to {
+        transform: scale(1.1);
+        opacity: 0.5;
+    }
 }
 
 /* Premium Buttons */
@@ -257,7 +267,7 @@
         --glass-bg: rgba(15, 23, 42, 0.7);
         --glass-border: rgba(51, 65, 85, 0.3);
     }
-    
+
     .navbar.scrolled {
         background: rgba(15, 23, 42, 0.9);
     }

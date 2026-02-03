@@ -500,7 +500,7 @@ Stalls:
 
 ### Integrate with Existing Testbench
 
-See [Integration Guide](/docs/axi4/integration/) for detailed steps.
+See [Integration Guide]({{ site.baseurl }}/docs/axi4/integration/) for detailed steps.
 
 ### Multiple Agents
 
@@ -566,11 +566,11 @@ endclass
 <div class="card">
 <h3>📖 Documentation</h3>
 <ul>
-<li><a href="/docs/axi4/user-guide/">User Guide</a></li>
-<li><a href="/docs/axi4/api/">API Reference</a></li>
-<li><a href="/docs/axi4/integration/">Integration Guide</a></li>
-<li><a href="/docs/axi4/testplan/">Test Plan</a></li>
-<li><a href="/docs/axi4/assertions/">Assertions</a></li>
+<li><a href="{{ site.baseurl }}/docs/axi4/user-guide/">User Guide</a></li>
+<li><a href="{{ site.baseurl }}/docs/axi4/api/">API Reference</a></li>
+<li><a href="{{ site.baseurl }}/docs/axi4/integration/">Integration Guide</a></li>
+<li><a href="{{ site.baseurl }}/docs/axi4/testplan/">Test Plan</a></li>
+<li><a href="{{ site.baseurl }}/docs/axi4/assertions/">Assertions</a></li>
 </ul>
 </div>
 
@@ -578,9 +578,9 @@ endclass
 <h3>🔧 Examples & Tools</h3>
 <ul>
 <li><a href="https://github.com/kiranreddi/kvips/tree/main/axi4/examples">Example Testbenches</a></li>
-<li><a href="/docs/axi4/debug/">Debugging Guide</a></li>
-<li><a href="/docs/axi4/performance/">Performance Tuning</a></li>
-<li><a href="/docs/axi4/faq/">FAQ</a></li>
+<li><a href="{{ site.baseurl }}/docs/axi4/debug/">Debugging Guide</a></li>
+<li><a href="{{ site.baseurl }}/docs/axi4/performance/">Performance Tuning</a></li>
+<li><a href="{{ site.baseurl }}/docs/axi4/faq/">FAQ</a></li>
 </ul>
 </div>
 </div>
@@ -611,5 +611,5 @@ endclass
 <p style="font-size: 1.125rem; margin-bottom: 1.5rem; color: rgba(255,255,255,0.95);">
 Download KVIPS and start verifying your AXI4 designs today!
 </p>
-<a href="/docs/getting-started/" class="btn btn-secondary">Get Started</a>
+<a href="{{ site.baseurl }}/docs/getting-started/" class="btn btn-secondary">Get Started</a>
 </div>

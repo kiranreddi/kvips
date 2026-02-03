@@ -54,8 +54,8 @@ Explore our collection of professional-grade SystemVerilog UVM verification IPs,
     </div>
     
     <div style="display: flex; gap: 0.5rem; margin-top: 1.5rem;">
-      <a href="/docs/axi4-vip/" class="btn btn-primary" style="font-size: 0.875rem; padding: 0.5rem 1rem;">Documentation</a>
-      <a href="/docs/getting-started/" class="btn btn-secondary" style="font-size: 0.875rem; padding: 0.5rem 1rem;">Quick Start</a>
+      <a href="{{ site.baseurl }}/docs/axi4-vip/" class="btn btn-primary" style="font-size: 0.875rem; padding: 0.5rem 1rem;">Documentation</a>
+      <a href="{{ site.baseurl }}/docs/getting-started/" class="btn btn-secondary" style="font-size: 0.875rem; padding: 0.5rem 1rem;">Quick Start</a>
     </div>
   </div>
 </div>
@@ -94,8 +94,8 @@ Explore our collection of professional-grade SystemVerilog UVM verification IPs,
     </div>
 
     <div style="display: flex; gap: 0.5rem; margin-top: 1.5rem;">
-      <a href="/docs/apb-vip/" class="btn btn-primary" style="font-size: 0.875rem; padding: 0.5rem 1rem;">Documentation</a>
-      <a href="/docs/getting-started/" class="btn btn-secondary" style="font-size: 0.875rem; padding: 0.5rem 1rem;">Quick Start</a>
+      <a href="{{ site.baseurl }}/docs/apb-vip/" class="btn btn-primary" style="font-size: 0.875rem; padding: 0.5rem 1rem;">Documentation</a>
+      <a href="{{ site.baseurl }}/docs/getting-started/" class="btn btn-secondary" style="font-size: 0.875rem; padding: 0.5rem 1rem;">Quick Start</a>
     </div>
   </div>
 </div>
@@ -136,8 +136,8 @@ Explore our collection of professional-grade SystemVerilog UVM verification IPs,
     </div>
 
     <div style="display: flex; gap: 0.5rem; margin-top: 1.5rem;">
-      <a href="/docs/ahb-vip/" class="btn btn-primary" style="font-size: 0.875rem; padding: 0.5rem 1rem;">Documentation</a>
-      <a href="/docs/getting-started/" class="btn btn-secondary" style="font-size: 0.875rem; padding: 0.5rem 1rem;">Quick Start</a>
+      <a href="{{ site.baseurl }}/docs/ahb-vip/" class="btn btn-primary" style="font-size: 0.875rem; padding: 0.5rem 1rem;">Documentation</a>
+      <a href="{{ site.baseurl }}/docs/getting-started/" class="btn btn-secondary" style="font-size: 0.875rem; padding: 0.5rem 1rem;">Quick Start</a>
     </div>
   </div>
 </div>
@@ -441,9 +441,9 @@ Contribution Guide
 <div class="card">
 <h4>📖 Documentation</h4>
 <ul style="margin: 0;">
-<li><a href="/docs/getting-started/">Getting Started</a></li>
-<li><a href="/docs/best-practices/">Best Practices</a></li>
-<li><a href="/docs/code-review/">Code Review</a></li>
+<li><a href="{{ site.baseurl }}/docs/getting-started/">Getting Started</a></li>
+<li><a href="{{ site.baseurl }}/docs/best-practices/">Best Practices</a></li>
+<li><a href="{{ site.baseurl }}/docs/code-review/">Code Review</a></li>
 </ul>
 </div>
 
@@ -460,8 +460,8 @@ Contribution Guide
 <h4>🔧 Examples</h4>
 <ul style="margin: 0;">
 <li><a href="https://github.com/kiranreddi/kvips/tree/main/axi4/examples">AXI4 Examples</a></li>
-<li><a href="/docs/examples/">Example Gallery</a></li>
-<li><a href="/docs/tutorials/">Tutorials</a></li>
+<li><a href="{{ site.baseurl }}/docs/examples/">Example Gallery</a></li>
+<li><a href="{{ site.baseurl }}/docs/tutorials/">Tutorials</a></li>
 </ul>
 </div>
 
@@ -474,5 +474,5 @@ Contribution Guide
 <p style="font-size: 1.125rem; color: var(--text-secondary); margin: 1rem 0;">
 Download KVIPS and accelerate your verification efforts today!
 </p>
-<a href="/docs/getting-started/" class="btn btn-primary">Get Started</a>
+<a href="{{ site.baseurl }}/docs/getting-started/" class="btn btn-primary">Get Started</a>
 </div>
