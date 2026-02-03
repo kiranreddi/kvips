@@ -30,9 +30,7 @@ package tb_pkg;
     localparam int DATA_W = 32;
     localparam int NSEL   = 1;
 
-    typedef virtual interface apb_if #(ADDR_W, DATA_W, NSEL) apb_vif_t;
-
-    apb_vif_t vif;
+    virtual interface apb_if #(ADDR_W, DATA_W, NSEL) vif;
 
     apb_env_cfg#(ADDR_W, DATA_W, NSEL) env_cfg;
     apb_env#(ADDR_W, DATA_W, NSEL)     env;
@@ -62,7 +60,7 @@ package tb_pkg;
   end
 `endif
 
-      if (!uvm_config_db#(apb_vif_t)::get(this, "", "vif", vif)) begin
+      if (!uvm_config_db#(virtual interface apb_if #(ADDR_W, DATA_W, NSEL))::get(this, "", "vif", vif)) begin
         `uvm_fatal("APB_TB", "Missing vif in config DB (key: vif)")
       end
 

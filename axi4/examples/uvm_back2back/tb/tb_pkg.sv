@@ -31,9 +31,7 @@ package tb_pkg;
     localparam int ID_W   = 4;
     localparam int USER_W = 1;
 
-    typedef virtual interface axi4_if #(ADDR_W, DATA_W, ID_W, USER_W) axi4_vif_t;
-
-    axi4_vif_t vif;
+    virtual interface axi4_if #(ADDR_W, DATA_W, ID_W, USER_W) vif;
 
     axi4_env_cfg#(ADDR_W, DATA_W, ID_W, USER_W) env_cfg;
     axi4_env#(ADDR_W, DATA_W, ID_W, USER_W)     env;
@@ -75,7 +73,7 @@ package tb_pkg;
       uvm_root::get().set_report_severity_id_action(UVM_INFO, "UVM/COMP/NAMECHECK", UVM_NO_ACTION);
 `endif
 
-      if (!uvm_config_db#(axi4_vif_t)::get(this, "", "vif", vif)) begin
+      if (!uvm_config_db#(virtual interface axi4_if #(ADDR_W, DATA_W, ID_W, USER_W))::get(this, "", "vif", vif)) begin
         `uvm_fatal(get_type_name(), "Missing vif in config DB (key: vif)")
       end
 
