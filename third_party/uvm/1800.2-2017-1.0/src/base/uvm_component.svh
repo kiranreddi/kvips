@@ -3304,7 +3304,7 @@ function void uvm_component::m_apply_verbosity_settings(uvm_phase phase);
         string p_rand = p.get_randstate();
         fork begin
           m_verbosity_setting setting = m_verbosity_settings[i];
-          #(setting.offset);
+          #setting.offset;
           if(setting.id == "_ALL_") 
             set_report_verbosity_level(setting.verbosity);
           else 

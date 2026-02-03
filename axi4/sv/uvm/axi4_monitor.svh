@@ -199,6 +199,9 @@ class axi4_monitor #(
   endfunction
 
   function automatic void maybe_record(axi4_item#(ADDR_W, DATA_W, ID_W, USER_W) tr, string label);
+`ifdef VERILATOR
+    return;
+`endif
     if (!cfg.tr_record_enable) return;
     void'(begin_tr(tr, cfg.tr_stream_name, label));
     tr.record();

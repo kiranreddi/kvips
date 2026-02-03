@@ -103,6 +103,9 @@ class apb_monitor #(
   endfunction
 
   function automatic void maybe_record(item_t tr, string label);
+`ifdef VERILATOR
+    return;
+`endif
     if (!cfg.tr_record_enable) return;
     void'(begin_tr(tr, cfg.tr_stream_name, label));
     tr.record();
