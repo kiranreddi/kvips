@@ -82,11 +82,6 @@ if ! command -v "${VERILATOR_BIN}" >/dev/null 2>&1; then
   exit 127
 fi
 
-if [[ -z "${VERILATOR_ROOT:-}" ]]; then
-  VERILATOR_ROOT="$(cd "$(dirname "${VERILATOR_BIN}")/.." && pwd)"
-  export VERILATOR_ROOT
-fi
-
 cd "${OUT}"
 
 REUSE_BUILD="${VERILATOR_REUSE_BUILD:-0}"

@@ -208,7 +208,7 @@
         const currentPath = window.location.pathname;
 
         // active class on scroll
-        window.addEventListener('scroll', function() {
+        window.addEventListener('scroll', function () {
             if (window.scrollY > 50) {
                 navbar.classList.add('scrolled');
             } else {
