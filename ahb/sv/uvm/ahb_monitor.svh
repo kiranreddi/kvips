@@ -13,7 +13,7 @@ class ahb_monitor #(
 
   localparam string RID = "AHB_MON";
 
-  typedef virtual ahb_if #(
+  typedef virtual interface ahb_if #(
     .ADDR_W(ADDR_W),
     .DATA_W(DATA_W),
     .HAS_HMASTLOCK(HAS_HMASTLOCK),

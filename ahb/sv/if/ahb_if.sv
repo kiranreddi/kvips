@@ -49,6 +49,7 @@ interface ahb_if #(
   logic [HRESP_W-1:0] HRESP;
 
   // Clocking blocks (posedge HCLK)
+`ifndef VERILATOR
   clocking cb_m @(posedge HCLK);
     default input #1step output #0;
     output HADDR, HTRANS, HWRITE, HSIZE, HBURST, HPROT, HWDATA, HSEL, HMASTLOCK, HMASTER;
@@ -65,6 +66,7 @@ interface ahb_if #(
     default input #1step output #0;
     input HADDR, HTRANS, HWRITE, HSIZE, HBURST, HPROT, HWDATA, HSEL, HMASTLOCK, HMASTER, HREADY, HREADYOUT, HRESP, HRDATA;
   endclocking
+`endif
 
 `ifndef VERILATOR
   modport master (clocking cb_m, input HCLK, input HRESETn);
