@@ -18,6 +18,14 @@ class apb_master_driver #(
   apb_cfg#(ADDR_W, DATA_W, NSEL) cfg;
   apb_vif_t vif;
 
+`ifdef VERILATOR
+  `define APB_M_CB vif
+  `define APB_M_EVT @(posedge vif.PCLK)
+`else
+  `define APB_M_CB vif.cb_m
+  `define APB_M_EVT @(vif.cb_m)
+`endif
+
   `uvm_component_param_utils(apb_master_driver#(ADDR_W, DATA_W, NSEL))
 
   function new(string name, uvm_component parent);
@@ -35,19 +43,19 @@ class apb_master_driver #(
   endfunction
 
   task automatic drive_idle();
-    vif.cb_m.PSEL    <= '0;
-    vif.cb_m.PENABLE <= 1'b0;
-    vif.cb_m.PWRITE  <= 1'b0;
-    vif.cb_m.PADDR   <= '0;
-    vif.cb_m.PWDATA  <= '0;
-    vif.cb_m.PPROT   <= 3'b000;
-    vif.cb_m.PSTRB   <= '0;
+    `APB_M_CB.PSEL    <= '0;
+    `APB_M_CB.PENABLE <= 1'b0;
+    `APB_M_CB.PWRITE  <= 1'b0;
+    `APB_M_CB.PADDR   <= '0;
+    `APB_M_CB.PWDATA  <= '0;
+    `APB_M_CB.PPROT   <= 3'b000;
+    `APB_M_CB.PSTRB   <= '0;
   endtask
 
   task automatic wait_reset_release();
     drive_idle();
-    while (vif.PRESETn !== 1'b1) @(vif.cb_m);
-    @(vif.cb_m);
+    while (vif.PRESETn !== 1'b1) `APB_M_EVT;
+    `APB_M_EVT;
   endtask
 
   function automatic logic [2:0] choose_pprot(apb_item#(ADDR_W, DATA_W) tr);
@@ -84,33 +92,33 @@ class apb_master_driver #(
     tr.strb = pstrb_v;
 
     // SETUP phase
-    vif.cb_m.PADDR   <= tr.addr;
-    vif.cb_m.PWRITE  <= tr.write;
-    vif.cb_m.PWDATA  <= tr.wdata;
-    vif.cb_m.PSEL    <= sel;
-    vif.cb_m.PENABLE <= 1'b0;
-    vif.cb_m.PPROT   <= pprot_v;
-    vif.cb_m.PSTRB   <= pstrb_v;
-    @(vif.cb_m);
+    `APB_M_CB.PADDR   <= tr.addr;
+    `APB_M_CB.PWRITE  <= tr.write;
+    `APB_M_CB.PWDATA  <= tr.wdata;
+    `APB_M_CB.PSEL    <= sel;
+    `APB_M_CB.PENABLE <= 1'b0;
+    `APB_M_CB.PPROT   <= pprot_v;
+    `APB_M_CB.PSTRB   <= pstrb_v;
+    `APB_M_EVT;
 
     // ENABLE phase
-    vif.cb_m.PENABLE <= 1'b1;
+    `APB_M_CB.PENABLE <= 1'b1;
     // Advance into the first ACCESS cycle. APB completes in an ACCESS cycle,
     // not in the same delta-cycle as PENABLE assertion.
-    @(vif.cb_m);
+    `APB_M_EVT;
 
     wait_c = 0;
     tr.start_t = $time;
-    while (vif.cb_m.PREADY !== 1'b1) begin
+    while (`APB_M_CB.PREADY !== 1'b1) begin
       wait_c++;
-      @(vif.cb_m);
+      `APB_M_EVT;
     end
 
     // COMPLETE
     tr.wait_cycles = wait_c;
-    tr.slverr = (vif.cb_m.PSLVERR === 1'b1);
+    tr.slverr = (`APB_M_CB.PSLVERR === 1'b1);
     tr.resp   = tr.slverr ? APB_RESP_ERR : APB_RESP_OK;
-    if (!tr.write) tr.rdata = vif.cb_m.PRDATA;
+    if (!tr.write) tr.rdata = `APB_M_CB.PRDATA;
     tr.end_t = $time;
 
     if (cfg.trace_enable) begin
@@ -123,13 +131,13 @@ class apb_master_driver #(
 
     // Return to SETUP/IDLE for next transfer.
     if (cfg.drop_psel_between) begin
-      vif.cb_m.PSEL    <= '0;
-      vif.cb_m.PENABLE <= 1'b0;
-      @(vif.cb_m);
+      `APB_M_CB.PSEL    <= '0;
+      `APB_M_CB.PENABLE <= 1'b0;
+      `APB_M_EVT;
     end else begin
       // Continuous mode: drop PENABLE, keep PSEL asserted and update address/data in next setup cycle.
-      vif.cb_m.PENABLE <= 1'b0;
-      @(vif.cb_m);
+      `APB_M_CB.PENABLE <= 1'b0;
+      `APB_M_EVT;
     end
   endtask
 
@@ -156,5 +164,8 @@ class apb_master_driver #(
   endtask
 
 endclass
+
+`undef APB_M_CB
+`undef APB_M_EVT
 
 `endif // KVIPS_APB_MASTER_DRIVER_SVH

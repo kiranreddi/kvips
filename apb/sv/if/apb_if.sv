@@ -60,7 +60,9 @@ interface apb_if #(
 `endif
 
   // Optional assertions (bound into the interface for portability)
+`ifndef VERILATOR
   `include "apb_if_sva.svh"
+`endif
 
 endinterface
 

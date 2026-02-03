@@ -25,6 +25,14 @@ class ahb_monitor #(
 
   uvm_analysis_port #(ahb_item#(ADDR_W, DATA_W, HRESP_W)) ap;
 
+`ifdef VERILATOR
+`define AHB_MON_CB  vif
+`define AHB_MON_EVT posedge vif.HCLK
+`else
+`define AHB_MON_CB  vif.cb_mon
+`define AHB_MON_EVT vif.cb_mon
+`endif
+
   typedef struct packed {
     bit                valid;
     bit                write;
@@ -117,13 +125,13 @@ class ahb_monitor #(
 
   function ctrl_t sample_ctrl();
     ctrl_t c;
-    c.valid = (vif.cb_mon.HSEL && vif.cb_mon.HTRANS[1] && vif.cb_mon.HREADY);
-    c.write = vif.cb_mon.HWRITE;
-    c.addr  = vif.cb_mon.HADDR;
-    c.size  = ahb_size_e'(vif.cb_mon.HSIZE);
-    c.burst = ahb_burst_e'(vif.cb_mon.HBURST);
-    c.prot  = vif.cb_mon.HPROT;
-    c.lock  = vif.cb_mon.HMASTLOCK;
+    c.valid = (`AHB_MON_CB.HSEL && `AHB_MON_CB.HTRANS[1] && `AHB_MON_CB.HREADY);
+    c.write = `AHB_MON_CB.HWRITE;
+    c.addr  = `AHB_MON_CB.HADDR;
+    c.size  = ahb_size_e'(`AHB_MON_CB.HSIZE);
+    c.burst = ahb_burst_e'(`AHB_MON_CB.HBURST);
+    c.prot  = `AHB_MON_CB.HPROT;
+    c.lock  = `AHB_MON_CB.HMASTLOCK;
     return c;
   endfunction
 
@@ -151,7 +159,7 @@ class ahb_monitor #(
     if (!cfg.monitor_enable) begin
       // Keep component alive but inactive (avoids fork/join ordering surprises
       // in environments that expect the monitor to exist).
-      forever @(vif.cb_mon);
+      forever @(`AHB_MON_EVT);
     end
 
     ctrl_pipe = clear_ctrl();
@@ -167,7 +175,7 @@ class ahb_monitor #(
     end
 
     forever begin
-      @(vif.cb_mon);
+      @(`AHB_MON_EVT);
 
       if (!vif.HRESETn) begin
         ctrl_pipe = clear_ctrl();
@@ -176,7 +184,7 @@ class ahb_monitor #(
         continue;
       end
 
-      if (!vif.cb_mon.HREADY) begin
+      if (!`AHB_MON_CB.HREADY) begin
         // Stalling the current data phase.
         if (ctrl_data.valid) stall_cnt++;
         continue;
@@ -195,11 +203,11 @@ class ahb_monitor #(
         t.len   = 1;
         t.post_randomize();
         t.wait_cycles[0] = stall_cnt;
-        t.resp[0]        = vif.cb_mon.HRESP;
+        t.resp[0]        = `AHB_MON_CB.HRESP;
         if (ctrl_data.write) begin
-          t.wdata[0] = vif.cb_mon.HWDATA;
+          t.wdata[0] = `AHB_MON_CB.HWDATA;
         end else begin
-          t.rdata[0] = vif.cb_mon.HRDATA;
+          t.rdata[0] = `AHB_MON_CB.HRDATA;
         end
         ap.write(t);
 
@@ -221,5 +229,8 @@ class ahb_monitor #(
   endtask
 
 endclass
+
+`undef AHB_MON_CB
+`undef AHB_MON_EVT
 
 `endif // KVIPS_AHB_MONITOR_SVH

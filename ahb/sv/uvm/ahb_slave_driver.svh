@@ -25,6 +25,14 @@ class ahb_slave_driver #(
 
   typedef logic [HRESP_W-1:0] hresp_t;
 
+`ifdef VERILATOR
+`define AHB_S_CB  vif
+`define AHB_S_EVT posedge vif.HCLK
+`else
+`define AHB_S_CB  vif.cb_s
+`define AHB_S_EVT vif.cb_s
+`endif
+
   // Simple byte-addressed memory model
   byte unsigned mem[longint unsigned];
 
@@ -111,13 +119,13 @@ class ahb_slave_driver #(
 
   function ctrl_t sample_ctrl();
     ctrl_t c;
-    c.valid = ((vif.cb_s.HSEL === 1'b1) && (vif.cb_s.HTRANS[1] === 1'b1) && (vif.cb_s.HREADY === 1'b1));
-    c.write = vif.cb_s.HWRITE;
-    c.addr  = vif.cb_s.HADDR;
-    c.size  = ahb_size_e'(vif.cb_s.HSIZE);
-    c.burst = ahb_burst_e'(vif.cb_s.HBURST);
-    c.prot  = vif.cb_s.HPROT;
-    c.lock  = vif.cb_s.HMASTLOCK;
+    c.valid = ((`AHB_S_CB.HSEL === 1'b1) && (`AHB_S_CB.HTRANS[1] === 1'b1) && (`AHB_S_CB.HREADY === 1'b1));
+    c.write = `AHB_S_CB.HWRITE;
+    c.addr  = `AHB_S_CB.HADDR;
+    c.size  = ahb_size_e'(`AHB_S_CB.HSIZE);
+    c.burst = ahb_burst_e'(`AHB_S_CB.HBURST);
+    c.prot  = `AHB_S_CB.HPROT;
+    c.lock  = `AHB_S_CB.HMASTLOCK;
     return c;
   endfunction
 
@@ -136,16 +144,16 @@ class ahb_slave_driver #(
     stall_rem = 0;
     stall_armed = 0;
 
-    vif.cb_s.HREADYOUT <= 1'b1;
-    vif.cb_s.HRESP     <= resp_okay();
-    vif.cb_s.HRDATA    <= '0;
+    `AHB_S_CB.HREADYOUT <= 1'b1;
+    `AHB_S_CB.HRESP     <= resp_okay();
+    `AHB_S_CB.HRDATA    <= '0;
 
     @(posedge vif.HCLK);
     while (!vif.HRESETn) begin
       @(posedge vif.HCLK);
-      vif.cb_s.HREADYOUT <= 1'b1;
-      vif.cb_s.HRESP     <= resp_okay();
-      vif.cb_s.HRDATA    <= '0;
+      `AHB_S_CB.HREADYOUT <= 1'b1;
+      `AHB_S_CB.HRESP     <= resp_okay();
+      `AHB_S_CB.HRDATA    <= '0;
       ctrl_pipe = clear_ctrl();
       ctrl_data = clear_ctrl();
       stall_rem = 0;
@@ -153,16 +161,16 @@ class ahb_slave_driver #(
     end
 
     forever begin
-      @(vif.cb_s);
+      @(`AHB_S_EVT);
 
       if (!vif.HRESETn) begin
         ctrl_pipe = clear_ctrl();
         ctrl_data = clear_ctrl();
         stall_rem = 0;
         stall_armed = 0;
-        vif.cb_s.HREADYOUT <= 1'b1;
-        vif.cb_s.HRESP     <= resp_okay();
-        vif.cb_s.HRDATA    <= '0;
+        `AHB_S_CB.HREADYOUT <= 1'b1;
+        `AHB_S_CB.HRESP     <= resp_okay();
+        `AHB_S_CB.HRDATA    <= '0;
         continue;
       end
 
@@ -174,27 +182,27 @@ class ahb_slave_driver #(
 
       if (ctrl_data.valid && (stall_rem != 0)) begin
         // Stall cycle: keep outputs stable, hold HREADYOUT low, decrement.
-        vif.cb_s.HREADYOUT <= 1'b0;
+        `AHB_S_CB.HREADYOUT <= 1'b0;
         stall_rem--;
         continue;
       end
 
       // Ready to complete current beat (if any) and accept next control.
-      vif.cb_s.HREADYOUT <= 1'b1;
+      `AHB_S_CB.HREADYOUT <= 1'b1;
 
       // Complete data phase for ctrl_data (this cycle's handshake completes it).
       if (ctrl_data.valid) begin
         bit err = cfg.addr_in_error_range(ctrl_data.addr);
-        vif.cb_s.HRESP  <= err ? resp_error() : resp_okay();
+        `AHB_S_CB.HRESP  <= err ? resp_error() : resp_okay();
         if (!ctrl_data.write) begin
-          vif.cb_s.HRDATA <= read_bytes(ctrl_data.addr, ctrl_data.size);
+          `AHB_S_CB.HRDATA <= read_bytes(ctrl_data.addr, ctrl_data.size);
         end else begin
-          write_bytes(ctrl_data.addr, ctrl_data.size, vif.cb_s.HWDATA);
-          vif.cb_s.HRDATA <= '0;
+          write_bytes(ctrl_data.addr, ctrl_data.size, `AHB_S_CB.HWDATA);
+          `AHB_S_CB.HRDATA <= '0;
         end
       end else begin
-        vif.cb_s.HRESP  <= resp_okay();
-        vif.cb_s.HRDATA <= '0;
+        `AHB_S_CB.HRESP  <= resp_okay();
+        `AHB_S_CB.HRDATA <= '0;
       end
 
       // Shift pipeline at end of ready cycle:
@@ -214,5 +222,8 @@ class ahb_slave_driver #(
   endtask
 
 endclass
+
+`undef AHB_S_CB
+`undef AHB_S_EVT
 
 `endif // KVIPS_AHB_SLAVE_DRIVER_SVH

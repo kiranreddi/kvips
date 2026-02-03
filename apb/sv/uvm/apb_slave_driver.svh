@@ -18,6 +18,14 @@ class apb_slave_driver #(
   apb_cfg#(ADDR_W, DATA_W, NSEL) cfg;
   apb_vif_t vif;
 
+`ifdef VERILATOR
+  `define APB_S_CB vif
+  `define APB_S_EVT @(posedge vif.PCLK)
+`else
+  `define APB_S_CB vif.cb_s
+  `define APB_S_EVT @(vif.cb_s)
+`endif
+
   // Simple word-addressed backing store.
   logic [DATA_W-1:0] mem[longint unsigned];
 
@@ -84,26 +92,26 @@ class apb_slave_driver #(
   endfunction
 
   task automatic drive_idle();
-    vif.cb_s.PREADY  <= 1'b1;
-    vif.cb_s.PSLVERR <= 1'b0;
-    vif.cb_s.PRDATA  <= '0;
+    `APB_S_CB.PREADY  <= 1'b1;
+    `APB_S_CB.PSLVERR <= 1'b0;
+    `APB_S_CB.PRDATA  <= '0;
   endtask
 
   task automatic wait_reset_release();
     drive_idle();
     have_pending = 0;
     wait_left = 0;
-    while (vif.PRESETn !== 1'b1) @(vif.cb_s);
-    @(vif.cb_s);
+    while (vif.PRESETn !== 1'b1) `APB_S_EVT;
+    `APB_S_EVT;
   endtask
 
   task automatic capture_setup();
-    pending.addr  = vif.cb_s.PADDR;
-    pending.write = (vif.cb_s.PWRITE === 1'b1);
-    pending.wdata = vif.cb_s.PWDATA;
-    pending.prot  = vif.cb_s.PPROT;
-    pending.strb  = cfg.is_apb4() ? vif.cb_s.PSTRB : '1;
-    pending.slv_err = should_slverr(vif.cb_s.PADDR);
+    pending.addr  = `APB_S_CB.PADDR;
+    pending.write = (`APB_S_CB.PWRITE === 1'b1);
+    pending.wdata = `APB_S_CB.PWDATA;
+    pending.prot  = `APB_S_CB.PPROT;
+    pending.strb  = cfg.is_apb4() ? `APB_S_CB.PSTRB : '1;
+    pending.slv_err = should_slverr(`APB_S_CB.PADDR);
     have_pending = 1;
 
     if (cfg.allow_wait_states && (cfg.max_wait_cycles != 0)) begin
@@ -121,7 +129,7 @@ class apb_slave_driver #(
     logic [DATA_W-1:0] old_d;
     logic [DATA_W-1:0] new_d;
 
-    vif.cb_s.PSLVERR <= pending.slv_err;
+    `APB_S_CB.PSLVERR <= pending.slv_err;
 
     wi = word_idx(pending.addr);
     old_d = mem.exists(wi) ? mem[wi] : '0;
@@ -133,9 +141,9 @@ class apb_slave_driver #(
       if (cfg.is_apb4()) new_d = apply_strb(old_d, pending.wdata, pending.strb);
       else               new_d = pending.wdata;
       mem[wi] = new_d;
-      vif.cb_s.PRDATA <= '0;
+      `APB_S_CB.PRDATA <= '0;
     end else begin
-      vif.cb_s.PRDATA <= old_d;
+      `APB_S_CB.PRDATA <= old_d;
     end
   endtask
 
@@ -144,7 +152,7 @@ class apb_slave_driver #(
 
     forever begin
       bit done;
-      @(vif.cb_s);
+      `APB_S_EVT;
       done = 0;
 
       if (vif.PRESETn !== 1'b1) begin
@@ -155,19 +163,19 @@ class apb_slave_driver #(
       end
 
       // Setup observed
-      if ((|vif.cb_s.PSEL) && (vif.cb_s.PENABLE === 1'b0)) begin
+      if ((|`APB_S_CB.PSEL) && (`APB_S_CB.PENABLE === 1'b0)) begin
         capture_setup();
         // Response (PRDATA/PSLVERR) is only valid/meaningful in the ACCESS phase.
         // Keep PSLVERR low in setup; respond_access() will drive the real response
         // on the completion cycle in ACCESS.
-        vif.cb_s.PREADY  <= 1'b0;
-        vif.cb_s.PSLVERR <= 1'b0;
-        vif.cb_s.PRDATA  <= '0;
+        `APB_S_CB.PREADY  <= 1'b0;
+        `APB_S_CB.PSLVERR <= 1'b0;
+        `APB_S_CB.PRDATA  <= '0;
         continue;
       end
 
       // Access phase
-      if ((|vif.cb_s.PSEL) && (vif.cb_s.PENABLE === 1'b1)) begin
+      if ((|`APB_S_CB.PSEL) && (`APB_S_CB.PENABLE === 1'b1)) begin
         if (!have_pending) begin
           // Defensive: recover by treating current cycle as pending.
           capture_setup();
@@ -175,22 +183,25 @@ class apb_slave_driver #(
 
         // Stall for wait_left cycles with PREADY low, then complete with PREADY high.
         if (wait_left > 0) begin
-          vif.cb_s.PREADY  <= 1'b0;
-          vif.cb_s.PSLVERR <= 1'b0;
+          `APB_S_CB.PREADY  <= 1'b0;
+          `APB_S_CB.PSLVERR <= 1'b0;
           wait_left--;
         end else begin
-          vif.cb_s.PREADY <= 1'b1;
+          `APB_S_CB.PREADY <= 1'b1;
           respond_access();
           have_pending = 0;
         end
       end else begin
         // Idle: keep ready high, error low.
-        vif.cb_s.PREADY  <= 1'b1;
-        vif.cb_s.PSLVERR <= 1'b0;
+        `APB_S_CB.PREADY  <= 1'b1;
+        `APB_S_CB.PSLVERR <= 1'b0;
       end
     end
   endtask
 
 endclass
+
+`undef APB_S_CB
+`undef APB_S_EVT
 
 `endif // KVIPS_APB_SLAVE_DRIVER_SVH

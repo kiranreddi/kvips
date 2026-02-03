@@ -20,6 +20,14 @@ class axi4_monitor #(
   axi4_agent_cfg#(ADDR_W, DATA_W, ID_W, USER_W) cfg;
   axi4_vif_t vif;
 
+`ifdef VERILATOR
+`define AXI4_MON_CB  vif
+`define AXI4_MON_EVT posedge vif.aclk
+`else
+`define AXI4_MON_CB  vif.mon_cb
+`define AXI4_MON_EVT vif.mon_cb
+`endif
+
   uvm_analysis_port #(axi4_item#(ADDR_W, DATA_W, ID_W, USER_W)) ap;
 
   // -------------------------
@@ -252,7 +260,7 @@ class axi4_monitor #(
   task run_phase(uvm_phase phase);
     if (!cfg.monitor_enable) begin
       // Keep component alive but inactive.
-      forever @(vif.mon_cb);
+      forever @(`AXI4_MON_EVT);
     end
     fork
       stats_loop();
@@ -276,9 +284,9 @@ class axi4_monitor #(
 
     if (!cfg.stats_enable) begin
       // Keep thread alive but idle to avoid fork/join termination ordering surprises.
-      forever @(vif.mon_cb);
+      forever @(`AXI4_MON_EVT);
     end
-    while (vif.areset_n !== 1'b1) @(vif.mon_cb);
+    while (vif.areset_n !== 1'b1) @(`AXI4_MON_EVT);
 
     last_cycles   = 0;
     last_aw_hs    = 0;
@@ -293,13 +301,13 @@ class axi4_monitor #(
     last_r_stall  = 0;
 
     forever begin
-      @(vif.mon_cb);
+      @(`AXI4_MON_EVT);
       stat_cycles++;
-      if (vif.mon_cb.awvalid && !vif.mon_cb.awready) stat_aw_stall++;
-      if (vif.mon_cb.wvalid  && !vif.mon_cb.wready)  stat_w_stall++;
-      if (vif.mon_cb.bvalid  && !vif.mon_cb.bready)  stat_b_stall++;
-      if (vif.mon_cb.arvalid && !vif.mon_cb.arready) stat_ar_stall++;
-      if (vif.mon_cb.rvalid  && !vif.mon_cb.rready)  stat_r_stall++;
+      if (`AXI4_MON_CB.awvalid && !`AXI4_MON_CB.awready) stat_aw_stall++;
+      if (`AXI4_MON_CB.wvalid  && !`AXI4_MON_CB.wready)  stat_w_stall++;
+      if (`AXI4_MON_CB.bvalid  && !`AXI4_MON_CB.bready)  stat_b_stall++;
+      if (`AXI4_MON_CB.arvalid && !`AXI4_MON_CB.arready) stat_ar_stall++;
+      if (`AXI4_MON_CB.rvalid  && !`AXI4_MON_CB.rready)  stat_r_stall++;
 
       if (cfg.stats_window_cycles != 0) begin
         longint unsigned win_size;
@@ -337,24 +345,24 @@ class axi4_monitor #(
     int unsigned beat_idx;
     bit have_aw = 0;
 
-    while (vif.areset_n !== 1'b1) @(vif.mon_cb);
+    while (vif.areset_n !== 1'b1) @(`AXI4_MON_EVT);
     forever begin
-      @(vif.mon_cb);
+      @(`AXI4_MON_EVT);
 
-      if (vif.mon_cb.awvalid && vif.mon_cb.awready) begin
+      if (`AXI4_MON_CB.awvalid && `AXI4_MON_CB.awready) begin
         a_chan_t tmp;
         sum_aw_hs++;
-        tmp.id    = vif.mon_cb.awid;
-        tmp.addr  = vif.mon_cb.awaddr;
-        tmp.len   = vif.mon_cb.awlen;
-        tmp.size  = vif.mon_cb.awsize;
-        tmp.burst = axi4_burst_e'(vif.mon_cb.awburst);
-        tmp.lock  = vif.mon_cb.awlock;
-        tmp.cache  = vif.mon_cb.awcache;
-        tmp.prot   = vif.mon_cb.awprot;
-        tmp.qos    = vif.mon_cb.awqos;
-        tmp.region = vif.mon_cb.awregion;
-        tmp.user  = vif.mon_cb.awuser;
+        tmp.id    = `AXI4_MON_CB.awid;
+        tmp.addr  = `AXI4_MON_CB.awaddr;
+        tmp.len   = `AXI4_MON_CB.awlen;
+        tmp.size  = `AXI4_MON_CB.awsize;
+        tmp.burst = axi4_burst_e'(`AXI4_MON_CB.awburst);
+        tmp.lock  = `AXI4_MON_CB.awlock;
+        tmp.cache  = `AXI4_MON_CB.awcache;
+        tmp.prot   = `AXI4_MON_CB.awprot;
+        tmp.qos    = `AXI4_MON_CB.awqos;
+        tmp.region = `AXI4_MON_CB.awregion;
+        tmp.user  = `AXI4_MON_CB.awuser;
         aw_q.push_back(tmp);
         if (cfg.stats_enable) begin
           stat_aw_hs++;
@@ -384,28 +392,28 @@ class axi4_monitor #(
         tr.allocate_payload();
       end
 
-      if (have_aw && (tr != null) && (vif.mon_cb.wvalid && vif.mon_cb.wready)) begin
+      if (have_aw && (tr != null) && (`AXI4_MON_CB.wvalid && `AXI4_MON_CB.wready)) begin
         sum_w_hs++;
         if (cfg.stats_enable) stat_w_hs++;
         if (beat_idx < tr.num_beats()) begin
-          tr.data[beat_idx] = vif.mon_cb.wdata;
-          if (tr.strb.size() == tr.num_beats()) tr.strb[beat_idx] = vif.mon_cb.wstrb;
+          tr.data[beat_idx] = `AXI4_MON_CB.wdata;
+          if (tr.strb.size() == tr.num_beats()) tr.strb[beat_idx] = `AXI4_MON_CB.wstrb;
         end
         beat_idx++;
-        if (vif.mon_cb.wlast) begin
+        if (`AXI4_MON_CB.wlast) begin
           wr_wait_b[tr.id].push_back(tr);
           tr = null;
           have_aw = 0;
         end
       end
 
-      if (vif.mon_cb.bvalid && vif.mon_cb.bready) begin
+      if (`AXI4_MON_CB.bvalid && `AXI4_MON_CB.bready) begin
         logic [ID_W-1:0] bid;
         item_t trb;
         int unsigned spop;
         bit is_narrow;
         sum_b_hs++;
-        bid = vif.mon_cb.bid;
+        bid = `AXI4_MON_CB.bid;
         if (cfg.stats_enable) begin
           longint unsigned start_c;
           longint unsigned lat;
@@ -422,7 +430,7 @@ class axi4_monitor #(
         end
         if (wr_wait_b.exists(bid) && (wr_wait_b[bid].size() != 0)) begin
           trb = wr_wait_b[bid].pop_front();
-          trb.bresp = axi4_resp_e'(vif.mon_cb.bresp);
+          trb.bresp = axi4_resp_e'(`AXI4_MON_CB.bresp);
 `ifndef VERILATOR
           if (cfg.coverage_enable) begin
             spop = (trb.strb.size() != 0) ? $countones(trb.strb[0]) : STRB_W;
@@ -442,26 +450,26 @@ class axi4_monitor #(
   endtask
 
   task automatic monitor_ar_r();
-    while (vif.areset_n !== 1'b1) @(vif.mon_cb);
+    while (vif.areset_n !== 1'b1) @(`AXI4_MON_EVT);
     forever begin
-      @(vif.mon_cb);
+      @(`AXI4_MON_EVT);
 
-      if (vif.mon_cb.arvalid && vif.mon_cb.arready) begin
+      if (`AXI4_MON_CB.arvalid && `AXI4_MON_CB.arready) begin
         rd_state_t st;
         sum_ar_hs++;
         st.tr = new("mon_rd");
         st.tr.is_write = 0;
-        st.tr.id    = vif.mon_cb.arid;
-        st.tr.addr  = vif.mon_cb.araddr;
-        st.tr.len   = vif.mon_cb.arlen;
-        st.tr.size  = vif.mon_cb.arsize;
-        st.tr.burst = axi4_burst_e'(vif.mon_cb.arburst);
-        st.tr.lock  = vif.mon_cb.arlock;
-        st.tr.cache  = vif.mon_cb.arcache;
-        st.tr.prot   = vif.mon_cb.arprot;
-        st.tr.qos    = vif.mon_cb.arqos;
-        st.tr.region = vif.mon_cb.arregion;
-        st.tr.user  = vif.mon_cb.aruser;
+        st.tr.id    = `AXI4_MON_CB.arid;
+        st.tr.addr  = `AXI4_MON_CB.araddr;
+        st.tr.len   = `AXI4_MON_CB.arlen;
+        st.tr.size  = `AXI4_MON_CB.arsize;
+        st.tr.burst = axi4_burst_e'(`AXI4_MON_CB.arburst);
+        st.tr.lock  = `AXI4_MON_CB.arlock;
+        st.tr.cache  = `AXI4_MON_CB.arcache;
+        st.tr.prot   = `AXI4_MON_CB.arprot;
+        st.tr.qos    = `AXI4_MON_CB.arqos;
+        st.tr.region = `AXI4_MON_CB.arregion;
+        st.tr.user  = `AXI4_MON_CB.aruser;
         st.tr.allocate_payload();
         st.beat_idx = 0;
         st.beats    = st.tr.num_beats();
@@ -474,10 +482,10 @@ class axi4_monitor #(
         end
       end
 
-      if (vif.mon_cb.rvalid && vif.mon_cb.rready) begin
+      if (`AXI4_MON_CB.rvalid && `AXI4_MON_CB.rready) begin
         logic [ID_W-1:0] rid;
         sum_r_hs++;
-        rid = vif.mon_cb.rid;
+        rid = `AXI4_MON_CB.rid;
         if (cfg.stats_enable) stat_r_hs++;
         if (!(rd_q.exists(rid)) || (rd_q[rid].size() == 0)) begin
           `uvm_warning(RID, $sformatf("Observed R (rid=0x%0h) with no matching outstanding read", rid))
@@ -487,13 +495,13 @@ class axi4_monitor #(
           if (st.beat_idx >= st.beats) begin
             `uvm_error(RID, $sformatf("Read beat overflow rid=0x%0h beat_idx=%0d beats=%0d", rid, st.beat_idx, st.beats))
           end else begin
-            st.tr.data[st.beat_idx]  = vif.mon_cb.rdata;
-            st.tr.rresp[st.beat_idx] = axi4_resp_e'(vif.mon_cb.rresp);
+            st.tr.data[st.beat_idx]  = `AXI4_MON_CB.rdata;
+            st.tr.rresp[st.beat_idx] = axi4_resp_e'(`AXI4_MON_CB.rresp);
           end
           st.beat_idx++;
           rd_q[rid][0] = st;
 
-          if (vif.mon_cb.rlast) begin
+          if (`AXI4_MON_CB.rlast) begin
             sum_r_last_hs++;
             st = rd_q[rid].pop_front();
             if (cfg.stats_enable) begin
@@ -549,5 +557,8 @@ class axi4_monitor #(
   endfunction
 
 endclass
+
+`undef AXI4_MON_CB
+`undef AXI4_MON_EVT
 
 `endif // KVIPS_AXI4_MONITOR_SVH
