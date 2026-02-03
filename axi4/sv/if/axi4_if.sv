@@ -90,6 +90,7 @@ interface axi4_if #(
   // -------------------------
   // Clocking blocks (BFM friendly)
   // -------------------------
+`ifndef VERILATOR
   clocking m_cb @(posedge aclk);
     default input #1step output #0;
     output awid, awaddr, awlen, awsize, awburst, awlock, awcache, awprot, awqos, awregion, awuser, awvalid;
@@ -126,6 +127,7 @@ interface axi4_if #(
     input arid, araddr, arlen, arsize, arburst, arlock, arcache, arprot, arqos, arregion, aruser, arvalid, arready;
     input rid, rdata, rresp, rlast, ruser, rvalid, rready;
   endclocking
+`endif
 
   // -------------------------
   // Modports
