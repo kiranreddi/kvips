@@ -35,9 +35,7 @@ class apb_monitor #(
   // - Single covergroup supports both APB3 and APB4.
   // - APB4-only coverpoints are sampled only when is_apb4==1, so APB3 runs
   //   don't drag those bins down to 0%.
-`ifdef VERILATOR
-  /* verilator lint_off COVERIGN */
-`endif
+`ifndef VERILATOR
   covergroup cov with function sample(
     bit          is_apb4,
     bit          write,
@@ -75,8 +73,6 @@ class apb_monitor #(
 
     cx_mode_wr_err: cross cp_mode, cp_wr, cp_err;
   endgroup
-`ifdef VERILATOR
-  /* verilator lint_on COVERIGN */
 `endif
 
   `uvm_component_param_utils(apb_monitor#(ADDR_W, DATA_W, NSEL))
@@ -84,7 +80,9 @@ class apb_monitor #(
   function new(string name, uvm_component parent);
     super.new(name, parent);
     ap = new("ap", this);
+`ifndef VERILATOR
     cov = new();
+`endif
   endfunction
 
   function void build_phase(uvm_phase phase);
@@ -178,6 +176,7 @@ class apb_monitor #(
           if (cur_tr.write) sum_wr++; else sum_rd++;
           if (cur_tr.slverr) sum_err++;
 
+`ifndef VERILATOR
           if (cfg.coverage_enable) begin
             bit is_apb4;
             int unsigned strb_pop;
@@ -186,6 +185,7 @@ class apb_monitor #(
             strb_pop = is_apb4 ? $countones(cur_tr.strb) : STRB_W;
             cov.sample(is_apb4, cur_tr.write, cur_tr.wait_cycles, cur_tr.slverr, strb_pop, cur_tr.prot);
           end
+`endif
           maybe_record(cur_tr, cur_tr.write ? "apb_write" : "apb_read");
           ap.write(cur_tr);
           if (cfg.trace_enable) `uvm_info(RID, {"MON txn:\n", cur_tr.sprint()}, UVM_LOW)

@@ -328,6 +328,12 @@
     overflow: hidden;
 }
 
+.cta-box--premium {
+    background: linear-gradient(135deg, rgba(17, 24, 39, 0.95) 0%, rgba(30, 64, 175, 0.95) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: var(--shadow-2xl);
+}
+
 .cta-box::before {
     content: '';
     position: absolute;

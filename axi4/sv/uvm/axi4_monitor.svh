@@ -95,9 +95,7 @@ class axi4_monitor #(
   // -------------------------
   // Optional functional coverage (portable subset)
   // -------------------------
-`ifdef VERILATOR
-  /* verilator lint_off COVERIGN */
-`endif
+`ifndef VERILATOR
   covergroup cov with function sample(
     bit          is_write,
     axi4_burst_e burst,
@@ -172,8 +170,6 @@ class axi4_monitor #(
       ignore_bins narrow_full = binsof(cp_narrow) intersect {1} && binsof(cp_strb_pop.full);
     }
   endgroup
-`ifdef VERILATOR
-  /* verilator lint_on COVERIGN */
 `endif
 
   `uvm_component_param_utils(axi4_monitor#(ADDR_W, DATA_W, ID_W, USER_W))
@@ -181,7 +177,9 @@ class axi4_monitor #(
   function new(string name, uvm_component parent);
     super.new(name, parent);
     ap = new("ap", this);
+`ifndef VERILATOR
     cov = new();
+`endif
   endfunction
 
   function automatic void get_summary_counts(
@@ -422,12 +420,14 @@ class axi4_monitor #(
         if (wr_wait_b.exists(bid) && (wr_wait_b[bid].size() != 0)) begin
           trb = wr_wait_b[bid].pop_front();
           trb.bresp = axi4_resp_e'(vif.mon_cb.bresp);
+`ifndef VERILATOR
           if (cfg.coverage_enable) begin
             spop = (trb.strb.size() != 0) ? $countones(trb.strb[0]) : STRB_W;
             is_narrow = (int'(trb.size) < $clog2(DATA_W/8));
             cov.sample(1'b1, trb.burst, int'(trb.size), int'(trb.len), trb.lock, trb.bresp,
               trb.qos, trb.prot, trb.cache, trb.region, spop, is_narrow);
           end
+`endif
           maybe_record(trb, "axi4_write");
           ap.write(trb);
           if (cfg.trace_enable) `uvm_info(RID, {"MON write:\n", trb.sprint()}, UVM_LOW)
@@ -507,6 +507,7 @@ class axi4_monitor #(
               end
             end
             maybe_record(st.tr, "axi4_read");
+`ifndef VERILATOR
           if (cfg.coverage_enable) begin
             axi4_resp_e resp0;
             int unsigned spop;
@@ -517,6 +518,7 @@ class axi4_monitor #(
             cov.sample(1'b0, st.tr.burst, int'(st.tr.size), int'(st.tr.len), st.tr.lock, resp0,
               st.tr.qos, st.tr.prot, st.tr.cache, st.tr.region, spop, is_narrow);
           end
+`endif
           ap.write(st.tr);
           if (cfg.trace_enable) `uvm_info(RID, {"MON read:\n", st.tr.sprint()}, UVM_LOW)
         end

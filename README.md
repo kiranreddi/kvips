@@ -35,8 +35,8 @@ KVIPS is a comprehensive, production-ready verification IP suite built with Syst
 | Protocol | Status | Version | Description | Documentation |
 |----------|--------|---------|-------------|---------------|
 | **AXI4 Full** | ✅ Stable | v1.0 | Complete AMBA AXI4 master/slave agents with pipelined transactions, assertions, and scoreboard | [📖 AXI4 VIP Guide](https://kiranreddi.github.io/kvips/docs/axi4-vip/) |
-| **APB** | 🧪 Beta | v0.1 | AMBA APB3/APB4 master/slave agents for register access (single-image, runtime APB3/APB4 switch) | [📖 APB VIP Guide](https://kiranreddi.github.io/kvips/docs/apb-vip/) |
-| **AHB** | 🧪 Beta | v0.1 | AMBA AHB-Lite/AHB Full master/slave agents with stalls, bursts, assertions, coverage, scoreboard | [📖 AHB VIP Guide](https://kiranreddi.github.io/kvips/docs/ahb-vip/) |
+| **APB** | ✅ Stable | v1.0 | AMBA APB3/APB4 master/slave agents for register access (single-image, runtime APB3/APB4 switch) | [📖 APB VIP Guide](https://kiranreddi.github.io/kvips/docs/apb-vip/) |
+| **AHB** | ✅ Stable | v1.0 | AMBA AHB-Lite/AHB Full master/slave agents with stalls, bursts, assertions, coverage, scoreboard | [📖 AHB VIP Guide](https://kiranreddi.github.io/kvips/docs/ahb-vip/) |
 | **PCIe** | 📋 Planned | - | PCIe Gen3/Gen4/Gen5 with TLP generation | - |
 | **USB 3.x** | 📋 Planned | - | USB 3.0/3.1/3.2 protocol layers | - |
 
@@ -178,11 +178,11 @@ kvips/
 │   │   ├── tests/           # Test scenarios
 │   │   └── Makefile         # Build scripts
 │   └── docs/                 # VIP-specific documentation
-├── apb/                       # APB3/APB4 VIP (beta)
+├── apb/                       # APB3/APB4 VIP (stable)
 │   ├── sv/
 │   ├── docs/
 │   └── examples/
-├── ahb/                       # AHB-Lite/AHB Full VIP (beta)
+├── ahb/                       # AHB-Lite/AHB Full VIP (stable)
 │   ├── sv/
 │   ├── docs/
 │   └── examples/
@@ -432,8 +432,8 @@ KVIPS is built on the shoulders of giants:
 
 ### Phase 1: Core Bus Protocols (2026 Q1-Q2)
 - [x] AXI4 Full (v1.0) — **COMPLETE**
-- [x] APB3/APB4 (v0.1) — **BETA**
-- [ ] AHB-Lite/AHB5 — Q2 2026
+- [x] APB3/APB4 (v1.0) — **STABLE**
+- [x] AHB-Lite/AHB Full (v1.0) — **STABLE**
 
 ### Phase 2: High-Speed Interfaces (2026 Q3-Q4)
 - [ ] PCIe Gen3/Gen4 — Q3 2026

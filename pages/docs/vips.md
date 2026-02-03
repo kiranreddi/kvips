@@ -67,7 +67,7 @@ Explore our collection of professional-grade SystemVerilog UVM verification IPs,
     <div>
       <h3 class="card-title" style="margin: 0;">APB</h3>
       <div style="margin-top: 0.5rem;">
-        <span class="badge badge-warning">Beta v0.1</span>
+        <span class="badge badge-success">Stable v1.0</span>
         <span class="badge badge-primary">UVM 1.2</span>
       </div>
     </div>
@@ -107,7 +107,7 @@ Explore our collection of professional-grade SystemVerilog UVM verification IPs,
     <div>
       <h3 class="card-title" style="margin: 0;">AHB (AHB-Lite/Full)</h3>
       <div style="margin-top: 0.5rem;">
-        <span class="badge badge-warning">Beta v0.1</span>
+        <span class="badge badge-success">Stable v1.0</span>
         <span class="badge badge-primary">UVM 1.2</span>
       </div>
     </div>
@@ -170,14 +170,14 @@ Explore our collection of professional-grade SystemVerilog UVM verification IPs,
 </tr>
 <tr>
 <td><strong>APB</strong></td>
-<td><span class="badge badge-warning">🧪 Beta</span></td>
-<td>v0.1</td>
+<td><span class="badge badge-success">✅ Stable</span></td>
+<td>v1.0</td>
 <td>High</td>
 </tr>
 <tr>
 <td><strong>AHB</strong></td>
-<td><span class="badge badge-warning">🧪 Beta</span></td>
-<td>v0.1</td>
+<td><span class="badge badge-success">✅ Stable</span></td>
+<td>v1.0</td>
 <td>Medium</td>
 </tr>
 <tr>
@@ -300,9 +300,9 @@ For high-bandwidth data transfer and DMA operations
 <h3>📝 Register Access</h3>
 <p><strong>Recommended VIPs:</strong></p>
 <ul>
-<li>APB (beta)</li>
+<li>APB (stable)</li>
 <li>AXI-Lite (coming soon)</li>
-<li>AHB (beta)</li>
+<li>AHB (stable)</li>
 </ul>
 <p style="margin-top: 1rem; font-size: 0.875rem; color: var(--text-secondary);">
 For configuration registers and low-bandwidth control

@@ -3,7 +3,7 @@
 <div align="center">
 
 **Version:** 1.1 (January 2026)  
-**Status:** Production Ready (AXI4), Beta (APB, AHB)  
+**Status:** Production Ready (AXI4, APB, AHB)  
 **Maintainer:** K's Verification Team  
 **License:** MIT
 
@@ -50,8 +50,8 @@ KVIPS (K's Verification IP Suite) is a professional-grade, vendor-neutral verifi
 | VIP | Status | Maturity | Test Coverage | Documentation | Recommended Use |
 |-----|--------|----------|---------------|---------------|-----------------|
 | **AXI4 Full** | ✅ Stable v1.0 | Production | 95%+ | Complete | Production projects |
-| **APB (APB3/APB4)** | 🧪 Beta v0.1 | Advanced Beta | 85%+ | Complete | Beta testing/integration |
-| **AHB (AHB-Lite/Full)** | 🧪 Beta v0.1 | Advanced Beta | 85%+ | Complete | Beta testing/integration |
+| **APB (APB3/APB4)** | ✅ Stable v1.0 | Production | 90%+ | Complete | Production projects |
+| **AHB (AHB-Lite/Full)** | ✅ Stable v1.0 | Production | 90%+ | Complete | Production projects |
 
 ---
 
@@ -85,7 +85,7 @@ KVIPS Root
 │   ├── docs/                  # VIP-specific documentation
 │   └── examples/              # Example testbenches
 │
-├── apb/                       # APB3/APB4 VIP (Beta)
+├── apb/                       # APB3/APB4 VIP (Stable)
 │   ├── sv/
 │   │   ├── if/
 │   │   ├── pkg/
@@ -94,7 +94,7 @@ KVIPS Root
 │   ├── docs/
 │   └── examples/
 │
-├── ahb/                       # AHB-Lite/Full VIP (Beta)
+├── ahb/                       # AHB-Lite/Full VIP (Stable)
 │   ├── sv/
 │   │   ├── if/
 │   │   ├── pkg/
@@ -253,7 +253,7 @@ endclass
 
 ### APB VIP
 
-#### Status: 🧪 Beta (v0.1)
+#### Status: ✅ Stable (v1.0)
 
 #### Overview
 
@@ -357,14 +357,14 @@ endclass
 - ✅ Siemens Questa 2025.3_2
 - ✅ Synopsys VCS 2025.06_1
 - ✅ Cadence Xcelium 25.03.007
-- ✅ Beta regression suite (50+ tests)
-- 🧪 Undergoing extended validation
+- ✅ Full regression suite (50+ tests)
+- ✅ Extended validation complete
 
 ---
 
 ### AHB VIP
 
-#### Status: 🧪 Beta (v0.1)
+#### Status: ✅ Stable (v1.0)
 
 #### Overview
 
@@ -468,8 +468,8 @@ endclass
 - ✅ Siemens Questa 2025.3_2
 - ✅ Synopsys VCS 2025.06_1
 - ✅ Cadence Xcelium 25.03.007
-- ✅ Beta regression suite (45+ tests)
-- 🧪 Undergoing extended validation
+- ✅ Full regression suite (45+ tests)
+- ✅ Extended validation complete
 
 #### Planned Features
 
@@ -935,8 +935,8 @@ endclass
 | Protocol | Status | Target | Priority |
 |----------|--------|--------|----------|
 | AXI4 Full | ✅ Complete | v1.0 | High |
-| APB | 🧪 Beta | v1.0 Q2 2026 | High |
-| AHB | 🧪 Beta | v1.0 Q2 2026 | Medium |
+| APB | ✅ Stable | v1.0 | High |
+| AHB | ✅ Stable | v1.0 | Medium |
 | AXI-Lite | 📋 Planned | Q2 2026 | Medium |
 | AXI-Stream | 📋 Planned | Q3 2026 | Medium |
 
@@ -961,14 +961,14 @@ endclass
 ### Enhancement Roadmap
 
 **Q1 2026:**
-- ✅ Complete APB/AHB beta validation
+- ✅ Complete APB/AHB stable validation
 - ✅ Comprehensive documentation overhaul
 - ✅ GitHub Pages site enhancement
 - 📋 Add more usage examples
 
 **Q2 2026:**
-- 📋 APB v1.0 release
-- 📋 AHB v1.0 release
+- 📋 APB v1.0 maintenance release
+- 📋 AHB v1.0 maintenance release
 - 📋 AXI-Lite VIP development
 - 📋 Register abstraction layer (RAL) integration
 
