@@ -30,7 +30,7 @@ package tb_pkg;
     localparam int DATA_W = 32;
     localparam int NSEL   = 1;
 
-    typedef virtual interface apb_if #(ADDR_W, DATA_W, NSEL) apb_vif_t;
+    typedef virtual apb_if #(ADDR_W, DATA_W, NSEL) apb_vif_t;
 
     apb_vif_t vif;
 

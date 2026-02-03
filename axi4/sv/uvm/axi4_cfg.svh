@@ -12,7 +12,7 @@ class axi4_agent_cfg #(
   int USER_W = 1
 ) extends uvm_object;
 
-  typedef virtual interface axi4_if #(ADDR_W, DATA_W, ID_W, USER_W) axi4_vif_t;
+  typedef virtual axi4_if #(ADDR_W, DATA_W, ID_W, USER_W) axi4_vif_t;
 
   axi4_vif_t vif;
 
