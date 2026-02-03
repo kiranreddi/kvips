@@ -1,0 +1,46 @@
+name: AHB Verilator Regressions
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'ahb/**'
+      - 'common/**'
+      - 'third_party/uvm/**'
+      - '.github/workflows/ahb-verilator-regressions.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'ahb/**'
+      - 'common/**'
+      - 'third_party/uvm/**'
+
+jobs:
+  ahb-regressions:
+    name: AHB Regressions (Verilator)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Verilator
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y verilator ccache make autoconf g++ flex bison
+          verilator --version
+
+      - name: Run AHB Regressions
+        run: |
+          cd ahb/examples/uvm_back2back/sim
+          chmod +x run_verilator.sh regress_verilator.sh
+
+          export VERILATOR_JOBS=$(nproc)
+          ./regress_verilator.sh
+
+      - name: Archive Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ahb-verilator-results
+          path: ahb/examples/uvm_back2back/sim/out/verilator/
