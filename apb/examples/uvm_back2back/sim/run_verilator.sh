@@ -93,11 +93,14 @@ JOBS="${VERILATOR_JOBS:-1}"
 
 BIN="${OUT}/obj_dir/Vtb_top"
 if [[ "${REUSE_BUILD}" != "1" || ! -x "${BIN}" ]]; then
-  ${VERILATOR_BIN} -sv -Wno-fatal -Wno-PKGNODECL -Wno-UNDRIVEN -Wno-TIMESCALEMOD --timing --binary -j "${JOBS}" \
+  ${VERILATOR_BIN} -sv -Wno-fatal \
+    -Wno-PKGNODECL -Wno-UNDRIVEN -Wno-TIMESCALEMOD -Wno-SYNCASYNCNET \
+    --timing --binary -j "${JOBS}" \
     -CFLAGS "-Wno-deprecated-declarations" \
     --top-module tb_top \
     +incdir+"${UVM_HOME}" \
     +define+UVM_NO_DPI \
+    +define+UVM_USE_PROCESS_CONTAINER \
     "${UVM_HOME}/uvm_pkg.sv" \
     -f "${ABS_FILELIST}" \
     -o Vtb_top 2>&1 | tee "${OUT}/compile.log"

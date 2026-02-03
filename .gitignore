@@ -18,6 +18,24 @@ axi4/docs/questa_gap_analysis.md
 *.shm
 *.trn
 *.ucdb
+
+# Output directories
+obj_dir/
+**/out/
+**/sim/out/
+*.abs.f
+cp_dir/
+work/
+work_ovm/
+work_uvm/
+stack.info*
+last_built.info
+*.so
+*.o
+*.a
+*.d
+*.pyc
+__pycache__/
 *.vcd
 **/sim/out/
 simv

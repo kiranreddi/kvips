@@ -33,14 +33,26 @@
   end
 
   // Convenience (sampled via monitor clocking block to avoid race with #0 drives)
+`ifdef VERILATOR
+  wire kvips_xfer_setup  = (|PSEL) && !PENABLE;
+  wire kvips_xfer_access = (|PSEL) &&  PENABLE;
+  wire kvips_xfer_done   = (|PSEL) &&  PENABLE && PREADY;
+  `define APB_CLK posedge PCLK
+`else
   wire kvips_xfer_setup  = (|cb_mon.PSEL) && !cb_mon.PENABLE;
   wire kvips_xfer_access = (|cb_mon.PSEL) &&  cb_mon.PENABLE;
   wire kvips_xfer_done   = (|cb_mon.PSEL) &&  cb_mon.PENABLE && cb_mon.PREADY;
+  `define APB_CLK cb_mon
+`endif
 
   // PENABLE can only be asserted when PSEL is asserted.
   property p_penable_only_with_psel;
-    @(cb_mon) disable iff (!PRESETn || !kvips_apb_assert_en)
+    @(`APB_CLK) disable iff (!PRESETn || !kvips_apb_assert_en)
+`ifdef VERILATOR
+      PENABLE |-> (|PSEL);
+`else
       cb_mon.PENABLE |-> (|cb_mon.PSEL);
+`endif
   endproperty
   a_penable_only_with_psel: assert property (p_penable_only_with_psel);
 
@@ -48,45 +60,69 @@
   // in the prior cycle. Only check on entry into ACCESS (wait-states keep
   // ACCESS asserted across cycles).
   property p_setup_precedes_access;
-    @(cb_mon) disable iff (!PRESETn || !kvips_apb_assert_en)
+    @(`APB_CLK) disable iff (!PRESETn || !kvips_apb_assert_en)
       (kvips_xfer_access && !$past(kvips_xfer_access)) |-> $past(kvips_xfer_setup);
   endproperty
   a_setup_precedes_access: assert property (p_setup_precedes_access);
 
   // During access wait-states, address/control/data must remain stable.
   property p_stable_during_wait;
-    @(cb_mon) disable iff (!PRESETn || !kvips_apb_assert_en || !kvips_apb_strict_en)
+    @(`APB_CLK) disable iff (!PRESETn || !kvips_apb_assert_en || !kvips_apb_strict_en)
+`ifdef VERILATOR
+      (kvips_xfer_access && !PREADY) |->
+        ($stable(PADDR) && $stable(PWRITE) && $stable(PWDATA) &&
+         $stable(PSEL) && $stable(PPROT) && $stable(PSTRB));
+`else
       (kvips_xfer_access && !cb_mon.PREADY) |->
         ($stable(cb_mon.PADDR) && $stable(cb_mon.PWRITE) && $stable(cb_mon.PWDATA) &&
          $stable(cb_mon.PSEL) && $stable(cb_mon.PPROT) && $stable(cb_mon.PSTRB));
+`endif
   endproperty
   a_stable_during_wait: assert property (p_stable_during_wait);
 
   // No X/Z on key control signals during active transfer (optional).
   property p_known_controls;
-    @(cb_mon) disable iff (!PRESETn || !kvips_apb_assert_en || !kvips_apb_known_en)
+    @(`APB_CLK) disable iff (!PRESETn || !kvips_apb_assert_en || !kvips_apb_known_en)
+`ifdef VERILATOR
+      (|PSEL) |-> (!$isunknown(PENABLE) && !$isunknown(PWRITE) && !$isunknown(PADDR) && !$isunknown(PSEL));
+`else
       (|cb_mon.PSEL) |-> (!$isunknown(cb_mon.PENABLE) && !$isunknown(cb_mon.PWRITE) && !$isunknown(cb_mon.PADDR) && !$isunknown(cb_mon.PSEL));
+`endif
   endproperty
   a_known_controls: assert property (p_known_controls);
 
   // Strict: PSEL must not be X and must be onehot0 in typical single-target usage.
   property p_onehot_psel;
-    @(cb_mon) disable iff (!PRESETn || !kvips_apb_assert_en || !kvips_apb_strict_en)
+    @(`APB_CLK) disable iff (!PRESETn || !kvips_apb_assert_en || !kvips_apb_strict_en)
+`ifdef VERILATOR
+      1'b1 |-> $onehot0(PSEL);
+`else
       1'b1 |-> $onehot0(cb_mon.PSEL);
+`endif
   endproperty
   a_onehot_psel: assert property (p_onehot_psel);
 
   // APB4-specific: PSTRB/PPROT are meaningful; ensure stable across transfer.
   property p_pstrb_nonzero_on_write;
-    @(cb_mon) disable iff (!PRESETn || !kvips_apb_assert_en || !kvips_apb_strict_en || !kvips_apb_apb4_en)
+    @(`APB_CLK) disable iff (!PRESETn || !kvips_apb_assert_en || !kvips_apb_strict_en || !kvips_apb_apb4_en)
+`ifdef VERILATOR
+      (kvips_xfer_access && PWRITE) |-> (PSTRB != '0);
+`else
       (kvips_xfer_access && cb_mon.PWRITE) |-> (cb_mon.PSTRB != '0);
+`endif
   endproperty
   a_pstrb_nonzero_on_write: assert property (p_pstrb_nonzero_on_write);
 
   property p_pprot_known_when_selected;
-    @(cb_mon) disable iff (!PRESETn || !kvips_apb_assert_en || !kvips_apb_known_en || !kvips_apb_apb4_en)
+    @(`APB_CLK) disable iff (!PRESETn || !kvips_apb_assert_en || !kvips_apb_known_en || !kvips_apb_apb4_en)
+`ifdef VERILATOR
+      (|PSEL) |-> (!$isunknown(PPROT));
+`else
       (|cb_mon.PSEL) |-> (!$isunknown(cb_mon.PPROT));
+`endif
   endproperty
   a_pprot_known_when_selected: assert property (p_pprot_known_when_selected);
+
+`undef APB_CLK
 
 `endif // KVIPS_APB_IF_SVA_SVH
