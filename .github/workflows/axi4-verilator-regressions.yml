@@ -27,7 +27,7 @@ jobs:
       - name: Setup Verilator
         run: |
           sudo apt-get update
-          sudo apt-get install -y ccache make autoconf g++ flex bison git perl
+          sudo apt-get install -y ccache make autoconf g++ flex bison git perl help2man libfl-dev
           git clone --depth 1 --branch v5.026 https://github.com/verilator/verilator.git /tmp/verilator
           cd /tmp/verilator
           autoconf
