@@ -39,7 +39,7 @@ module top;
 
   // Provide vif to the test
   initial begin
-    uvm_config_db#(virtual axi4_if #(ADDR_W, DATA_W, ID_W, USER_W))::set(null, "*", "vif", axi);
+    uvm_config_db#(virtual interface axi4_if #(ADDR_W, DATA_W, ID_W, USER_W))::set(null, "*", "vif", axi);
     run_test();
   end
 

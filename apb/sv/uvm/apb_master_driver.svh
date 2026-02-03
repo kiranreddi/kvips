@@ -13,7 +13,7 @@ class apb_master_driver #(
   localparam int STRB_W = (DATA_W/8);
   localparam string RID = "APB_MDRV";
 
-  typedef virtual apb_if #(ADDR_W, DATA_W, NSEL) apb_vif_t;
+  typedef virtual interface apb_if #(ADDR_W, DATA_W, NSEL) apb_vif_t;
 
   apb_cfg#(ADDR_W, DATA_W, NSEL) cfg;
   apb_vif_t vif;
