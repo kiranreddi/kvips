@@ -93,7 +93,7 @@ JOBS="${VERILATOR_JOBS:-1}"
 
 BIN="${OUT}/obj_dir/Vtop"
 if [[ "${REUSE_BUILD}" != "1" || ! -x "${BIN}" ]]; then
-  ${VERILATOR_BIN} -sv --language 1800-2017 -Wno-fatal -Wno-PKGNODECL -Wno-UNDRIVEN -Wno-TIMESCALEMOD -Wno-SYNCASYNCNET --timing --binary -j "${JOBS}" \
+  ${VERILATOR_BIN} -sv --language 1800-2017 -Wno-fatal -Wno-PKGNODECL -Wno-UNDRIVEN -Wno-TIMESCALEMOD -Wno-SYNCASYNCNET -Wno-MISINDENT --timing --binary -j "${JOBS}" \
     +define+UVM_USE_PROCESS_CONTAINER \
     -CFLAGS "-Wno-deprecated-declarations" \
     --top-module top \
