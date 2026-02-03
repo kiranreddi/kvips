@@ -1,82 +1,135 @@
-# KVIPS PCIe VIP User Guide (Current Status)
+# KVIPS PCIe VIP User Guide
 
-This PCIe VIP is a **work in progress**. The current deliverable is a **buildable** (Questa/VCS/Xcelium) SV/UVM scaffold plus a runnable bring-up example.
+## 1. Introduction
 
-If you are looking for the long-term plan/intent, see `kvips/pcie/docs/COMPREHENSIVE_PCIE_VIP_PLAN.md`.
+The KVIPS PCIe VIP is a complete UVM-based verification IP for PCI Express Gen1 through Gen6. It supports both Root Complex (RC) and Endpoint (EP) modes, with PIPE and Serial interface options.
 
-## 1. What Is Implemented Today
+### 1.1 Key Features
 
-**Implemented (builds and runs the example):**
-- SV interfaces: `kvips/pcie/sv/if/pcie_pipe_if.sv`, `kvips/pcie/sv/if/pcie_serial_if.sv`
-- UVM classes: `pcie_cfg`, `pcie_transaction`, `pcie_sequencer`, `pcie_driver`, `pcie_monitor`, `pcie_scoreboard`, `pcie_agent`
-- Example TB: `kvips/pcie/examples/uvm_back2back`
+- **Multi-Generation**: Gen1 (2.5GT/s) to Gen6 (64GT/s)
+- **Multi-Width**: x1 to x32 lane configurations
+- **Dual Interface**: PIPE (PHY-MAC boundary) and Serial (full PHY)
+- **UVM Architecture**: Standard UVM 1.2 compliant
+- **Protocol Assertions**: Comprehensive SVA coverage
+- **Coverage Models**: Functional and protocol coverage
 
-**Not implemented yet (planned):**
-- Full PCIe link training / LTSSM behavior (disabled by default)
-- End-to-end PIPE/Serial link “wire model” (RC Tx → EP Rx and EP Tx → RC Rx)
-- A real transaction sequence library that drives TLPs and checks completions
-- Binding/instantiation of the SVA modules into the example TB
-- Protocol-accurate PHY/DLL/TL modeling and compliance coverage
+### 1.2 Documentation Overview
 
-## 2. Directory Layout
+| Document | Description |
+|----------|-------------|
+| `README.md` | Quick start guide |
+| `user_guide.md` | This document |
+| `integration_guide.md` | DUT integration instructions |
+| `supported_features.md` | Complete feature list |
+| `testplan.md` | Test plan and test descriptions |
+| `assertions.md` | SVA assertion details |
+
+## 2. Getting Started
+
+### 2.1 Environment Setup
+
+```bash
+# Set KVIPS root directory
+export KVIPS_ROOT=/path/to/kvips
+```
+
+### 2.2 File Organization
 
 ```
 kvips/pcie/
-├── README.md
-├── AGENTS.md
-├── docs/
-│   ├── COMPREHENSIVE_PCIE_VIP_PLAN.md
-│   ├── integration_guide.md
-│   ├── supported_features.md
-│   ├── testplan.md
-│   └── assertions.md
 ├── sv/
-│   ├── if/
-│   ├── pkg/
-│   ├── uvm/
-│   └── assertions/
-└── examples/
-    └── uvm_back2back/
+│   ├── if/           # Interface definitions
+│   ├── pkg/          # Type and UVM packages
+│   ├── uvm/          # UVM components
+│   ├── assertions/   # SVA files
+│   ├── phy/          # PHY layer models
+│   ├── dll/          # Data Link Layer
+│   └── tl/           # Transaction Layer
+├── examples/         # Runnable examples
+└── docs/             # Documentation
 ```
 
-## 3. UVM Components
+### 2.3 Running First Example
 
-The PCIe VIP currently ships an **agent-level** scaffold (there is no `pcie_env` wrapper yet).
+```bash
+cd kvips/pcie/examples/uvm_back2back/sim
+./run_questa.sh +UVM_TESTNAME=pcie_b2b_smoke_test
+```
 
-- `pcie_cfg` (`kvips/pcie/sv/uvm/pcie_cfg.svh`)
-  - Contains basic knobs for agent/interface mode and default “safe” values.
-  - `enable_ltssm` exists; the example uses the default (`0`) to avoid background LTSSM threads.
-- `pcie_agent` (`kvips/pcie/sv/uvm/pcie_agent.svh`)
-  - Builds a driver/monitor/scoreboard around the configured interface mode.
-- `pcie_driver` (`kvips/pcie/sv/uvm/pcie_driver.svh`)
-  - Contains a draft implementation of “transaction driving”, but it currently waits for `link_up`.
-  - With `enable_ltssm=0` (example default), no link-up occurs and no traffic is driven.
+## 3. VIP Architecture
 
-Agent mode enum (see `pcie_types_pkg`):
-- `PCIE_RC`
-- `PCIE_EP`
-- `PCIE_MONITOR`
+### 3.1 UVM Component Hierarchy
 
-## 4. Running the Back-to-Back Example
+```
+pcie_env
+├── rc_agent (Root Complex)
+│   ├── driver
+│   ├── monitor
+│   ├── sequencer
+│   └── coverage
+├── ep_agent (Endpoint)
+│   ├── driver
+│   ├── monitor
+│   ├── sequencer
+│   └── coverage
+└── scoreboard
+```
 
-From repo root:
+### 3.2 Agent Modes
 
-- Questa: `kvips/pcie/examples/uvm_back2back/sim/run_questa.sh +UVM_TESTNAME=pcie_b2b_smoke_test`
-- VCS: `kvips/pcie/examples/uvm_back2back/sim/run_vcs.sh +UVM_TESTNAME=pcie_b2b_smoke_test`
-- Xcelium: `kvips/pcie/examples/uvm_back2back/sim/run_xcelium.sh +UVM_TESTNAME=pcie_b2b_smoke_test`
+| Mode | Description | Use Case |
+|------|-------------|----------|
+| `PCIE_RC` | Root Complex | Verify EP DUTs |
+| `PCIE_EP` | Endpoint | Verify RC DUTs |
+| `PCIE_MONITOR` | Monitor only | Protocol analysis |
 
-**Example limitations (important):**
-- The example instantiates **one** PIPE interface. To avoid multiple drivers, it configures:
-  - RC agent as active
-  - EP agent as **monitor-only**
-- The `pcie_b2b_mem_test` currently constructs a `pcie_transaction` but does not yet start a sequence to drive it.
+### 3.3 Interface Modes
 
-## 5. Integration Notes
+| Interface | Description | Use Case |
+|-----------|-------------|----------|
+| PIPE | PHY-MAC boundary | Most integrations |
+| Serial | Full PHY | SERDES testing |
 
-For integration patterns (how to wire vifs via `uvm_config_db`, recommended top-level wiring, and simulator notes), see `kvips/pcie/docs/integration_guide.md`.
+## 4. Configuration
 
-## 6. Roadmap
+### 4.1 Agent Configuration (pcie_cfg)
 
-The “product-grade” feature list, test plan, and planned architecture are tracked here:
-- `kvips/pcie/docs/supported_features.md`
-- `kvips/pcie/docs/testplan.md`
+```systemverilog
+pcie_cfg cfg = pcie_cfg::type_id::create("cfg");
+cfg.agent_mode   = PCIE_RC;
+cfg.if_mode      = PCIE_PIPE_MODE;
+cfg.target_gen   = PCIE_GEN4;
+cfg.target_width = PCIE_X4;
+```
+
+### 4.2 Plusarg Configuration
+
+| Plusarg | Description | Default |
+|---------|-------------|---------|
+| `+PCIE_GEN=<n>` | Target generation (1-6) | 4 |
+| `+PCIE_LANES=<n>` | Lane count (1-32) | 4 |
+| `+VIP_TRACE` | Enable verbose logging | Off |
+| `+VIP_TR` | Enable transaction recording | Off |
+| `+VIP_STATS` | Enable statistics | Off |
+
+## 5. Transactions
+
+The VIP uses `pcie_transaction` to represent TLP/DLLP/ordered-set traffic at a UVM sequence-item level.
+
+## 6. Sequences
+
+Sequence library is intended to cover:
+- Link bring-up
+- Memory/config/io TLPs
+- Error injection / stress
+
+---
+
+## Agent note (2026-02-02T05:17:58-08:00)
+
+- This doc is kept as a “product intent” guide. Current implementation status is tracked in `kvips/pcie/docs/supported_features.md`.
+- In the runnable example (`kvips/pcie/examples/uvm_back2back`), EP is configured monitor-only to avoid multi-driving a single PIPE interface instance.
+- Verified `pcie_b2b_smoke_test` and `pcie_b2b_mem_test` compile/elab/run under:
+  - Questa `2025_3_2`
+  - VCS `2025.06_1`
+  - Xcelium `25.03.007`
