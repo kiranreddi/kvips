@@ -1,9 +1,0 @@
-+incdir+kvips/common/sv
-+incdir+kvips/pcie/sv/uvm
-+incdir+kvips/pcie/sv/assertions
-kvips/pcie/sv/if/pcie_pipe_if.sv
-kvips/pcie/sv/if/pcie_serial_if.sv
-kvips/pcie/sv/pkg/pcie_types_pkg.sv
-kvips/pcie/sv/pkg/pcie_uvm_pkg.sv
-kvips/pcie/examples/uvm_back2back/tb/tb_pkg.sv
-kvips/pcie/examples/uvm_back2back/tb/top.sv
