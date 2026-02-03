@@ -30,6 +30,12 @@ initial begin
   void'($value$plusargs("KVIPS_AXI4_ASSERT_MAX_OUTS_R=%d", kvips_axi4_max_outs_r));
 end
 
+`ifdef VERILATOR
+  `define AXI4_CLK posedge aclk
+`else
+  `define AXI4_CLK mon_cb
+`endif
+
 function automatic longint unsigned kvips_bytes_per_beat(input logic [2:0] size);
   return (longint'(1) << size);
 endfunction
@@ -71,167 +77,280 @@ endfunction
 
 // VALID/payload stability while stalled (VALID && !READY)
 property kvips_p_aw_hold;
-  @(posedge aclk) disable iff (!areset_n || !kvips_axi4_assertions_on)
+  @(`AXI4_CLK) disable iff (!areset_n || !kvips_axi4_assertions_on)
+`ifdef VERILATOR
     (awvalid && !awready)
       |=> (awvalid &&
            $stable({awid, awaddr, awlen, awsize, awburst, awlock, awcache, awprot, awqos, awregion, awuser}));
+`else
+    (mon_cb.awvalid && !mon_cb.awready)
+      |=> (mon_cb.awvalid &&
+           $stable({mon_cb.awid, mon_cb.awaddr, mon_cb.awlen, mon_cb.awsize, mon_cb.awburst, mon_cb.awlock, mon_cb.awcache, mon_cb.awprot, mon_cb.awqos, mon_cb.awregion, mon_cb.awuser}));
+`endif
 endproperty
 a_kvips_aw_hold: assert property (kvips_p_aw_hold);
 
 property kvips_p_w_hold;
-  @(posedge aclk) disable iff (!areset_n || !kvips_axi4_assertions_on)
+  @(`AXI4_CLK) disable iff (!areset_n || !kvips_axi4_assertions_on)
+`ifdef VERILATOR
     (wvalid && !wready)
       |=> (wvalid && $stable({wdata, wstrb, wlast, wuser}));
+`else
+    (mon_cb.wvalid && !mon_cb.wready)
+      |=> (mon_cb.wvalid && $stable({mon_cb.wdata, mon_cb.wstrb, mon_cb.wlast, mon_cb.wuser}));
+`endif
 endproperty
 a_kvips_w_hold: assert property (kvips_p_w_hold);
 
 property kvips_p_b_hold;
-  @(posedge aclk) disable iff (!areset_n || !kvips_axi4_assertions_on)
+  @(`AXI4_CLK) disable iff (!areset_n || !kvips_axi4_assertions_on)
+`ifdef VERILATOR
     (bvalid && !bready)
       |=> (bvalid && $stable({bid, bresp, buser}));
+`else
+    (mon_cb.bvalid && !mon_cb.bready)
+      |=> (mon_cb.bvalid && $stable({mon_cb.bid, mon_cb.bresp, mon_cb.buser}));
+`endif
 endproperty
 a_kvips_b_hold: assert property (kvips_p_b_hold);
 
 property kvips_p_ar_hold;
-  @(posedge aclk) disable iff (!areset_n || !kvips_axi4_assertions_on)
+  @(`AXI4_CLK) disable iff (!areset_n || !kvips_axi4_assertions_on)
+`ifdef VERILATOR
     (arvalid && !arready)
       |=> (arvalid &&
            $stable({arid, araddr, arlen, arsize, arburst, arlock, arcache, arprot, arqos, arregion, aruser}));
+`else
+    (mon_cb.arvalid && !mon_cb.arready)
+      |=> (mon_cb.arvalid &&
+           $stable({mon_cb.arid, mon_cb.araddr, mon_cb.arlen, mon_cb.arsize, mon_cb.arburst, mon_cb.arlock, mon_cb.arcache, mon_cb.arprot, mon_cb.arqos, mon_cb.arregion, mon_cb.aruser}));
+`endif
 endproperty
 a_kvips_ar_hold: assert property (kvips_p_ar_hold);
 
 property kvips_p_r_hold;
-  @(posedge aclk) disable iff (!areset_n || !kvips_axi4_assertions_on)
+  @(`AXI4_CLK) disable iff (!areset_n || !kvips_axi4_assertions_on)
+`ifdef VERILATOR
     (rvalid && !rready)
       |=> (rvalid && $stable({rid, rdata, rresp, rlast, ruser}));
+`else
+    (mon_cb.rvalid && !mon_cb.rready)
+      |=> (mon_cb.rvalid && $stable({mon_cb.rid, mon_cb.rdata, mon_cb.rresp, mon_cb.rlast, mon_cb.ruser}));
+`endif
 endproperty
 a_kvips_r_hold: assert property (kvips_p_r_hold);
 
 // Basic legality checks: SIZE vs DATA_W
 property kvips_p_aw_size_legal;
-  @(posedge aclk) disable iff (!areset_n || !kvips_axi4_assertions_on)
+  @(`AXI4_CLK) disable iff (!areset_n || !kvips_axi4_assertions_on)
+`ifdef VERILATOR
     awvalid |-> ((1 << awsize) <= STRB_W);
+`else
+    mon_cb.awvalid |-> ((1 << mon_cb.awsize) <= STRB_W);
+`endif
 endproperty
 a_kvips_aw_size_legal: assert property (kvips_p_aw_size_legal);
 
 property kvips_p_ar_size_legal;
-  @(posedge aclk) disable iff (!areset_n || !kvips_axi4_assertions_on)
+  @(`AXI4_CLK) disable iff (!areset_n || !kvips_axi4_assertions_on)
+`ifdef VERILATOR
     arvalid |-> ((1 << arsize) <= STRB_W);
+`else
+    mon_cb.arvalid |-> ((1 << mon_cb.arsize) <= STRB_W);
+`endif
 endproperty
 a_kvips_ar_size_legal: assert property (kvips_p_ar_size_legal);
 
 // Burst legality checks (AMBA4 AXI4 basics)
 property kvips_p_aw_burst_legal;
-  @(posedge aclk) disable iff (!areset_n || !kvips_axi4_assertions_on || !kvips_axi4_burst_checks_on)
+  @(`AXI4_CLK) disable iff (!areset_n || !kvips_axi4_assertions_on || !kvips_axi4_burst_checks_on)
+`ifdef VERILATOR
     awvalid |-> (awburst inside {2'b00,2'b01,2'b10});
+`else
+    mon_cb.awvalid |-> (mon_cb.awburst inside {2'b00,2'b01,2'b10});
+`endif
 endproperty
 a_kvips_aw_burst_legal: assert property (kvips_p_aw_burst_legal);
 
 property kvips_p_ar_burst_legal;
-  @(posedge aclk) disable iff (!areset_n || !kvips_axi4_assertions_on || !kvips_axi4_burst_checks_on)
+  @(`AXI4_CLK) disable iff (!areset_n || !kvips_axi4_assertions_on || !kvips_axi4_burst_checks_on)
+`ifdef VERILATOR
     arvalid |-> (arburst inside {2'b00,2'b01,2'b10});
+`else
+    mon_cb.arvalid |-> (mon_cb.arburst inside {2'b00,2'b01,2'b10});
+`endif
 endproperty
 a_kvips_ar_burst_legal: assert property (kvips_p_ar_burst_legal);
 
 property kvips_p_aw_len_legal;
-  @(posedge aclk) disable iff (!areset_n || !kvips_axi4_assertions_on || !kvips_axi4_burst_checks_on)
+  @(`AXI4_CLK) disable iff (!areset_n || !kvips_axi4_assertions_on || !kvips_axi4_burst_checks_on)
+`ifdef VERILATOR
     awvalid |-> ((awburst == 2'b01) ? (awlen <= 8'd255) : (awlen <= 8'd15));
+`else
+    mon_cb.awvalid |-> ((mon_cb.awburst == 2'b01) ? (mon_cb.awlen <= 8'd255) : (mon_cb.awlen <= 8'd15));
+`endif
 endproperty
 a_kvips_aw_len_legal: assert property (kvips_p_aw_len_legal);
 
 property kvips_p_ar_len_legal;
-  @(posedge aclk) disable iff (!areset_n || !kvips_axi4_assertions_on || !kvips_axi4_burst_checks_on)
+  @(`AXI4_CLK) disable iff (!areset_n || !kvips_axi4_assertions_on || !kvips_axi4_burst_checks_on)
+`ifdef VERILATOR
     arvalid |-> ((arburst == 2'b01) ? (arlen <= 8'd255) : (arlen <= 8'd15));
+`else
+    mon_cb.arvalid |-> ((mon_cb.arburst == 2'b01) ? (mon_cb.arlen <= 8'd255) : (mon_cb.arlen <= 8'd15));
+`endif
 endproperty
 a_kvips_ar_len_legal: assert property (kvips_p_ar_len_legal);
 
 property kvips_p_aw_wrap_len_legal;
-  @(posedge aclk) disable iff (!areset_n || !kvips_axi4_assertions_on || !kvips_axi4_burst_checks_on)
+  @(`AXI4_CLK) disable iff (!areset_n || !kvips_axi4_assertions_on || !kvips_axi4_burst_checks_on)
+`ifdef VERILATOR
     awvalid |-> ((awburst == 2'b10) ? kvips_wrap_len_legal(awlen) : 1'b1);
+`else
+    mon_cb.awvalid |-> ((mon_cb.awburst == 2'b10) ? kvips_wrap_len_legal(mon_cb.awlen) : 1'b1);
+`endif
 endproperty
 a_kvips_aw_wrap_len_legal: assert property (kvips_p_aw_wrap_len_legal);
 
 property kvips_p_ar_wrap_len_legal;
-  @(posedge aclk) disable iff (!areset_n || !kvips_axi4_assertions_on || !kvips_axi4_burst_checks_on)
+  @(`AXI4_CLK) disable iff (!areset_n || !kvips_axi4_assertions_on || !kvips_axi4_burst_checks_on)
+`ifdef VERILATOR
     arvalid |-> ((arburst == 2'b10) ? kvips_wrap_len_legal(arlen) : 1'b1);
+`else
+    mon_cb.arvalid |-> ((mon_cb.arburst == 2'b10) ? kvips_wrap_len_legal(mon_cb.arlen) : 1'b1);
+`endif
 endproperty
 a_kvips_ar_wrap_len_legal: assert property (kvips_p_ar_wrap_len_legal);
 
 property kvips_p_aw_wrap_addr_aligned;
-  @(posedge aclk) disable iff (!areset_n || !kvips_axi4_assertions_on || !kvips_axi4_burst_checks_on)
+  @(`AXI4_CLK) disable iff (!areset_n || !kvips_axi4_assertions_on || !kvips_axi4_burst_checks_on)
+`ifdef VERILATOR
     awvalid |-> ((awburst == 2'b10) ? kvips_wrap_addr_aligned(awaddr, awlen, awsize) : 1'b1);
+`else
+    mon_cb.awvalid |-> ((mon_cb.awburst == 2'b10) ? kvips_wrap_addr_aligned(mon_cb.awaddr, mon_cb.awlen, mon_cb.awsize) : 1'b1);
+`endif
 endproperty
 a_kvips_aw_wrap_addr_aligned: assert property (kvips_p_aw_wrap_addr_aligned);
 
 property kvips_p_ar_wrap_addr_aligned;
-  @(posedge aclk) disable iff (!areset_n || !kvips_axi4_assertions_on || !kvips_axi4_burst_checks_on)
+  @(`AXI4_CLK) disable iff (!areset_n || !kvips_axi4_assertions_on || !kvips_axi4_burst_checks_on)
+`ifdef VERILATOR
     arvalid |-> ((arburst == 2'b10) ? kvips_wrap_addr_aligned(araddr, arlen, arsize) : 1'b1);
+`else
+    mon_cb.arvalid |-> ((mon_cb.arburst == 2'b10) ? kvips_wrap_addr_aligned(mon_cb.araddr, mon_cb.arlen, mon_cb.arsize) : 1'b1);
+`endif
 endproperty
 a_kvips_ar_wrap_addr_aligned: assert property (kvips_p_ar_wrap_addr_aligned);
 
 property kvips_p_aw_no_4kb_cross;
-  @(posedge aclk) disable iff (!areset_n || !kvips_axi4_assertions_on || !kvips_axi4_burst_checks_on)
+  @(`AXI4_CLK) disable iff (!areset_n || !kvips_axi4_assertions_on || !kvips_axi4_burst_checks_on)
+`ifdef VERILATOR
     awvalid |-> (!kvips_crosses_4kb(awaddr, awlen, awsize, awburst));
+`else
+    mon_cb.awvalid |-> (!kvips_crosses_4kb(mon_cb.awaddr, mon_cb.awlen, mon_cb.awsize, mon_cb.awburst));
+`endif
 endproperty
 a_kvips_aw_no_4kb_cross: assert property (kvips_p_aw_no_4kb_cross);
 
 property kvips_p_ar_no_4kb_cross;
-  @(posedge aclk) disable iff (!areset_n || !kvips_axi4_assertions_on || !kvips_axi4_burst_checks_on)
+  @(`AXI4_CLK) disable iff (!areset_n || !kvips_axi4_assertions_on || !kvips_axi4_burst_checks_on)
+`ifdef VERILATOR
     arvalid |-> (!kvips_crosses_4kb(araddr, arlen, arsize, arburst));
+`else
+    mon_cb.arvalid |-> (!kvips_crosses_4kb(mon_cb.araddr, mon_cb.arlen, mon_cb.arsize, mon_cb.arburst));
+`endif
 endproperty
 a_kvips_ar_no_4kb_cross: assert property (kvips_p_ar_no_4kb_cross);
 
 // Exclusive access restrictions (AXI4, conservative checks)
 property kvips_p_aw_excl_restrictions;
-  @(posedge aclk) disable iff (!areset_n || !kvips_axi4_assertions_on || !kvips_axi4_excl_checks_on)
+  @(`AXI4_CLK) disable iff (!areset_n || !kvips_axi4_assertions_on || !kvips_axi4_excl_checks_on)
+`ifdef VERILATOR
     (awvalid && awlock) |->
       (awburst == 2'b01) &&
       (awlen <= 8'd15) &&
       (kvips_total_bytes(awlen, awsize) <= 128) &&
       ((longint'(awaddr) % kvips_bytes_per_beat(awsize)) == 0) &&
       (!kvips_crosses_4kb(awaddr, awlen, awsize, awburst));
+`else
+    (mon_cb.awvalid && mon_cb.awlock) |->
+      (mon_cb.awburst == 2'b01) &&
+      (mon_cb.awlen <= 8'd15) &&
+      (kvips_total_bytes(mon_cb.awlen, mon_cb.awsize) <= 128) &&
+      ((longint'(mon_cb.awaddr) % kvips_bytes_per_beat(mon_cb.awsize)) == 0) &&
+      (!kvips_crosses_4kb(mon_cb.awaddr, mon_cb.awlen, mon_cb.awsize, mon_cb.awburst));
+`endif
 endproperty
 a_kvips_aw_excl_restrictions: assert property (kvips_p_aw_excl_restrictions);
 
 property kvips_p_ar_excl_restrictions;
-  @(posedge aclk) disable iff (!areset_n || !kvips_axi4_assertions_on || !kvips_axi4_excl_checks_on)
+  @(`AXI4_CLK) disable iff (!areset_n || !kvips_axi4_assertions_on || !kvips_axi4_excl_checks_on)
+`ifdef VERILATOR
     (arvalid && arlock) |->
       (arburst == 2'b01) &&
       (arlen <= 8'd15) &&
       (kvips_total_bytes(arlen, arsize) <= 128) &&
       ((longint'(araddr) % kvips_bytes_per_beat(arsize)) == 0) &&
       (!kvips_crosses_4kb(araddr, arlen, arsize, arburst));
+`else
+    (mon_cb.arvalid && mon_cb.arlock) |->
+      (mon_cb.arburst == 2'b01) &&
+      (mon_cb.arlen <= 8'd15) &&
+      (kvips_total_bytes(mon_cb.arlen, mon_cb.arsize) <= 128) &&
+      ((longint'(mon_cb.araddr) % kvips_bytes_per_beat(mon_cb.arsize)) == 0) &&
+      (!kvips_crosses_4kb(mon_cb.araddr, mon_cb.arlen, mon_cb.arsize, mon_cb.arburst));
+`endif
 endproperty
 a_kvips_ar_excl_restrictions: assert property (kvips_p_ar_excl_restrictions);
 
 // Optional X/Z checks
 property kvips_p_known_aw;
-  @(posedge aclk) disable iff (!areset_n || !kvips_axi4_assertions_on || !kvips_axi4_known_checks_on)
+  @(`AXI4_CLK) disable iff (!areset_n || !kvips_axi4_assertions_on || !kvips_axi4_known_checks_on)
+`ifdef VERILATOR
     awvalid |-> (!$isunknown({awid, awaddr, awlen, awsize, awburst}));
+`else
+    mon_cb.awvalid |-> (!$isunknown({mon_cb.awid, mon_cb.awaddr, mon_cb.awlen, mon_cb.awsize, mon_cb.awburst}));
+`endif
 endproperty
 a_kvips_known_aw: assert property (kvips_p_known_aw);
 
 property kvips_p_known_w;
-  @(posedge aclk) disable iff (!areset_n || !kvips_axi4_assertions_on || !kvips_axi4_known_checks_on)
+  @(`AXI4_CLK) disable iff (!areset_n || !kvips_axi4_assertions_on || !kvips_axi4_known_checks_on)
+`ifdef VERILATOR
     wvalid |-> (!$isunknown({wdata, wstrb, wlast}));
+`else
+    mon_cb.wvalid |-> (!$isunknown({mon_cb.wdata, mon_cb.wstrb, mon_cb.wlast}));
+`endif
 endproperty
 a_kvips_known_w: assert property (kvips_p_known_w);
 
 property kvips_p_known_ar;
-  @(posedge aclk) disable iff (!areset_n || !kvips_axi4_assertions_on || !kvips_axi4_known_checks_on)
+  @(`AXI4_CLK) disable iff (!areset_n || !kvips_axi4_assertions_on || !kvips_axi4_known_checks_on)
+`ifdef VERILATOR
     arvalid |-> (!$isunknown({arid, araddr, arlen, arsize, arburst}));
+`else
+    mon_cb.arvalid |-> (!$isunknown({mon_cb.arid, mon_cb.araddr, mon_cb.arlen, mon_cb.arsize, mon_cb.arburst}));
+`endif
 endproperty
 a_kvips_known_ar: assert property (kvips_p_known_ar);
 
 property kvips_p_known_r;
-  @(posedge aclk) disable iff (!areset_n || !kvips_axi4_assertions_on || !kvips_axi4_known_checks_on)
+  @(`AXI4_CLK) disable iff (!areset_n || !kvips_axi4_assertions_on || !kvips_axi4_known_checks_on)
+`ifdef VERILATOR
     rvalid |-> (!$isunknown({rid, rdata, rlast, rresp}));
+`else
+    mon_cb.rvalid |-> (!$isunknown({mon_cb.rid, mon_cb.rdata, mon_cb.rlast, mon_cb.rresp}));
+`endif
 endproperty
 a_kvips_known_r: assert property (kvips_p_known_r);
 
 property kvips_p_known_b;
-  @(posedge aclk) disable iff (!areset_n || !kvips_axi4_assertions_on || !kvips_axi4_known_checks_on)
+  @(`AXI4_CLK) disable iff (!areset_n || !kvips_axi4_assertions_on || !kvips_axi4_known_checks_on)
+`ifdef VERILATOR
     bvalid |-> (!$isunknown({bid, bresp}));
+`else
+    mon_cb.bvalid |-> (!$isunknown({mon_cb.bid, mon_cb.bresp}));
+`endif
 endproperty
 a_kvips_known_b: assert property (kvips_p_known_b);
 
@@ -364,13 +483,15 @@ end
 
 // Optional outstanding-limit checks (set via plusargs).
 property kvips_p_outs_w_limit;
-  @(posedge aclk) disable iff (!areset_n || !kvips_axi4_assertions_on)
+  @(`AXI4_CLK) disable iff (!areset_n || !kvips_axi4_assertions_on)
     (kvips_axi4_max_outs_w == 0) or (kvips_outs_w <= kvips_axi4_max_outs_w);
 endproperty
 a_kvips_outs_w_limit: assert property (kvips_p_outs_w_limit);
 
 property kvips_p_outs_r_limit;
-  @(posedge aclk) disable iff (!areset_n || !kvips_axi4_assertions_on)
+  @(`AXI4_CLK) disable iff (!areset_n || !kvips_axi4_assertions_on)
     (kvips_axi4_max_outs_r == 0) or (kvips_outs_r <= kvips_axi4_max_outs_r);
 endproperty
 a_kvips_outs_r_limit: assert property (kvips_p_outs_r_limit);
+
+`undef AXI4_CLK
