@@ -89,12 +89,178 @@
     --transition-base: 200ms cubic-bezier(0.4, 0, 0.2, 1);
     --transition-slow: 300ms cubic-bezier(0.4, 0, 0.2, 1);
 
+    /* Glassmorphism */
+    --glass-bg: rgba(255, 255, 255, 0.7);
+    --glass-border: rgba(255, 255, 255, 0.3);
+    --glass-blur: 15px;
+
     /* Z-Index */
     --z-base: 1;
     --z-dropdown: 1000;
     --z-sticky: 1020;
     --z-fixed: 1030;
     --z-modal: 1050;
+}
+
+/* Glass Navbar */
+.navbar {
+    background: var(--glass-bg);
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
+    border-bottom: 1px solid var(--glass-border);
+    position: sticky;
+    top: 0;
+    z-index: var(--z-sticky);
+    transition: var(--transition-base);
+}
+
+.navbar.scrolled {
+    background: rgba(255, 255, 255, 0.9);
+    padding: 0.5rem 0;
+    box-shadow: var(--shadow-md);
+}
+
+.nav-link {
+    color: var(--text-secondary);
+    font-weight: 500;
+    transition: var(--transition-fast);
+}
+
+.nav-link:hover, .nav-link.active {
+    color: var(--primary);
+}
+
+.nav-link.active {
+    font-weight: 700;
+    border-bottom: 2px solid var(--primary);
+}
+
+/* Premium Scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--bg-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--gray-300);
+    border-radius: var(--radius-full);
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--gray-400);
+}
+
+/* Premium Card Hover Effects */
+.vip-card, .feature-item {
+    transition: transform var(--transition-base), box-shadow var(--transition-base);
+    border: 1px solid var(--border-color);
+}
+
+.vip-card:hover, .feature-item:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-xl);
+    border-color: var(--primary-light);
+}
+
+/* Hero Section Gradient Enhancement */
+.hero {
+    background: linear-gradient(135deg, var(--gray-900) 0%, #1e3a8a 100%);
+    position: relative;
+    overflow: hidden;
+}
+
+.hero::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle at center, rgba(37, 99, 235, 0.1) 0%, transparent 70%);
+    animation: pulse-slow 15s infinite alternate;
+}
+
+@keyframes pulse-slow {
+    from { transform: scale(1); opacity: 0.3; }
+    to { transform: scale(1.1); opacity: 0.5; }
+}
+
+/* Premium Buttons */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.75rem 1.5rem;
+    font-weight: 600;
+    border-radius: var(--radius-lg);
+    transition: all var(--transition-base);
+    cursor: pointer;
+    text-decoration: none;
+    gap: 0.5rem;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    color: white;
+    box-shadow: 0 4px 14px 0 rgba(37, 99, 235, 0.39);
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(37, 99, 235, 0.45);
+}
+
+.btn-outline {
+    border: 2px solid var(--primary);
+    color: var(--primary);
+    background: transparent;
+}
+
+.btn-outline:hover {
+    background: rgba(37, 99, 235, 0.05);
+    transform: translateY(-2px);
+}
+
+/* Glassmorphism for Alerts */
+.alert {
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-lg);
+    border-left: 4px solid transparent;
+    margin: var(--spacing-xl) 0;
+}
+
+.alert-info {
+    background: rgba(59, 130, 246, 0.05);
+    border-color: var(--info);
+    color: var(--gray-800);
+}
+
+.alert-success {
+    background: rgba(16, 185, 129, 0.05);
+    border-color: var(--success);
+    color: var(--gray-800);
+}
+
+/* Dark Mode Support (Basic) */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg-primary: #0f172a;
+        --bg-secondary: #1e293b;
+        --bg-tertiary: #334155;
+        --text-primary: #f8fafc;
+        --text-secondary: #cbd5e1;
+        --text-tertiary: #94a3b8;
+        --border-color: #334155;
+        --glass-bg: rgba(15, 23, 42, 0.7);
+        --glass-border: rgba(51, 65, 85, 0.3);
+    }
+    
+    .navbar.scrolled {
+        background: rgba(15, 23, 42, 0.9);
+    }
 }
 
 /* Dark Mode */

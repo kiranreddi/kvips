@@ -200,6 +200,32 @@
     }
 
     // ==========================================
+    // Navbar State and Active Highlighting
+    // ==========================================
+    function initNavbar() {
+        const navbar = document.querySelector('.navbar');
+        const navLinks = document.querySelectorAll('.nav-link');
+        const currentPath = window.location.pathname;
+
+        // active class on scroll
+        window.addEventListener('scroll', function() {
+            if (window.scrollY > 50) {
+                navbar.classList.add('scrolled');
+            } else {
+                navbar.classList.remove('scrolled');
+            }
+        });
+
+        // Highlight active link
+        navLinks.forEach(link => {
+            const href = link.getAttribute('href');
+            if (href && (currentPath === href || currentPath === href + '/' || currentPath === href.replace('index.html', ''))) {
+                link.classList.add('active');
+            }
+        });
+    }
+
+    // ==========================================
     // Scroll to Top Button
     // ==========================================
     function initScrollToTop() {

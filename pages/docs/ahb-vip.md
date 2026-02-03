@@ -100,7 +100,7 @@ The AHB VIP supports both AHB-Lite and AHB Full in a **single compiled image**. 
 Navigate to the AHB examples directory and run tests:
 
 ```bash
-cd /newsswork/tsmc12/boxsteru4/ktatheka/kvips/ahb/examples/
+cd ahb/examples/
 
 # List available tests
 make list-tests
@@ -473,9 +473,9 @@ examples/
 <div class="card">
 <h4>📖 Documentation</h4>
 <ul>
-<li><a href="{{ '/pages/docs/getting-started' | relative_url }}">Getting Started</a></li>
-<li><a href="{{ '/pages/docs/best-practices' | relative_url }}">Best Practices</a></li>
-<li><a href="{{ '/pages/docs/faq' | relative_url }}">FAQ</a></li>
+<li><a href="{{ '/docs/getting-started' | relative_url }}">Getting Started</a></li>
+<li><a href="{{ '/docs/best-practices' | relative_url }}">Best Practices</a></li>
+<li><a href="{{ '/docs/faq' | relative_url }}">FAQ</a></li>
 </ul>
 </div>
 
@@ -484,7 +484,7 @@ examples/
 <ul>
 <li><a href="https://github.com/kiranreddi/kvips/discussions">Discussions</a></li>
 <li><a href="https://github.com/kiranreddi/kvips/issues">Report Issues</a></li>
-<li><a href="{{ '/pages/docs/vips' | relative_url }}">VIP Catalog</a></li>
+<li><a href="{{ '/docs/vips' | relative_url }}">VIP Catalog</a></li>
 </ul>
 </div>
 </div>
@@ -496,6 +496,6 @@ examples/
 <p style="font-size: 1.125rem; color: var(--text-secondary); margin: 1rem 0;">
 Get started with KVIPS AHB VIP and accelerate your verification!
 </p>
-<a href="{{ '/pages/docs/getting-started' | relative_url }}" class="btn btn-primary">Get Started</a>
+<a href="{{ '/docs/getting-started' | relative_url }}" class="btn btn-primary">Get Started</a>
 <a href="https://github.com/kiranreddi/kvips" class="btn btn-secondary">View on GitHub</a>
 </div>

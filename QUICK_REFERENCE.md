@@ -8,7 +8,7 @@ Replace `kiranreddi` with your actual GitHub username in all files:
 
 ```bash
 # On Linux:
-cd /newsswork/tsmc12/boxsteru4/ktatheka/kvips
+cd kvips
 find . -type f \( -name "*.html" -o -name "*.md" -o -name "*.yml" \) \
   -exec sed -i 's/kiranreddi/your-actual-username/g' {} +
 
@@ -21,7 +21,7 @@ find . -type f \( -name "*.html" -o -name "*.md" -o -name "*.yml" \) \
 
 1. Push to GitHub:
    ```bash
-   cd /newsswork/tsmc12/boxsteru4/ktatheka/kvips
+   cd kvips
    git add _config.yml Gemfile index.html docs/ assets/ _layouts/ .github/ DEPLOYMENT.md
    git commit -m "Add premium GitHub Pages site"
    git push origin main
@@ -109,7 +109,7 @@ description: Your description
 
 ```bash
 # Install dependencies (first time only)
-cd /newsswork/tsmc12/boxsteru4/ktatheka/kvips
+cd kvips
 gem install bundler
 bundle install
 

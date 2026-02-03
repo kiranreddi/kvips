@@ -10,8 +10,8 @@ description: Industry-grade SystemVerilog UVM Verification IP Library. Protocol 
         <h1 class="hero-title">🚀 Premium Verification IP Library</h1>
         <p class="hero-subtitle">Industry-grade SystemVerilog UVM verification components for modern semiconductor design verification</p>
         <div class="hero-buttons">
-            <a href="{{ '/pages/docs/getting-started' | relative_url }}" class="btn btn-primary">Get Started</a>
-            <a href="{{ '/pages/docs/vips' | relative_url }}" class="btn btn-outline">Browse VIPs</a>
+            <a href="{{ '/docs/getting-started' | relative_url }}" class="btn btn-primary">Get Started</a>
+            <a href="{{ '/docs/vips' | relative_url }}" class="btn btn-outline">Browse VIPs</a>
             <a href="https://github.com/kiranreddi/kvips" class="btn btn-secondary" target="_blank" rel="noopener">View on GitHub</a>
         </div>
     </div>
@@ -99,8 +99,8 @@ description: Industry-grade SystemVerilog UVM Verification IP Library. Protocol 
                         <li>Built-in scoreboard for data verification</li>
                     </ul>
                     <div class="vip-actions">
-                        <a href="{{ '/pages/docs/axi4-vip' | relative_url }}" class="btn btn-primary btn-sm">Documentation</a>
-                        <a href="{{ '/pages/docs/getting-started' | relative_url }}" class="btn btn-secondary btn-sm">Quick Start</a>
+                        <a href="{{ '/docs/axi4-vip' | relative_url }}" class="btn btn-primary btn-sm">Documentation</a>
+                        <a href="{{ '/docs/getting-started' | relative_url }}" class="btn btn-secondary btn-sm">Quick Start</a>
                     </div>
                 </div>
             </div>
@@ -129,8 +129,8 @@ description: Industry-grade SystemVerilog UVM Verification IP Library. Protocol 
                         <li>Protocol assertions & scoreboard</li>
                     </ul>
                     <div class="vip-actions">
-                        <a href="{{ '/pages/docs/apb-vip' | relative_url }}" class="btn btn-primary btn-sm">Documentation</a>
-                        <a href="{{ '/pages/docs/getting-started' | relative_url }}" class="btn btn-secondary btn-sm">Quick Start</a>
+                        <a href="{{ '/docs/apb-vip' | relative_url }}" class="btn btn-primary btn-sm">Documentation</a>
+                        <a href="{{ '/docs/getting-started' | relative_url }}" class="btn btn-secondary btn-sm">Quick Start</a>
                     </div>
                 </div>
             </div>
@@ -159,8 +159,8 @@ description: Industry-grade SystemVerilog UVM Verification IP Library. Protocol 
                         <li>Comprehensive assertions & coverage</li>
                     </ul>
                     <div class="vip-actions">
-                        <a href="{{ '/pages/docs/ahb-vip' | relative_url }}" class="btn btn-primary btn-sm">Documentation</a>
-                        <a href="{{ '/pages/docs/getting-started' | relative_url }}" class="btn btn-secondary btn-sm">Quick Start</a>
+                        <a href="{{ '/docs/ahb-vip' | relative_url }}" class="btn btn-primary btn-sm">Documentation</a>
+                        <a href="{{ '/docs/getting-started' | relative_url }}" class="btn btn-secondary btn-sm">Quick Start</a>
                     </div>
                 </div>
             </div>
@@ -357,7 +357,7 @@ seq.start(env.get_master_sequencer(0));</code></pre>
             <h2 class="cta-title">Ready to Accelerate Your Verification?</h2>
             <p class="cta-subtitle">Start using KVIPS today and experience professional-grade verification IPs.</p>
             <div class="cta-buttons">
-                <a href="{{ '/pages/docs/getting-started' | relative_url }}" class="btn btn-primary btn-lg">Get Started Now</a>
+                <a href="{{ '/docs/getting-started' | relative_url }}" class="btn btn-primary btn-lg">Get Started Now</a>
                 <a href="{{ '/pages/docs' | relative_url }}" class="btn btn-outline btn-lg">Read the Docs</a>
             </div>
         </div>

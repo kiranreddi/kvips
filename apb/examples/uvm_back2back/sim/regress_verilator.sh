@@ -2,8 +2,8 @@
 set -euo pipefail
 
 HERE="$(cd "$(dirname "$0")" && pwd)"
-ROOT="$(cd "${HERE}/../../../../.." && pwd)"
-OUT="${ROOT}/kvips/apb/examples/uvm_back2back/sim/out/verilator"
+ROOT="$(cd "${HERE}" && git rev-parse --show-toplevel)"
+OUT="${ROOT}/apb/examples/uvm_back2back/sim/out/verilator"
 
 TESTS_FILE="${HERE}/tests_questa.list"
 if [[ ! -f "${TESTS_FILE}" ]]; then

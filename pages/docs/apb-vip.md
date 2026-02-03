@@ -108,7 +108,7 @@ The APB VIP supports both APB3 and APB4 in a **single compiled image**. The inte
 Navigate to the APB examples directory and run tests:
 
 ```bash
-cd /newsswork/tsmc12/boxsteru4/ktatheka/kvips/apb/examples/
+cd apb/examples/
 
 # List available tests
 make list-tests
@@ -132,7 +132,7 @@ make verilator TEST=apb_b2b_smoke_test PLUSARGS='+APB_PROTOCOL=APB4'
 make regress-verilator
 
 # Run with LSF (if tools require job scheduler)
-source /tools/lsf/conf/profile.lsf
+# source <path-to-lsf>/conf/profile.lsf
 make questa USE_LSF=1 TEST=apb_b2b_smoke_test PLUSARGS='+APB_PROTOCOL=APB4'
 ```
 
@@ -564,9 +564,9 @@ examples/
 <div class="card">
 <h4>📖 Documentation</h4>
 <ul>
-<li><a href="{{ '/pages/docs/getting-started' | relative_url }}">Getting Started</a></li>
-<li><a href="{{ '/pages/docs/best-practices' | relative_url }}">Best Practices</a></li>
-<li><a href="{{ '/pages/docs/faq' | relative_url }}">FAQ</a></li>
+<li><a href="{{ '/docs/getting-started' | relative_url }}">Getting Started</a></li>
+<li><a href="{{ '/docs/best-practices' | relative_url }}">Best Practices</a></li>
+<li><a href="{{ '/docs/faq' | relative_url }}">FAQ</a></li>
 </ul>
 </div>
 
@@ -575,7 +575,7 @@ examples/
 <ul>
 <li><a href="https://github.com/kiranreddi/kvips/discussions">Discussions</a></li>
 <li><a href="https://github.com/kiranreddi/kvips/issues">Report Issues</a></li>
-<li><a href="{{ '/pages/docs/vips' | relative_url }}">VIP Catalog</a></li>
+<li><a href="{{ '/docs/vips' | relative_url }}">VIP Catalog</a></li>
 </ul>
 </div>
 </div>
@@ -587,7 +587,7 @@ examples/
 <p style="font-size: 1.125rem; color: var(--text-secondary); margin: 1rem 0;">
 Get started with KVIPS APB VIP and accelerate your register verification!
 </p>
-<a href="{{ '/pages/docs/getting-started' | relative_url }}" class="btn btn-primary">Get Started</a>
+<a href="{{ '/docs/getting-started' | relative_url }}" class="btn btn-primary">Get Started</a>
 <a href="https://github.com/kiranreddi/kvips" class="btn btn-secondary">View on GitHub</a>
 </div>
 

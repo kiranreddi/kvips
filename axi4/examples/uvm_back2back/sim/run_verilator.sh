@@ -1,15 +1,15 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ROOT="$(cd "$(dirname "$0")/../../../../.." && pwd)"
-OUT="${ROOT}/kvips/axi4/examples/uvm_back2back/sim/out/verilator"
+ROOT="$(cd "$(dirname "$0")" && git rev-parse --show-toplevel)"
+OUT="${ROOT}/axi4/examples/uvm_back2back/sim/out/verilator"
 mkdir -p "${OUT}"
 
-ORIG_FILELIST="${ROOT}/kvips/axi4/examples/uvm_back2back/sim/filelist.f"
+ORIG_FILELIST="${ROOT}/axi4/examples/uvm_back2back/sim/filelist.f"
 ABS_FILELIST="${OUT}/filelist.abs.f"
 
 UVM_TARBALL_URL="https://www.accellera.org/images/downloads/standards/uvm/Accellera-1800.2-2017-1.0.tar.gz"
-UVM_BASE="${ROOT}/kvips/third_party/uvm"
+UVM_BASE="${ROOT}/third_party/uvm"
 UVM_SRC_DEFAULT="${UVM_BASE}/1800.2-2017-1.0/src"
 
 make_abs_filelist() {
