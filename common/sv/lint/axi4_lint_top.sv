@@ -2,6 +2,9 @@
 // AXI4 lint top (for Verilator lint-only runs)
 //------------------------------------------------------------------------------
 
+`include "axi4_types_pkg.sv"
+`include "axi4_if.sv"
+
 module axi4_lint_top;
   logic aclk;
   logic areset_n;
