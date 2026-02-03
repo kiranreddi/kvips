@@ -9,7 +9,8 @@ UVM_VERBOSITY ?= UVM_LOW
 PLUSARGS ?=
 
 USE_LSF ?= 0
-LSF_BSUB ?= bsub -Ip -app gnrc -P boxsteru4 -Lp boxsteru4 -q interactive
+# LSF Settings (Optional)
+LSF_BSUB ?= bsub -Ip -app gnrc -q interactive
 
 ifneq ($(USE_LSF),0)
 RUN_PREFIX := $(LSF_BSUB)
