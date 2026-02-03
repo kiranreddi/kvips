@@ -16,6 +16,13 @@ VERILATOR_UVM_URL="${VERILATOR_UVM_URL:-https://github.com/verilator/uvm/archive
 VERILATOR_UVM_BASE="${ROOT}/third_party/uvm_verilator"
 VERILATOR_UVM_SRC_DEFAULT="${VERILATOR_UVM_BASE}/uvm-master/src"
 
+apply_verilator_uvm_patch() {
+  local patch_file="${ROOT}/common/uvm/verilator_uvm.patch"
+  if [[ -f "${patch_file}" ]]; then
+    (cd "${VERILATOR_UVM_BASE}" && patch -p1 --forward < "${patch_file}")
+  fi
+}
+
 make_abs_filelist() {
   local in="$1"
   local out="$2"
@@ -54,6 +61,7 @@ ensure_uvm() {
   if [[ "${UVM_USE_VERILATOR:-1}" == "1" ]]; then
     if [[ -d "${VERILATOR_UVM_SRC_DEFAULT}" ]]; then
       export UVM_HOME="${VERILATOR_UVM_SRC_DEFAULT}"
+      apply_verilator_uvm_patch
       return 0
     fi
     mkdir -p "${VERILATOR_UVM_BASE}"
@@ -65,6 +73,7 @@ ensure_uvm() {
     echo "Extracting Verilator UVM into ${VERILATOR_UVM_BASE}" >&2
     tar -xvzf "${vtarball}" -C "${VERILATOR_UVM_BASE}"
     export UVM_HOME="${VERILATOR_UVM_SRC_DEFAULT}"
+    apply_verilator_uvm_patch
     return 0
   fi
   if [[ -d "${UVM_SRC_DEFAULT}" ]]; then
