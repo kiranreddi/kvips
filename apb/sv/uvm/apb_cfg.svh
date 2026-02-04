@@ -11,14 +11,9 @@ class apb_cfg #(
 ) extends uvm_object;
 
 `ifdef VERILATOR
-  typedef apb_if #(ADDR_W, DATA_W, NSEL) apb_vif_t;
+  virtual apb_if #(ADDR_W, DATA_W, NSEL) vif;
 `else
   typedef virtual apb_if #(ADDR_W, DATA_W, NSEL) apb_vif_t;
-`endif
-
-`ifdef VERILATOR
-  virtual apb_vif_t vif;
-`else
   apb_vif_t vif;
 `endif
 
