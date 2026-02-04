@@ -37,7 +37,9 @@ class axi4_master_driver #(
 
 `ifdef VERILATOR
   axi4_agent_cfg#(ADDR_W, DATA_W, ID_W, USER_W) cfg;
+  /* verilator lint_off UNSUPPORTED */
   virtual axi4_if #(ADDR_W, DATA_W, ID_W, USER_W) vif;
+  /* verilator lint_on UNSUPPORTED */
 `else
   typedef virtual axi4_if #(ADDR_W, DATA_W, ID_W, USER_W) axi4_vif_t;
   axi4_agent_cfg#(ADDR_W, DATA_W, ID_W, USER_W) cfg;

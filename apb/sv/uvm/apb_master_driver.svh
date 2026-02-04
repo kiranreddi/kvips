@@ -15,7 +15,9 @@ class apb_master_driver #(
 
 `ifdef VERILATOR
   apb_cfg#(ADDR_W, DATA_W, NSEL) cfg;
+  /* verilator lint_off UNSUPPORTED */
   virtual apb_if #(ADDR_W, DATA_W, NSEL) vif;
+  /* verilator lint_on UNSUPPORTED */
 `else
   typedef virtual apb_if #(ADDR_W, DATA_W, NSEL) apb_vif_t;
   apb_cfg#(ADDR_W, DATA_W, NSEL) cfg;

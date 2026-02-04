@@ -15,12 +15,14 @@ class ahb_slave_driver #(
 
 `ifdef VERILATOR
   ahb_cfg#(ADDR_W, DATA_W, HRESP_W, HAS_HMASTLOCK) cfg;
+  /* verilator lint_off UNSUPPORTED */
   virtual ahb_if #(
     .ADDR_W(ADDR_W),
     .DATA_W(DATA_W),
     .HAS_HMASTLOCK(HAS_HMASTLOCK),
     .HRESP_W(HRESP_W)
   ) vif;
+  /* verilator lint_on UNSUPPORTED */
 `else
   typedef virtual ahb_if #(
     .ADDR_W(ADDR_W),
