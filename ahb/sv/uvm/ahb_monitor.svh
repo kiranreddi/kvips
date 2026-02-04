@@ -13,13 +13,24 @@ class ahb_monitor #(
 
   localparam string RID = "AHB_MON";
 
-  ahb_cfg#(ADDR_W, DATA_W, HRESP_W, HAS_HMASTLOCK) cfg;
-  virtual interface ahb_if #(
+`ifdef VERILATOR
+  typedef virtual interface ahb_if #(
     .ADDR_W(ADDR_W),
     .DATA_W(DATA_W),
     .HAS_HMASTLOCK(HAS_HMASTLOCK),
     .HRESP_W(HRESP_W)
-  )                                vif;
+  ) ahb_vif_t;
+`else
+  typedef virtual ahb_if #(
+    .ADDR_W(ADDR_W),
+    .DATA_W(DATA_W),
+    .HAS_HMASTLOCK(HAS_HMASTLOCK),
+    .HRESP_W(HRESP_W)
+  ) ahb_vif_t;
+`endif
+
+  ahb_cfg#(ADDR_W, DATA_W, HRESP_W, HAS_HMASTLOCK) cfg;
+  ahb_vif_t                         vif;
 
   uvm_analysis_port #(ahb_item#(ADDR_W, DATA_W, HRESP_W)) ap;
 

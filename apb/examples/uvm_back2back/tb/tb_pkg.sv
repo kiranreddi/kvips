@@ -30,7 +30,12 @@ package tb_pkg;
     localparam int DATA_W = 32;
     localparam int NSEL   = 1;
 
-    virtual interface apb_if #(ADDR_W, DATA_W, NSEL) vif;
+  `ifdef VERILATOR
+    typedef virtual interface apb_if #(ADDR_W, DATA_W, NSEL) apb_vif_t;
+  `else
+    typedef virtual apb_if #(ADDR_W, DATA_W, NSEL) apb_vif_t;
+  `endif
+    apb_vif_t vif;
 
     apb_env_cfg#(ADDR_W, DATA_W, NSEL) env_cfg;
     apb_env#(ADDR_W, DATA_W, NSEL)     env;
