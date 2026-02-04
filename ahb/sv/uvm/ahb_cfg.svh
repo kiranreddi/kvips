@@ -12,12 +12,12 @@ class ahb_cfg #(
 ) extends uvm_object;
 
 `ifdef VERILATOR
-  typedef ahb_if #(
+  virtual ahb_if #(
     .ADDR_W(ADDR_W),
     .DATA_W(DATA_W),
     .HAS_HMASTLOCK(HAS_HMASTLOCK),
     .HRESP_W(HRESP_W)
-  ) ahb_vif_t;
+  ) vif;
 `else
   typedef virtual ahb_if #(
     .ADDR_W(ADDR_W),
@@ -25,11 +25,6 @@ class ahb_cfg #(
     .HAS_HMASTLOCK(HAS_HMASTLOCK),
     .HRESP_W(HRESP_W)
   ) ahb_vif_t;
-`endif
-
-`ifdef VERILATOR
-  virtual ahb_vif_t vif;
-`else
   ahb_vif_t vif;
 `endif
 

@@ -32,15 +32,11 @@ package tb_pkg;
     localparam int USER_W = 1;
 
   `ifdef VERILATOR
-      typedef axi4_if #(ADDR_W, DATA_W, ID_W, USER_W) axi4_vif_t;
+      virtual axi4_if #(ADDR_W, DATA_W, ID_W, USER_W) vif;
     `else
       typedef virtual axi4_if #(ADDR_W, DATA_W, ID_W, USER_W) axi4_vif_t;
-    `endif
-  `ifdef VERILATOR
-      virtual axi4_vif_t vif;
-  `else
       axi4_vif_t vif;
-  `endif
+    `endif
 
     axi4_env_cfg#(ADDR_W, DATA_W, ID_W, USER_W) env_cfg;
     axi4_env#(ADDR_W, DATA_W, ID_W, USER_W)     env;
