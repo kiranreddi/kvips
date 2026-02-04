@@ -37,20 +37,18 @@ interface apb_if #(
   // Clocking blocks (all sampled on posedge PCLK)
 `ifndef VERILATOR
   clocking cb_m @(posedge PCLK);
-    // Avoid race between drivers/monitors: drive at #0, sample at #1step.
-    default input #1step output #0;
-    output PADDR, PSEL, PENABLE, PWRITE, PWDATA, PPROT, PSTRB;
-    input  PRDATA, PREADY, PSLVERR;
+    // Sample-only clocking block (drivers write via vif.*).
+    default input #1step;
+    input PADDR, PSEL, PENABLE, PWRITE, PWDATA, PRDATA, PREADY, PSLVERR, PPROT, PSTRB;
   endclocking
 
   clocking cb_s @(posedge PCLK);
-    default input #1step output #0;
-    input  PADDR, PSEL, PENABLE, PWRITE, PWDATA, PPROT, PSTRB;
-    output PRDATA, PREADY, PSLVERR;
+    default input #1step;
+    input PADDR, PSEL, PENABLE, PWRITE, PWDATA, PRDATA, PREADY, PSLVERR, PPROT, PSTRB;
   endclocking
 
   clocking cb_mon @(posedge PCLK);
-    default input #1step output #0;
+    default input #1step;
     input PADDR, PSEL, PENABLE, PWRITE, PWDATA, PRDATA, PREADY, PSLVERR, PPROT, PSTRB;
   endclocking
 `endif

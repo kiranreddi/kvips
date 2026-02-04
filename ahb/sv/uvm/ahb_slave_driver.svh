@@ -142,16 +142,16 @@ class ahb_slave_driver #(
     stall_rem = 0;
     stall_armed = 0;
 
-    `AHB_S_CB.HREADYOUT <= 1'b1;
-    `AHB_S_CB.HRESP     <= resp_okay();
-    `AHB_S_CB.HRDATA    <= '0;
+    vif.HREADYOUT <= 1'b1;
+    vif.HRESP     <= resp_okay();
+    vif.HRDATA    <= '0;
 
     @(posedge vif.HCLK);
     while (!vif.HRESETn) begin
       @(posedge vif.HCLK);
-      `AHB_S_CB.HREADYOUT <= 1'b1;
-      `AHB_S_CB.HRESP     <= resp_okay();
-      `AHB_S_CB.HRDATA    <= '0;
+      vif.HREADYOUT <= 1'b1;
+      vif.HRESP     <= resp_okay();
+      vif.HRDATA    <= '0;
       ctrl_pipe = clear_ctrl();
       ctrl_data = clear_ctrl();
       stall_rem = 0;
@@ -166,9 +166,9 @@ class ahb_slave_driver #(
         ctrl_data = clear_ctrl();
         stall_rem = 0;
         stall_armed = 0;
-        `AHB_S_CB.HREADYOUT <= 1'b1;
-        `AHB_S_CB.HRESP     <= resp_okay();
-        `AHB_S_CB.HRDATA    <= '0;
+        vif.HREADYOUT <= 1'b1;
+        vif.HRESP     <= resp_okay();
+        vif.HRDATA    <= '0;
         continue;
       end
 
@@ -180,27 +180,27 @@ class ahb_slave_driver #(
 
       if (ctrl_data.valid && (stall_rem != 0)) begin
         // Stall cycle: keep outputs stable, hold HREADYOUT low, decrement.
-        `AHB_S_CB.HREADYOUT <= 1'b0;
+        vif.HREADYOUT <= 1'b0;
         stall_rem--;
         continue;
       end
 
       // Ready to complete current beat (if any) and accept next control.
-      `AHB_S_CB.HREADYOUT <= 1'b1;
+      vif.HREADYOUT <= 1'b1;
 
       // Complete data phase for ctrl_data (this cycle's handshake completes it).
       if (ctrl_data.valid) begin
         bit err = cfg.addr_in_error_range(ctrl_data.addr);
-        `AHB_S_CB.HRESP  <= err ? resp_error() : resp_okay();
+        vif.HRESP  <= err ? resp_error() : resp_okay();
         if (!ctrl_data.write) begin
-          `AHB_S_CB.HRDATA <= read_bytes(ctrl_data.addr, ctrl_data.size);
+          vif.HRDATA <= read_bytes(ctrl_data.addr, ctrl_data.size);
         end else begin
           write_bytes(ctrl_data.addr, ctrl_data.size, `AHB_S_CB.HWDATA);
-          `AHB_S_CB.HRDATA <= '0;
+          vif.HRDATA <= '0;
         end
       end else begin
-        `AHB_S_CB.HRESP  <= resp_okay();
-        `AHB_S_CB.HRDATA <= '0;
+        vif.HRESP  <= resp_okay();
+        vif.HRDATA <= '0;
       end
 
       // Shift pipeline at end of ready cycle:

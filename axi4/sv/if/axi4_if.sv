@@ -92,31 +92,21 @@ interface axi4_if #(
   // -------------------------
 `ifndef VERILATOR
   clocking m_cb @(posedge aclk);
-    default input #1step output #0;
-    output awid, awaddr, awlen, awsize, awburst, awlock, awcache, awprot, awqos, awregion, awuser, awvalid;
-    input  awready;
-    output wdata, wstrb, wlast, wuser, wvalid;
-    input  wready;
-    input  bid, bresp, buser, bvalid;
-    output bready;
-    output arid, araddr, arlen, arsize, arburst, arlock, arcache, arprot, arqos, arregion, aruser, arvalid;
-    input  arready;
-    input  rid, rdata, rresp, rlast, ruser, rvalid;
-    output rready;
+    default input #1step;
+    input awid, awaddr, awlen, awsize, awburst, awlock, awcache, awprot, awqos, awregion, awuser, awvalid, awready;
+    input wdata, wstrb, wlast, wuser, wvalid, wready;
+    input bid, bresp, buser, bvalid, bready;
+    input arid, araddr, arlen, arsize, arburst, arlock, arcache, arprot, arqos, arregion, aruser, arvalid, arready;
+    input rid, rdata, rresp, rlast, ruser, rvalid, rready;
   endclocking
 
   clocking s_cb @(posedge aclk);
-    default input #1step output #0;
-    input  awid, awaddr, awlen, awsize, awburst, awlock, awcache, awprot, awqos, awregion, awuser, awvalid;
-    output awready;
-    input  wdata, wstrb, wlast, wuser, wvalid;
-    output wready;
-    output bid, bresp, buser, bvalid;
-    input  bready;
-    input  arid, araddr, arlen, arsize, arburst, arlock, arcache, arprot, arqos, arregion, aruser, arvalid;
-    output arready;
-    output rid, rdata, rresp, rlast, ruser, rvalid;
-    input  rready;
+    default input #1step;
+    input awid, awaddr, awlen, awsize, awburst, awlock, awcache, awprot, awqos, awregion, awuser, awvalid, awready;
+    input wdata, wstrb, wlast, wuser, wvalid, wready;
+    input bid, bresp, buser, bvalid, bready;
+    input arid, araddr, arlen, arsize, arburst, arlock, arcache, arprot, arqos, arregion, aruser, arvalid, arready;
+    input rid, rdata, rresp, rlast, ruser, rvalid, rready;
   endclocking
 
   clocking mon_cb @(posedge aclk);

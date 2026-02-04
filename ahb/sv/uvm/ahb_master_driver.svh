@@ -110,15 +110,15 @@ class ahb_master_driver #(
 
   task drive_idle();
     vif.HSEL          <= 1'b1;
-    `AHB_M_CB.HTRANS  <= AHB_TRANS_IDLE;
-    `AHB_M_CB.HADDR   <= '0;
-    `AHB_M_CB.HWRITE  <= 1'b0;
-    `AHB_M_CB.HSIZE   <= AHB_SIZE_32;
-    `AHB_M_CB.HBURST  <= AHB_BURST_SINGLE;
-    `AHB_M_CB.HPROT   <= 4'h0;
+    vif.HTRANS        <= AHB_TRANS_IDLE;
+    vif.HADDR         <= '0;
+    vif.HWRITE        <= 1'b0;
+    vif.HSIZE         <= AHB_SIZE_32;
+    vif.HBURST        <= AHB_BURST_SINGLE;
+    vif.HPROT         <= 4'h0;
     vif.HWDATA        <= '0;
     // Optional signals default inside the interface when disabled.
-    if (HAS_HMASTLOCK) `AHB_M_CB.HMASTLOCK <= 1'b0;
+    if (HAS_HMASTLOCK) vif.HMASTLOCK <= 1'b0;
   endtask
 
   task apply_optional_idles();
@@ -231,13 +231,13 @@ class ahb_master_driver #(
         if (cur_beat < cur_beats) begin
           next_a = next_addr(cur_item.addr, cur_beat, cur_item.size, cur_item.burst);
           vif.HSEL         <= 1'b1;
-          `AHB_M_CB.HADDR  <= next_a;
-          `AHB_M_CB.HWRITE <= cur_item.write;
-          `AHB_M_CB.HSIZE  <= cur_item.size;
-          `AHB_M_CB.HBURST <= cur_item.burst;
-          `AHB_M_CB.HPROT  <= cur_item.prot;
-          if (HAS_HMASTLOCK) `AHB_M_CB.HMASTLOCK <= cur_item.lock;
-          `AHB_M_CB.HTRANS <= (cur_beat == 0) ? AHB_TRANS_NONSEQ : AHB_TRANS_SEQ;
+          vif.HADDR        <= next_a;
+          vif.HWRITE       <= cur_item.write;
+          vif.HSIZE        <= cur_item.size;
+          vif.HBURST       <= cur_item.burst;
+          vif.HPROT        <= cur_item.prot;
+          if (HAS_HMASTLOCK) vif.HMASTLOCK <= cur_item.lock;
+          vif.HTRANS       <= (cur_beat == 0) ? AHB_TRANS_NONSEQ : AHB_TRANS_SEQ;
 
           // This beat becomes the data-phase beat in the next cycle.
           next_data_valid = 1;

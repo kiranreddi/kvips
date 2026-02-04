@@ -90,9 +90,9 @@ class apb_slave_driver #(
   endfunction
 
   task automatic drive_idle();
-    `APB_S_CB.PREADY  <= 1'b1;
-    `APB_S_CB.PSLVERR <= 1'b0;
-    `APB_S_CB.PRDATA  <= '0;
+    vif.PREADY  <= 1'b1;
+    vif.PSLVERR <= 1'b0;
+    vif.PRDATA  <= '0;
   endtask
 
   task automatic wait_reset_release();
@@ -127,7 +127,7 @@ class apb_slave_driver #(
     logic [DATA_W-1:0] old_d;
     logic [DATA_W-1:0] new_d;
 
-    `APB_S_CB.PSLVERR <= pending.slv_err;
+    vif.PSLVERR <= pending.slv_err;
 
     wi = word_idx(pending.addr);
     old_d = mem.exists(wi) ? mem[wi] : '0;
@@ -139,9 +139,9 @@ class apb_slave_driver #(
       if (cfg.is_apb4()) new_d = apply_strb(old_d, pending.wdata, pending.strb);
       else               new_d = pending.wdata;
       mem[wi] = new_d;
-      `APB_S_CB.PRDATA <= '0;
+      vif.PRDATA <= '0;
     end else begin
-      `APB_S_CB.PRDATA <= old_d;
+      vif.PRDATA <= old_d;
     end
   endtask
 
@@ -166,9 +166,9 @@ class apb_slave_driver #(
         // Response (PRDATA/PSLVERR) is only valid/meaningful in the ACCESS phase.
         // Keep PSLVERR low in setup; respond_access() will drive the real response
         // on the completion cycle in ACCESS.
-        `APB_S_CB.PREADY  <= 1'b0;
-        `APB_S_CB.PSLVERR <= 1'b0;
-        `APB_S_CB.PRDATA  <= '0;
+        vif.PREADY  <= 1'b0;
+        vif.PSLVERR <= 1'b0;
+        vif.PRDATA  <= '0;
         continue;
       end
 
@@ -181,18 +181,18 @@ class apb_slave_driver #(
 
         // Stall for wait_left cycles with PREADY low, then complete with PREADY high.
         if (wait_left > 0) begin
-          `APB_S_CB.PREADY  <= 1'b0;
-          `APB_S_CB.PSLVERR <= 1'b0;
+          vif.PREADY  <= 1'b0;
+          vif.PSLVERR <= 1'b0;
           wait_left--;
         end else begin
-          `APB_S_CB.PREADY <= 1'b1;
+          vif.PREADY <= 1'b1;
           respond_access();
           have_pending = 0;
         end
       end else begin
         // Idle: keep ready high, error low.
-        `APB_S_CB.PREADY  <= 1'b1;
-        `APB_S_CB.PSLVERR <= 1'b0;
+        vif.PREADY  <= 1'b1;
+        vif.PSLVERR <= 1'b0;
       end
     end
   endtask
