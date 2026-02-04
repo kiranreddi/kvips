@@ -96,8 +96,14 @@ class axi4_slave_driver #(
   localparam int STRB_W = DATA_W/8;
   localparam string RID = "AXI4_SDRV";
 
+`ifdef VERILATOR
+  typedef virtual interface axi4_if #(ADDR_W, DATA_W, ID_W, USER_W) axi4_vif_t;
+`else
+  typedef virtual axi4_if #(ADDR_W, DATA_W, ID_W, USER_W) axi4_vif_t;
+`endif
+
   axi4_agent_cfg#(ADDR_W, DATA_W, ID_W, USER_W) cfg;
-  virtual interface axi4_if #(ADDR_W, DATA_W, ID_W, USER_W) vif;
+  axi4_vif_t vif;
   axi4_slave_mem#(ADDR_W, DATA_W) mem;
 
   typedef struct packed {

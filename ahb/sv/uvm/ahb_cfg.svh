@@ -11,12 +11,23 @@ class ahb_cfg #(
   bit HAS_HMASTLOCK = 1'b0
 ) extends uvm_object;
 
-  virtual interface ahb_if #(
+`ifdef VERILATOR
+  typedef virtual interface ahb_if #(
     .ADDR_W(ADDR_W),
     .DATA_W(DATA_W),
     .HAS_HMASTLOCK(HAS_HMASTLOCK),
     .HRESP_W(HRESP_W)
-  ) vif;
+  ) ahb_vif_t;
+`else
+  typedef virtual ahb_if #(
+    .ADDR_W(ADDR_W),
+    .DATA_W(DATA_W),
+    .HAS_HMASTLOCK(HAS_HMASTLOCK),
+    .HRESP_W(HRESP_W)
+  ) ahb_vif_t;
+`endif
+
+  ahb_vif_t vif;
 
   // Protocol selection
   ahb_mode_e mode = AHB_MODE_LITE;
