@@ -14,7 +14,7 @@ class ahb_slave_driver #(
   localparam string RID = "AHB_SDRV";
 
 `ifdef VERILATOR
-  typedef virtual ahb_if #(
+  typedef ahb_if #(
     .ADDR_W(ADDR_W),
     .DATA_W(DATA_W),
     .HAS_HMASTLOCK(HAS_HMASTLOCK),
@@ -30,7 +30,11 @@ class ahb_slave_driver #(
 `endif
 
   ahb_cfg#(ADDR_W, DATA_W, HRESP_W, HAS_HMASTLOCK) cfg;
-  ahb_vif_t                         vif;
+`ifdef VERILATOR
+  virtual ahb_vif_t                   vif;
+`else
+  ahb_vif_t                           vif;
+`endif
 
   typedef logic [HRESP_W-1:0] hresp_t;
 

@@ -16,13 +16,17 @@ class axi4_monitor #(
   localparam int unsigned STRB_W = (DATA_W/8);
 
 `ifdef VERILATOR
-  typedef virtual axi4_if #(ADDR_W, DATA_W, ID_W, USER_W) axi4_vif_t;
+  typedef axi4_if #(ADDR_W, DATA_W, ID_W, USER_W) axi4_vif_t;
 `else
   typedef virtual axi4_if #(ADDR_W, DATA_W, ID_W, USER_W) axi4_vif_t;
 `endif
 
   axi4_agent_cfg#(ADDR_W, DATA_W, ID_W, USER_W) cfg;
+`ifdef VERILATOR
+  virtual axi4_vif_t vif;
+`else
   axi4_vif_t vif;
+`endif
 
 `ifdef VERILATOR
 `define AXI4_MON_CB  vif

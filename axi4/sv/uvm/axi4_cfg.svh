@@ -13,12 +13,16 @@ class axi4_agent_cfg #(
 ) extends uvm_object;
 
 `ifdef VERILATOR
-  typedef virtual axi4_if #(ADDR_W, DATA_W, ID_W, USER_W) axi4_vif_t;
+  typedef axi4_if #(ADDR_W, DATA_W, ID_W, USER_W) axi4_vif_t;
 `else
   typedef virtual axi4_if #(ADDR_W, DATA_W, ID_W, USER_W) axi4_vif_t;
 `endif
 
+`ifdef VERILATOR
+  virtual axi4_vif_t vif;
+`else
   axi4_vif_t vif;
+`endif
 
   bit is_master = 1'b1;
   bit is_slave  = 1'b0;
