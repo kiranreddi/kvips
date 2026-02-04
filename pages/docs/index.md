@@ -1,7 +1,7 @@
 ---
 layout: default
 title: Documentation
-permalink: /pages/docs/
+permalink: /docs/
 ---
 
 <section class="section-padding">
