@@ -31,9 +31,7 @@ package tb_pkg;
     localparam int NSEL   = 1;
 
   `ifdef VERILATOR
-      /* verilator lint_off UNSUPPORTED */
       virtual apb_if #(ADDR_W, DATA_W, NSEL) vif;
-      /* verilator lint_on UNSUPPORTED */
     `else
       typedef virtual apb_if #(ADDR_W, DATA_W, NSEL) apb_vif_t;
       apb_vif_t vif;
