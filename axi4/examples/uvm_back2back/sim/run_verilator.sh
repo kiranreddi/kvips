@@ -19,7 +19,7 @@ VERILATOR_UVM_SRC_DEFAULT="${VERILATOR_UVM_BASE}/uvm-master/src"
 apply_verilator_uvm_patch() {
   local patch_file="${ROOT}/common/uvm/verilator_uvm.patch"
   if [[ -f "${patch_file}" ]]; then
-    (cd "${VERILATOR_UVM_BASE}" && patch -p1 --forward < "${patch_file}")
+    (cd "${VERILATOR_UVM_BASE}" && patch -p1 --forward < "${patch_file}" || true)
   fi
 }
 

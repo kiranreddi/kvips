@@ -26,7 +26,14 @@ module top;
   ahb_if #(.ADDR_W(ADDR_W), .DATA_W(DATA_W), .HRESP_W(HRESP_W)) ahb_if0 (.HCLK(HCLK), .HRESETn(HRESETn));
 
   // For a single-slave example, HREADY is just the slave's HREADYOUT.
-  always_comb ahb_if0.HREADY = ahb_if0.HREADYOUT;
+`ifdef VERILATOR
+  always_ff @(posedge HCLK or negedge HRESETn) begin
+    if (!HRESETn) ahb_if0.HREADY <= 1'b1;
+    else          ahb_if0.HREADY <= ahb_if0.HREADYOUT;
+  end
+`else
+  assign ahb_if0.HREADY = ahb_if0.HREADYOUT;
+`endif
 
   initial begin
     uvm_config_db#(virtual interface ahb_if #(.ADDR_W(ADDR_W), .DATA_W(DATA_W), .HRESP_W(HRESP_W)))::set(null, "*", "vif", ahb_if0);
