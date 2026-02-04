@@ -22,7 +22,7 @@ class ahb_b2b_base_test extends uvm_test;
   localparam int HRESP_W = 2;
 
 `ifdef VERILATOR
-  typedef virtual interface ahb_if #(.ADDR_W(ADDR_W), .DATA_W(DATA_W), .HRESP_W(HRESP_W)) ahb_vif_t;
+  typedef virtual ahb_if #(.ADDR_W(ADDR_W), .DATA_W(DATA_W), .HRESP_W(HRESP_W)) ahb_vif_t;
 `else
   typedef virtual ahb_if #(.ADDR_W(ADDR_W), .DATA_W(DATA_W), .HRESP_W(HRESP_W)) ahb_vif_t;
 `endif

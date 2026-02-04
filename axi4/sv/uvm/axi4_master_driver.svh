@@ -36,7 +36,7 @@ class axi4_master_driver #(
   localparam string RID = "AXI4_MDRV";
 
 `ifdef VERILATOR
-  typedef virtual interface axi4_if #(ADDR_W, DATA_W, ID_W, USER_W) axi4_vif_t;
+  typedef virtual axi4_if #(ADDR_W, DATA_W, ID_W, USER_W) axi4_vif_t;
 `else
   typedef virtual axi4_if #(ADDR_W, DATA_W, ID_W, USER_W) axi4_vif_t;
 `endif
