@@ -51,15 +51,15 @@ interface ahb_if #(
   // Clocking blocks (posedge HCLK)
 `ifndef VERILATOR
   clocking cb_m @(posedge HCLK);
-    default input #1step output #0;
-    output HADDR, HTRANS, HWRITE, HSIZE, HBURST, HPROT, HMASTLOCK, HMASTER;
-    input  HSEL, HWDATA, HREADY, HREADYOUT, HRESP, HRDATA;
+    default input #1step;
+    input HADDR, HTRANS, HWRITE, HSIZE, HBURST, HPROT, HMASTLOCK, HMASTER;
+    input HSEL, HWDATA, HREADY, HREADYOUT, HRESP, HRDATA;
   endclocking
 
   clocking cb_s @(posedge HCLK);
-    default input #1step output #0;
-    input  HADDR, HTRANS, HWRITE, HSIZE, HBURST, HPROT, HWDATA, HSEL, HMASTLOCK, HMASTER, HREADY;
-    output HREADYOUT, HRESP, HRDATA;
+    default input #1step;
+    input HADDR, HTRANS, HWRITE, HSIZE, HBURST, HPROT, HWDATA, HSEL, HMASTLOCK, HMASTER, HREADY;
+    input HREADYOUT, HRESP, HRDATA;
   endclocking
 
   clocking cb_mon @(posedge HCLK);

@@ -41,13 +41,13 @@ class apb_master_driver #(
   endfunction
 
   task automatic drive_idle();
-    `APB_M_CB.PSEL    <= '0;
-    `APB_M_CB.PENABLE <= 1'b0;
-    `APB_M_CB.PWRITE  <= 1'b0;
-    `APB_M_CB.PADDR   <= '0;
-    `APB_M_CB.PWDATA  <= '0;
-    `APB_M_CB.PPROT   <= 3'b000;
-    `APB_M_CB.PSTRB   <= '0;
+    vif.PSEL    <= '0;
+    vif.PENABLE <= 1'b0;
+    vif.PWRITE  <= 1'b0;
+    vif.PADDR   <= '0;
+    vif.PWDATA  <= '0;
+    vif.PPROT   <= 3'b000;
+    vif.PSTRB   <= '0;
   endtask
 
   task automatic wait_reset_release();
@@ -90,17 +90,17 @@ class apb_master_driver #(
     tr.strb = pstrb_v;
 
     // SETUP phase
-    `APB_M_CB.PADDR   <= tr.addr;
-    `APB_M_CB.PWRITE  <= tr.write;
-    `APB_M_CB.PWDATA  <= tr.wdata;
-    `APB_M_CB.PSEL    <= sel;
-    `APB_M_CB.PENABLE <= 1'b0;
-    `APB_M_CB.PPROT   <= pprot_v;
-    `APB_M_CB.PSTRB   <= pstrb_v;
+    vif.PADDR   <= tr.addr;
+    vif.PWRITE  <= tr.write;
+    vif.PWDATA  <= tr.wdata;
+    vif.PSEL    <= sel;
+    vif.PENABLE <= 1'b0;
+    vif.PPROT   <= pprot_v;
+    vif.PSTRB   <= pstrb_v;
     `APB_M_EVT;
 
     // ENABLE phase
-    `APB_M_CB.PENABLE <= 1'b1;
+    vif.PENABLE <= 1'b1;
     // Advance into the first ACCESS cycle. APB completes in an ACCESS cycle,
     // not in the same delta-cycle as PENABLE assertion.
     `APB_M_EVT;
@@ -129,12 +129,12 @@ class apb_master_driver #(
 
     // Return to SETUP/IDLE for next transfer.
     if (cfg.drop_psel_between) begin
-      `APB_M_CB.PSEL    <= '0;
-      `APB_M_CB.PENABLE <= 1'b0;
+      vif.PSEL    <= '0;
+      vif.PENABLE <= 1'b0;
       `APB_M_EVT;
     end else begin
       // Continuous mode: drop PENABLE, keep PSEL asserted and update address/data in next setup cycle.
-      `APB_M_CB.PENABLE <= 1'b0;
+      vif.PENABLE <= 1'b0;
       `APB_M_EVT;
     end
   endtask
