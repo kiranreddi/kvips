@@ -8,6 +8,11 @@
 [![GitHub Pages](https://img.shields.io/badge/docs-github_pages-blue)](https://kiranreddi.github.io/kvips/)
 [![SystemVerilog](https://img.shields.io/badge/SystemVerilog-IEEE_1800-orange)](https://standards.ieee.org/)
 [![UVM](https://img.shields.io/badge/UVM-1.1d%20%7C%201.2-green)](https://www.accellera.org/)
+[![APB Verilator Regressions](https://github.com/kiranreddi/kvips/actions/workflows/apb-verilator-regressions.yml/badge.svg?branch=main)](https://github.com/kiranreddi/kvips/actions/workflows/apb-verilator-regressions.yml)
+[![AHB Verilator Regressions](https://github.com/kiranreddi/kvips/actions/workflows/ahb-verilator-regressions.yml/badge.svg?branch=main)](https://github.com/kiranreddi/kvips/actions/workflows/ahb-verilator-regressions.yml)
+[![AXI4 Verilator Regressions](https://github.com/kiranreddi/kvips/actions/workflows/axi4-verilator-regressions.yml/badge.svg?branch=main)](https://github.com/kiranreddi/kvips/actions/workflows/axi4-verilator-regressions.yml)
+[![Verilator Lint](https://github.com/kiranreddi/kvips/actions/workflows/verilator-lint.yml/badge.svg?branch=main)](https://github.com/kiranreddi/kvips/actions/workflows/verilator-lint.yml)
+[![Pages](https://github.com/kiranreddi/kvips/actions/workflows/pages.yml/badge.svg?branch=main)](https://github.com/kiranreddi/kvips/actions/workflows/pages.yml)
 
 **Professional, vendor-neutral verification IP suite for AMBA protocols and high-speed interfaces**
 

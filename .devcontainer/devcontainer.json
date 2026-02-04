@@ -1,0 +1,21 @@
+{
+  "name": "kvips-codespaces",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "bash"
+      },
+      "extensions": [
+        "ms-vscode.cpptools",
+        "ms-vscode.makefile-tools"
+      ]
+    }
+  },
+  "remoteEnv": {
+    "VERILATOR_ROOT": "/usr/local/share/verilator"
+  },
+  "postCreateCommand": "verilator --version"
+}
