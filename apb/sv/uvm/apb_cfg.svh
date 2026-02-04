@@ -10,12 +10,8 @@ class apb_cfg #(
   int NSEL   = 1
 ) extends uvm_object;
 
-`ifdef VERILATOR
-  virtual apb_if #(ADDR_W, DATA_W, NSEL) vif;
-`else
   typedef virtual apb_if #(ADDR_W, DATA_W, NSEL) apb_vif_t;
   apb_vif_t vif;
-`endif
 
   apb_protocol_e protocol = APB_PROTOCOL_APB4;
   int unsigned   sel_index = 0;

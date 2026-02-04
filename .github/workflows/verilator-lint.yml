@@ -26,18 +26,28 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Run Verilator (Docker)
+      - name: Setup Verilator
         run: |
-          docker run --rm -v "$PWD":/work -w /work verilator/verilator:v5.026 verilator --version
+          sudo apt-get update
+          sudo apt-get install -y ccache make autoconf g++ flex bison git perl help2man libfl-dev
+          git clone https://github.com/verilator/verilator.git /tmp/verilator
+          cd /tmp/verilator
+          git checkout ad85d8981
+          autoconf
+          ./configure
+          make -j$(nproc)
+          sudo make install
+          verilator --version
 
+      - name: Run Verilator Lint
+        run: |
           # Verilator does not fully support UVM; lint a portable subset (types/IF/assertions).
-          docker run --rm -v "$PWD":/work -w /work verilator/verilator:v5.026 \
-            verilator --lint-only --sv --language 1800-2017 -Wall -Wno-fatal -Wno-DECLFILENAME --bbox-unsup -DVERILATOR \
-              --top-module axi4_lint_top \
-              -Icommon/sv \
-              -Iaxi4/sv/pkg \
-              -Iaxi4/sv/if \
-              common/sv/lint/axi4_lint_top.sv || true
+          verilator --lint-only --sv --language 1800-2017 -Wall -Wno-fatal -Wno-DECLFILENAME --bbox-unsup -DVERILATOR \
+            --top-module axi4_lint_top \
+            -Icommon/sv \
+            -Iaxi4/sv/pkg \
+            -Iaxi4/sv/if \
+            common/sv/lint/axi4_lint_top.sv || true
 
       - name: Lint Summary
         run: echo "✅ Verilator lint completed (non-blocking)"
