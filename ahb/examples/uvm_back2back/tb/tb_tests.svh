@@ -22,7 +22,9 @@ class ahb_b2b_base_test extends uvm_test;
   localparam int HRESP_W = 2;
 
 `ifdef VERILATOR
+  /* verilator lint_off UNSUPPORTED */
   virtual ahb_if #(.ADDR_W(ADDR_W), .DATA_W(DATA_W), .HRESP_W(HRESP_W)) vif;
+  /* verilator lint_on UNSUPPORTED */
 `else
   typedef virtual ahb_if #(.ADDR_W(ADDR_W), .DATA_W(DATA_W), .HRESP_W(HRESP_W)) ahb_vif_t;
   ahb_vif_t vif;
