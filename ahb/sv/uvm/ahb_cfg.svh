@@ -12,14 +12,12 @@ class ahb_cfg #(
 ) extends uvm_object;
 
 `ifdef VERILATOR
-  /* verilator lint_off UNSUPPORTED */
   virtual ahb_if #(
     .ADDR_W(ADDR_W),
     .DATA_W(DATA_W),
     .HAS_HMASTLOCK(HAS_HMASTLOCK),
     .HRESP_W(HRESP_W)
   ) vif;
-  /* verilator lint_on UNSUPPORTED */
 `else
   typedef virtual ahb_if #(
     .ADDR_W(ADDR_W),

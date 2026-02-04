@@ -13,9 +13,7 @@ class axi4_agent_cfg #(
 ) extends uvm_object;
 
 `ifdef VERILATOR
-  /* verilator lint_off UNSUPPORTED */
   virtual axi4_if #(ADDR_W, DATA_W, ID_W, USER_W) vif;
-  /* verilator lint_on UNSUPPORTED */
 `else
   typedef virtual axi4_if #(ADDR_W, DATA_W, ID_W, USER_W) axi4_vif_t;
   axi4_vif_t vif;
