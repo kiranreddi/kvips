@@ -2,8 +2,8 @@
 set -euo pipefail
 
 HERE="$(cd "$(dirname "$0")" && pwd)"
-ROOT="$(cd "${HERE}/../../../../.." && pwd)"
-OUT="${ROOT}/kvips/apb/examples/uvm_back2back/sim/out/xcelium"
+ROOT="$(cd "${HERE}/../../../.." && pwd)"
+OUT="${ROOT}/apb/examples/uvm_back2back/sim/out/xcelium"
 
 TESTS_FILE="${HERE}/tests_questa.list"
 if [[ ! -f "${TESTS_FILE}" ]]; then
@@ -18,4 +18,3 @@ while IFS= read -r t || [[ -n "${t}" ]]; do
 done <"${TESTS_FILE}"
 
 echo "DONE. See ${OUT}/run.log"
-

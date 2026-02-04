@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ROOT="$(cd "$(dirname "$0")/../../../../.." && pwd)"
-SIM_DIR="${ROOT}/kvips/axi4/examples/uvm_back2back/sim"
-OUT_DIR="${ROOT}/kvips/axi4/examples/uvm_back2back/sim/out/fsdbreport"
+ROOT="$(cd "$(dirname "$0")/../../../.." && pwd)"
+SIM_DIR="${ROOT}/axi4/examples/uvm_back2back/sim"
+OUT_DIR="${ROOT}/axi4/examples/uvm_back2back/sim/out/fsdbreport"
 mkdir -p "${OUT_DIR}"
 
 usage() {

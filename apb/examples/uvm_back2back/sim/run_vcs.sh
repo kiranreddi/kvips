@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ROOT="$(cd "$(dirname "$0")/../../../../.." && pwd)"
-OUT="${ROOT}/kvips/apb/examples/uvm_back2back/sim/out/vcs"
+ROOT="$(cd "$(dirname "$0")/../../../.." && pwd)"
+OUT="${ROOT}/apb/examples/uvm_back2back/sim/out/vcs"
 mkdir -p "${OUT}"
 
-ORIG_FILELIST="${ROOT}/kvips/apb/examples/uvm_back2back/sim/filelist.f"
+ORIG_FILELIST="${ROOT}/apb/examples/uvm_back2back/sim/filelist.f"
 ABS_FILELIST="${OUT}/filelist.abs.f"
 
 make_abs_filelist() {
@@ -88,4 +88,3 @@ done
 [[ "$HAVE_VERBOSITY" -eq 0 ]] && EXTRA_ARGS+=("+UVM_VERBOSITY=UVM_LOW")
 
 ./simv "${EXTRA_ARGS[@]}" | tee "${OUT}/run.log"
-
