@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ROOT="$(cd "$(dirname "$0")/../../../../.." && pwd)"
-OUT="${ROOT}/kvips/ahb/examples/uvm_back2back/sim/out/vcs"
+ROOT="$(cd "$(dirname "$0")/../../../.." && pwd)"
+OUT="${ROOT}/ahb/examples/uvm_back2back/sim/out/vcs"
 mkdir -p "${OUT}"
 
-ORIG_FILELIST="${ROOT}/kvips/ahb/examples/uvm_back2back/sim/filelist.f"
+ORIG_FILELIST="${ROOT}/ahb/examples/uvm_back2back/sim/filelist.f"
 ABS_FILELIST="${OUT}/filelist.abs.f"
 
 make_abs_filelist() {
@@ -65,7 +65,8 @@ rm -rf simv* csrc ucli.key *.log *.vdb 2>/dev/null || true
 make_abs_filelist "${ORIG_FILELIST}" "${ABS_FILELIST}"
 
 vcs -full64 -sverilog -timescale=1ns/1ps \
-  -l compile.log \
+  -ntb_opts uvm-1.2 \
+  -l "${OUT}/compile.log" \
   -f "${ABS_FILELIST}" \
   -o simv
 
@@ -79,5 +80,4 @@ done
 [[ "$HAVE_TESTNAME" -eq 0 ]] && EXTRA_ARGS+=("+UVM_TESTNAME=ahb_smoke_test")
 [[ "$HAVE_VERBOSITY" -eq 0 ]] && EXTRA_ARGS+=("+UVM_VERBOSITY=UVM_LOW")
 
-./simv -l run.log "${EXTRA_ARGS[@]}"
-
+./simv -l "${OUT}/run.log" "${EXTRA_ARGS[@]}"

@@ -33,8 +33,8 @@ interface ahb_if #(
   logic [2:0]        HSIZE;
   logic [2:0]        HBURST;
   logic [3:0]        HPROT;
-  logic              HMASTLOCK;
-  logic [HMASTER_W-1:0] HMASTER;
+  logic              HMASTLOCK = 1'b0;
+  logic [HMASTER_W-1:0] HMASTER = '0;
 
   // Optional decode select (commonly provided by interconnect)
   logic              HSEL;
@@ -82,24 +82,7 @@ interface ahb_if #(
     if (!HAS_HREADYOUT) begin : g_no_hreadyout
       always_comb HREADYOUT = 1'b1;
     end
-    if (!HAS_HMASTLOCK) begin : g_no_hmastlock
-    `ifdef VERILATOR
-      /* verilator lint_off MULTIDRIVEN */
-    `endif
-      always_comb HMASTLOCK = 1'b0;
-    `ifdef VERILATOR
-      /* verilator lint_on MULTIDRIVEN */
-    `endif
-    end
-    if (!HAS_HMASTER) begin : g_no_hmaster
-    `ifdef VERILATOR
-      /* verilator lint_off MULTIDRIVEN */
-    `endif
-      always_comb HMASTER = '0;
-    `ifdef VERILATOR
-      /* verilator lint_on MULTIDRIVEN */
-    `endif
-    end
+    // HMASTLOCK/HMASTER default to 0 via declaration; drivers may override when enabled.
   endgenerate
 
   // Optional assertions (bound into the interface for portability)

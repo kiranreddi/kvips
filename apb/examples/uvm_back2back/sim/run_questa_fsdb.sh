@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ROOT="$(cd "$(dirname "$0")/../../../../.." && pwd)"
-OUT="${ROOT}/kvips/apb/examples/uvm_back2back/sim/out/questa_fsdb"
+ROOT="$(cd "$(dirname "$0")/../../../.." && pwd)"
+OUT="${ROOT}/apb/examples/uvm_back2back/sim/out/questa_fsdb"
 mkdir -p "${OUT}"
 
-ORIG_FILELIST="${ROOT}/kvips/apb/examples/uvm_back2back/sim/filelist.f"
+ORIG_FILELIST="${ROOT}/apb/examples/uvm_back2back/sim/filelist.f"
 ABS_FILELIST="${OUT}/filelist.abs.f"
 
 make_abs_filelist() {
@@ -113,4 +113,3 @@ vsim -c -uvmcontrol=all tb_top \
   -pli "${NOVAS_FLI}" \
   -do "run -all; quit -f" \
   "${EXTRA_ARGS[@]}" | tee "${OUT}/run.log"
-

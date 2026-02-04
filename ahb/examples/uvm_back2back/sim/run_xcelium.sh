@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ROOT="$(cd "$(dirname "$0")/../../../../.." && pwd)"
-OUT="${ROOT}/kvips/ahb/examples/uvm_back2back/sim/out/xcelium"
+ROOT="$(cd "$(dirname "$0")/../../../.." && pwd)"
+OUT="${ROOT}/ahb/examples/uvm_back2back/sim/out/xcelium"
 mkdir -p "${OUT}"
 
-ORIG_FILELIST="${ROOT}/kvips/ahb/examples/uvm_back2back/sim/filelist.f"
+ORIG_FILELIST="${ROOT}/ahb/examples/uvm_back2back/sim/filelist.f"
 ABS_FILELIST="${OUT}/filelist.abs.f"
 
 make_abs_filelist() {
@@ -77,4 +77,3 @@ xrun -64bit -sv -timescale 1ns/1ps \
   -f "${ABS_FILELIST}" \
   -l run.log \
   "${EXTRA_ARGS[@]}"
-

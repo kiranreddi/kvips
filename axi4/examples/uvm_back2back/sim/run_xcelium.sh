@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ROOT="$(cd "$(dirname "$0")/../../../../.." && pwd)"
-OUT="${ROOT}/kvips/axi4/examples/uvm_back2back/sim/out/xcelium"
+ROOT="$(cd "$(dirname "$0")/../../../.." && pwd)"
+OUT="${ROOT}/axi4/examples/uvm_back2back/sim/out/xcelium"
 mkdir -p "${OUT}"
 
-ORIG_FILELIST="${ROOT}/kvips/axi4/examples/uvm_back2back/sim/filelist.f"
+ORIG_FILELIST="${ROOT}/axi4/examples/uvm_back2back/sim/filelist.f"
 ABS_FILELIST="${OUT}/filelist.abs.f"
 
 make_abs_filelist() {

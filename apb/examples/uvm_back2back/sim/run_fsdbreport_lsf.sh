@@ -2,7 +2,7 @@
 set -euo pipefail
 
 HERE="$(cd "$(dirname "$0")" && pwd)"
-ROOT="$(cd "${HERE}/../../../../.." && pwd)"
+ROOT="$(cd "${HERE}/../../../.." && pwd)"
 
 FSDB="${1:-}"
 shift || true
@@ -44,4 +44,3 @@ OUT_TXT="${OUT_DIR}/fsdbreport_$(date +%Y%m%d_%H%M%S).txt"
 echo "INFO: fsdbreport ${FSDB} -> ${OUT_TXT}"
 fsdbreport "${FSDB}" -f "${TMP_CFG}" -o "${OUT_TXT}" "$@"
 echo "DONE: ${OUT_TXT}"
-
