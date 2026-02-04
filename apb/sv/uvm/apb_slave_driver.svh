@@ -14,13 +14,17 @@ class apb_slave_driver #(
   localparam string RID = "APB_SDRV";
 
 `ifdef VERILATOR
-  typedef virtual apb_if #(ADDR_W, DATA_W, NSEL) apb_vif_t;
+  typedef apb_if #(ADDR_W, DATA_W, NSEL) apb_vif_t;
 `else
   typedef virtual apb_if #(ADDR_W, DATA_W, NSEL) apb_vif_t;
 `endif
 
   apb_cfg#(ADDR_W, DATA_W, NSEL) cfg;
+`ifdef VERILATOR
+  virtual apb_vif_t vif;
+`else
   apb_vif_t vif;
+`endif
 
 `ifdef VERILATOR
   `define APB_S_CB vif

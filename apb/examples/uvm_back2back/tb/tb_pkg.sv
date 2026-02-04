@@ -31,11 +31,15 @@ package tb_pkg;
     localparam int NSEL   = 1;
 
   `ifdef VERILATOR
-    typedef virtual apb_if #(ADDR_W, DATA_W, NSEL) apb_vif_t;
+    typedef apb_if #(ADDR_W, DATA_W, NSEL) apb_vif_t;
   `else
     typedef virtual apb_if #(ADDR_W, DATA_W, NSEL) apb_vif_t;
   `endif
+  `ifdef VERILATOR
+    virtual apb_vif_t vif;
+  `else
     apb_vif_t vif;
+  `endif
 
     apb_env_cfg#(ADDR_W, DATA_W, NSEL) env_cfg;
     apb_env#(ADDR_W, DATA_W, NSEL)     env;

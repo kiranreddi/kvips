@@ -14,7 +14,7 @@ class ahb_monitor #(
   localparam string RID = "AHB_MON";
 
 `ifdef VERILATOR
-  typedef virtual ahb_if #(
+  typedef ahb_if #(
     .ADDR_W(ADDR_W),
     .DATA_W(DATA_W),
     .HAS_HMASTLOCK(HAS_HMASTLOCK),
@@ -30,7 +30,11 @@ class ahb_monitor #(
 `endif
 
   ahb_cfg#(ADDR_W, DATA_W, HRESP_W, HAS_HMASTLOCK) cfg;
-  ahb_vif_t                         vif;
+`ifdef VERILATOR
+  virtual ahb_vif_t                   vif;
+`else
+  ahb_vif_t                           vif;
+`endif
 
   uvm_analysis_port #(ahb_item#(ADDR_W, DATA_W, HRESP_W)) ap;
 

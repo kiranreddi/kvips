@@ -16,13 +16,17 @@ class apb_monitor #(
   typedef apb_item#(ADDR_W, DATA_W) item_t;
 
 `ifdef VERILATOR
-  typedef virtual apb_if #(ADDR_W, DATA_W, NSEL) apb_vif_t;
+  typedef apb_if #(ADDR_W, DATA_W, NSEL) apb_vif_t;
 `else
   typedef virtual apb_if #(ADDR_W, DATA_W, NSEL) apb_vif_t;
 `endif
 
   apb_cfg#(ADDR_W, DATA_W, NSEL) cfg;
+`ifdef VERILATOR
+  virtual apb_vif_t vif;
+`else
   apb_vif_t vif;
+`endif
 
   uvm_analysis_port #(item_t) ap;
 
