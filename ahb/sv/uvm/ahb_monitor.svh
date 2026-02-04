@@ -14,7 +14,7 @@ class ahb_monitor #(
   localparam string RID = "AHB_MON";
 
 `ifdef VERILATOR
-  typedef virtual interface ahb_if #(
+  typedef virtual ahb_if #(
     .ADDR_W(ADDR_W),
     .DATA_W(DATA_W),
     .HAS_HMASTLOCK(HAS_HMASTLOCK),

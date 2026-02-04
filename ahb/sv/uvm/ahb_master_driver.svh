@@ -14,7 +14,7 @@ class ahb_master_driver #(
   localparam string RID = "AHB_MDRV";
 
 `ifdef VERILATOR
-  typedef virtual interface ahb_if #(
+  typedef virtual ahb_if #(
     .ADDR_W(ADDR_W),
     .DATA_W(DATA_W),
     .HAS_HMASTLOCK(HAS_HMASTLOCK),

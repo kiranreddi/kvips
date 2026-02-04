@@ -14,7 +14,7 @@ class apb_master_driver #(
   localparam string RID = "APB_MDRV";
 
 `ifdef VERILATOR
-  typedef virtual interface apb_if #(ADDR_W, DATA_W, NSEL) apb_vif_t;
+  typedef virtual apb_if #(ADDR_W, DATA_W, NSEL) apb_vif_t;
 `else
   typedef virtual apb_if #(ADDR_W, DATA_W, NSEL) apb_vif_t;
 `endif

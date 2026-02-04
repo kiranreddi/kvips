@@ -32,7 +32,7 @@ package tb_pkg;
     localparam int USER_W = 1;
 
   `ifdef VERILATOR
-    typedef virtual interface axi4_if #(ADDR_W, DATA_W, ID_W, USER_W) axi4_vif_t;
+    typedef virtual axi4_if #(ADDR_W, DATA_W, ID_W, USER_W) axi4_vif_t;
   `else
     typedef virtual axi4_if #(ADDR_W, DATA_W, ID_W, USER_W) axi4_vif_t;
   `endif

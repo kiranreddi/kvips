@@ -16,7 +16,7 @@ class axi4_monitor #(
   localparam int unsigned STRB_W = (DATA_W/8);
 
 `ifdef VERILATOR
-  typedef virtual interface axi4_if #(ADDR_W, DATA_W, ID_W, USER_W) axi4_vif_t;
+  typedef virtual axi4_if #(ADDR_W, DATA_W, ID_W, USER_W) axi4_vif_t;
 `else
   typedef virtual axi4_if #(ADDR_W, DATA_W, ID_W, USER_W) axi4_vif_t;
 `endif
