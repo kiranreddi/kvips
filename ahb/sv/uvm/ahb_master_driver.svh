@@ -109,14 +109,14 @@ class ahb_master_driver #(
   endfunction
 
   task drive_idle();
-    `AHB_M_CB.HSEL    <= 1'b1;
+    vif.HSEL          <= 1'b1;
     `AHB_M_CB.HTRANS  <= AHB_TRANS_IDLE;
     `AHB_M_CB.HADDR   <= '0;
     `AHB_M_CB.HWRITE  <= 1'b0;
     `AHB_M_CB.HSIZE   <= AHB_SIZE_32;
     `AHB_M_CB.HBURST  <= AHB_BURST_SINGLE;
     `AHB_M_CB.HPROT   <= 4'h0;
-    `AHB_M_CB.HWDATA  <= '0;
+    vif.HWDATA        <= '0;
     // Optional signals default inside the interface when disabled.
     if (HAS_HMASTLOCK) `AHB_M_CB.HMASTLOCK <= 1'b0;
   endtask
@@ -212,7 +212,7 @@ class ahb_master_driver #(
 
         // Drive HWDATA for the beat in the data phase now (accepted previously).
         if (data_valid && data_write && (data_beat < cur_item.wdata.size())) begin
-          `AHB_M_CB.HWDATA <= cur_item.wdata[data_beat];
+          vif.HWDATA <= cur_item.wdata[data_beat];
         end
 
         // Complete previous beat (data phase) if one is pending.
@@ -230,7 +230,7 @@ class ahb_master_driver #(
         // Issue next control beat (address/control phase) if any.
         if (cur_beat < cur_beats) begin
           next_a = next_addr(cur_item.addr, cur_beat, cur_item.size, cur_item.burst);
-          `AHB_M_CB.HSEL   <= 1'b1;
+          vif.HSEL         <= 1'b1;
           `AHB_M_CB.HADDR  <= next_a;
           `AHB_M_CB.HWRITE <= cur_item.write;
           `AHB_M_CB.HSIZE  <= cur_item.size;
