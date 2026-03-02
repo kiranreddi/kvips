@@ -547,7 +547,8 @@ class axi4_master_driver #(
       tr.rresp[i] = axi4_resp_e'(vif.rresp);
       if ((i == beats-1) && !vif.rlast) `uvm_error(RID, "Expected RLAST on final beat")
       if ((i != beats-1) && vif.rlast)  `uvm_error(RID, "Unexpected RLAST before final beat")
-      @(posedge vif.aclk);
+      // NOTE: Do NOT add extra @(posedge) here — the while(1) loop above
+      // already advances to the next posedge for beat capture.
     end
     @(negedge vif.aclk);
     vif.rready <= 1'b0;

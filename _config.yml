@@ -61,10 +61,16 @@ exclude:
   - .gitignore
   - LICENSE
   - axi4
+  - apb
+  - ahb
   - common
-  - docs
+  - third_party
+  - KVIPS_COMPREHENSIVE_REVIEW.md
+  - QUICK_REFERENCE.md
+  - "*.py"
 
-# Include assets
+# Include assets and docs
 include:
   - _layouts
   - assets
+  - docs

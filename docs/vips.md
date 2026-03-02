@@ -1,7 +1,7 @@
 ---
 layout: default
 title: VIP Catalog
-permalink: /vips/
+permalink: /docs/vips/
 ---
 
 # Verification IP Catalog

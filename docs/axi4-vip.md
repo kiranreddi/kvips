@@ -1,7 +1,7 @@
 ---
 layout: default
 title: AXI4 Verification IP
-permalink: /vips/axi4/
+permalink: /docs/axi4-vip/
 ---
 
 # AXI4 Full Protocol Verification IP

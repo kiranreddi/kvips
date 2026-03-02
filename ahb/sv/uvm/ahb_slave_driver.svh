@@ -197,21 +197,34 @@ class ahb_slave_driver #(
       end
 
       // Ready to complete current beat (if any) and accept next control.
-      vif.HREADYOUT <= 1'b1;
-
       // Complete data phase for ctrl_data (this cycle's handshake completes it).
       if (ctrl_data.valid) begin
         bit err = cfg.addr_in_error_range(ctrl_data.addr);
-        vif.HRESP  <= err ? resp_error() : resp_okay();
-        if (!ctrl_data.write) begin
-          vif.HRDATA <= read_bytes(ctrl_data.addr, ctrl_data.size);
+        if (err) begin
+          // AHB spec two-cycle error response:
+          // Cycle 1: HREADYOUT=0, HRESP=ERROR (stall master)
+          // Cycle 2: HREADYOUT=1, HRESP=ERROR (complete transfer)
+          vif.HREADYOUT <= 1'b0;
+          vif.HRESP     <= resp_error();
+          vif.HRDATA    <= '0;
+          @(`AHB_S_EVT);
+          // Cycle 2 of error response
+          vif.HREADYOUT <= 1'b1;
+          vif.HRESP     <= resp_error();
         end else begin
-          write_bytes(ctrl_data.addr, ctrl_data.size, `AHB_S_CB.HWDATA);
-          vif.HRDATA <= '0;
+          vif.HREADYOUT <= 1'b1;
+          vif.HRESP     <= resp_okay();
+          if (!ctrl_data.write) begin
+            vif.HRDATA <= read_bytes(ctrl_data.addr, ctrl_data.size);
+          end else begin
+            write_bytes(ctrl_data.addr, ctrl_data.size, `AHB_S_CB.HWDATA);
+            vif.HRDATA <= '0;
+          end
         end
       end else begin
-        vif.HRESP  <= resp_okay();
-        vif.HRDATA <= '0;
+        vif.HREADYOUT <= 1'b1;
+        vif.HRESP     <= resp_okay();
+        vif.HRDATA    <= '0;
       end
 
       // Shift pipeline at end of ready cycle:

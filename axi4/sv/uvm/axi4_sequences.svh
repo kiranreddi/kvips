@@ -237,13 +237,15 @@ class axi4_write_burst_seq #(
       axi4_item#(ADDR_W, DATA_W, ID_W, USER_W) tr;
       tr = axi4_item#(ADDR_W, DATA_W, ID_W, USER_W)::type_id::create($sformatf("wr_%0d", t));
       start_item(tr);
-      tr.is_write = 1;
-      tr.id       = id;
-      tr.addr     = start_addr + t*(DATA_W/8);
-      tr.len      = (max_len == 0) ? 0 : $urandom_range(0, max_len);
-      tr.size     = $clog2(DATA_W/8);
-      tr.burst    = AXI4_BURST_INCR;
-      tr.user     = '0;
+      if (!tr.randomize() with {
+        is_write == 1;
+        id       == local::id;
+        addr     == local::start_addr + t*(DATA_W/8);
+        len      inside {[0:local::max_len]};
+        size     == $clog2(DATA_W/8);
+        burst    == AXI4_BURST_INCR;
+        user     == '0;
+      }) `uvm_fatal(get_name(), "Randomize failed for write burst")
       tr.allocate_payload();
       for (int unsigned i = 0; i < tr.num_beats(); i++) begin
         tr.data[i] = {$urandom(), $urandom()};
@@ -279,13 +281,15 @@ class axi4_read_burst_seq #(
       axi4_item#(ADDR_W, DATA_W, ID_W, USER_W) tr;
       tr = axi4_item#(ADDR_W, DATA_W, ID_W, USER_W)::type_id::create($sformatf("rd_%0d", t));
       start_item(tr);
-      tr.is_write = 0;
-      tr.id       = id;
-      tr.addr     = start_addr + t*(DATA_W/8);
-      tr.len      = (max_len == 0) ? 0 : $urandom_range(0, max_len);
-      tr.size     = $clog2(DATA_W/8);
-      tr.burst    = AXI4_BURST_INCR;
-      tr.user     = '0;
+      if (!tr.randomize() with {
+        is_write == 0;
+        id       == local::id;
+        addr     == local::start_addr + t*(DATA_W/8);
+        len      inside {[0:local::max_len]};
+        size     == $clog2(DATA_W/8);
+        burst    == AXI4_BURST_INCR;
+        user     == '0;
+      }) `uvm_fatal(get_name(), "Randomize failed for read burst")
       tr.allocate_payload();
       finish_item(tr);
     end

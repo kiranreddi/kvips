@@ -381,11 +381,16 @@ class axi4_slave_driver #(
         // Clear this ID's reservation after an exclusive write attempt.
         if (is_excl) excl_clear_reservation(cur_aw.id);
 
-        // Exclusive write updates memory only if successful.
+        // Exclusive write: commit memory based on success/legal status.
+        // Per AMBA AXI4 spec: if slave returns OKAY for an exclusive write
+        // (illegal params or failed reservation), it must treat it as a normal
+        // write and commit the data to memory.
         if (cfg.slave_mem_enable) begin
           if (!is_err) begin
             if (is_excl) begin
-              if (excl_success) begin
+              if (excl_success || !excl_legal) begin
+                // excl_success: exclusive succeeded, commit as exclusive.
+                // !excl_legal:  illegal exclusive returned OKAY, commit as normal write.
                 for (int unsigned i = 0; i < buf_data.size(); i++) begin
                   longint unsigned a;
                   a = axi4_beat_addr(longint'(cur_aw.addr), int'(cur_aw.size), int'(cur_aw.len), cur_aw.burst, i);
@@ -393,6 +398,7 @@ class axi4_slave_driver #(
                   mem.write_beat(beat_addr, buf_data[i], buf_strb[i]);
                 end
               end
+              // else: legal exclusive that failed reservation check — data not committed.
             end else begin
               // Non-exclusive writes are written beat-by-beat (already committed).
             end

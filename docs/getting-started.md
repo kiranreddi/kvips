@@ -10,7 +10,7 @@ permalink: /docs/getting-started/
     <h1 class="hero-title">Launch KVIPS in minutes</h1>
     <p class="hero-subtitle">Premium SystemVerilog UVM VIPs with clean APIs, production regressions, and Verilator-ready scripts.</p>
     <div class="hero-buttons">
-      <a href="{{ '/vips/' | relative_url }}" class="btn btn-outline">VIP Catalog</a>
+      <a href="{{ '/docs/vips/' | relative_url }}" class="btn btn-outline">VIP Catalog</a>
       <a href="https://github.com/kiranreddi/kvips" class="btn btn-secondary" target="_blank" rel="noopener">GitHub</a>
     </div>
   </div>
@@ -429,7 +429,7 @@ Now that you have KVIPS running, explore these resources:
 <div class="card">
 <h3>📖 VIP Documentation</h3>
 <ul>
-<li><a href="{{ site.baseurl }}/vips/axi4/">AXI4 User Guide</a></li>
+<li><a href="{{ site.baseurl }}/docs/axi4-vip/">AXI4 User Guide</a></li>
 <li><a href="{{ site.baseurl }}/docs/axi4/api/">API Reference</a></li>
 <li><a href="{{ site.baseurl }}/docs/axi4/integration/">Integration Guide</a></li>
 </ul>

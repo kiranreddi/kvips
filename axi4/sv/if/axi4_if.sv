@@ -8,6 +8,8 @@
 // - Provides role-specific modports for master/slave BFMs and a passive monitor.
 //------------------------------------------------------------------------------
 
+`timescale 1ns/1ps
+
 `ifndef KVIPS_AXI4_IF_SV
 `define KVIPS_AXI4_IF_SV
 

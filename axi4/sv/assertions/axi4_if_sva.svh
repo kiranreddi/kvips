@@ -58,8 +58,9 @@ function automatic bit kvips_crosses_4kb(
   longint unsigned end_b;
   longint unsigned total;
   if (burst == 2'b00) return 1'b0; // FIXED does not advance address
+  if (burst == 2'b10) return 1'b0; // WRAP wraps within container, never crosses 4KB
   total   = kvips_total_bytes(len, size);
-  start_b = longint'(addr);
+  start_b = {1'b0, addr};  // zero-extend to avoid sign issues
   end_b   = (total == 0) ? start_b : (start_b + total - 1);
   return ((start_b >> 12) != (end_b >> 12));
 endfunction
@@ -72,7 +73,7 @@ function automatic bit kvips_wrap_addr_aligned(
   longint unsigned container;
   container = kvips_total_bytes(len, size);
   if (container == 0) return 1'b1;
-  return ((longint'(addr) % container) == 0);
+  return (({1'b0, addr} % container) == 0);
 endfunction
 
 // VALID/payload stability while stalled (VALID && !READY)
