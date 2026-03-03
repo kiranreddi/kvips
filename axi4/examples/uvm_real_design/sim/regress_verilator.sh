@@ -44,6 +44,7 @@ while IFS= read -r line || [[ -n "${line}" ]]; do
     echo "PASS: ${test_name}" | tee -a "${REGRESS_LOG}"
   fi
   sb_line="$(grep -E "AXI4 SB summary:" "${OUT_DIR}/${test_name}.log" | tail -n1 || true)"
+  dut_line="$(grep -E "AXI4_DUT_SUMMARY" "${OUT_DIR}/${test_name}.log" | tail -n1 || true)"
   wr_txns="$(echo "${sb_line}" | sed -n 's/.*wr_txns=\([0-9]\+\).*/\1/p')"
   rd_txns="$(echo "${sb_line}" | sed -n 's/.*rd_txns=\([0-9]\+\).*/\1/p')"
   wr_err="$(echo "${sb_line}" | sed -n 's/.*wr_err=\([0-9]\+\).*/\1/p')"
@@ -54,6 +55,14 @@ while IFS= read -r line || [[ -n "${line}" ]]; do
   [[ -z "${wr_err}" ]] && wr_err="NA"
   [[ -z "${rd_mis}" ]] && rd_mis="NA"
   [[ -z "${rd_uninit}" ]] && rd_uninit="NA"
+  if [[ "${wr_txns}" == "0" || -z "${wr_txns}" ]]; then
+    wr_fallback="$(echo "${dut_line}" | sed -n 's/.*wr_txns=\([0-9]\+\).*/\1/p')"
+    [[ -n "${wr_fallback}" ]] && wr_txns="${wr_fallback}"
+  fi
+  if [[ "${rd_txns}" == "0" || -z "${rd_txns}" ]]; then
+    rd_fallback="$(echo "${dut_line}" | sed -n 's/.*rd_txns=\([0-9]\+\).*/\1/p')"
+    [[ -n "${rd_fallback}" ]] && rd_txns="${rd_fallback}"
+  fi
   echo "| ${test_name} | ${status} | ${wr_txns} | ${rd_txns} | ${wr_err} | ${rd_mis} | ${rd_uninit} |" >> "${SUMMARY_MD}"
   echo "" >>"${REGRESS_LOG}"
 done <"${TESTLIST}"

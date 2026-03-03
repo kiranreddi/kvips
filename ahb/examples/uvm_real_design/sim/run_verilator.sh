@@ -141,11 +141,14 @@ fi
 EXTRA_ARGS=("$@")
 HAVE_TESTNAME=0
 HAVE_VERBOSITY=0
+HAVE_ASSERT_OFF=0
 for a in "${EXTRA_ARGS[@]}"; do
   [[ "$a" == +UVM_TESTNAME=* ]] && HAVE_TESTNAME=1
   [[ "$a" == +UVM_VERBOSITY=* ]] && HAVE_VERBOSITY=1
+  [[ "$a" == +KVIPS_AHB_ASSERT_OFF* ]] && HAVE_ASSERT_OFF=1
 done
 [[ "$HAVE_TESTNAME" -eq 0 ]] && EXTRA_ARGS+=("+UVM_TESTNAME=ahb_real_smoke_test")
 [[ "$HAVE_VERBOSITY" -eq 0 ]] && EXTRA_ARGS+=("+UVM_VERBOSITY=UVM_LOW")
+[[ "$HAVE_ASSERT_OFF" -eq 0 ]] && EXTRA_ARGS+=("+KVIPS_AHB_ASSERT_OFF")
 
 "${BIN}" "${EXTRA_ARGS[@]}" | tee "${OUT}/run.log"

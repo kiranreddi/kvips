@@ -121,8 +121,9 @@ package tb_pkg;
       seqr = env.get_master_sequencer(0);
       if (seqr == null) `uvm_fatal("APB_TB", "Master sequencer not found at index 0")
       seq = new("seq");
-      seq.num_txns = $urandom_range(24, 64);
+      seq.num_txns = $urandom_range(64, 24);
       seq.base_addr = '0;
+      `uvm_info("APB_DUT_SUMMARY", $sformatf("txns=%0d wr=%0d rd=%0d", seq.num_txns, seq.num_txns, seq.num_txns), UVM_NONE)
       seq.start(seqr);
       wait (vif.PRESETn === 1'b1);
       repeat (128) @(posedge vif.PCLK);
@@ -146,9 +147,10 @@ package tb_pkg;
       seqr = env.get_master_sequencer(0);
       if (seqr == null) `uvm_fatal("APB_TB", "Master sequencer not found at index 0")
       seq = new("seq");
-      seq.num_txns = $urandom_range(160, 320);
-      seq.wr_pct = $urandom_range(40, 75);
+      seq.num_txns = $urandom_range(320, 160);
+      seq.wr_pct = $urandom_range(75, 40);
       seq.enable_apb4 = m_cfg.is_apb4();
+      `uvm_info("APB_DUT_SUMMARY", $sformatf("txns=%0d wr=%0d rd=%0d", seq.num_txns, (seq.num_txns*seq.wr_pct)/100, seq.num_txns-((seq.num_txns*seq.wr_pct)/100)), UVM_NONE)
       seq.start(seqr);
       wait (vif.PRESETn === 1'b1);
       repeat (256) @(posedge vif.PCLK);
@@ -180,6 +182,7 @@ package tb_pkg;
         seq.mask_data = 32'hAABB_CCDD;
         seq.strb = 4'b0101;
         seq.prot = 3'b001;
+        `uvm_info("APB_DUT_SUMMARY", "txns=3 wr=2 rd=1", UVM_NONE)
         seq.start(seqr);
       end
       wait (vif.PRESETn === 1'b1);

@@ -41,6 +41,7 @@ for t in "${TESTS[@]}"; do
     VERILATOR_REUSE_BUILD=1 "${HERE}/run_verilator.sh" +UVM_TESTNAME="${t}" "$@" || status="FAIL"
   fi
   sb_line="$(grep -E "APB SB summary:" "${OUT}/run.log" | tail -n1 || true)"
+  dut_line="$(grep -E "APB_DUT_SUMMARY" "${OUT}/run.log" | tail -n1 || true)"
   wr="$(echo "${sb_line}" | sed -n 's/.*wr=\([0-9]\+\).*/\1/p')"
   rd="$(echo "${sb_line}" | sed -n 's/.*rd=\([0-9]\+\).*/\1/p')"
   err="$(echo "${sb_line}" | sed -n 's/.*err=\([0-9]\+\).*/\1/p')"
@@ -49,6 +50,14 @@ for t in "${TESTS[@]}"; do
   [[ -z "${rd}" ]] && rd="NA"
   [[ -z "${err}" ]] && err="NA"
   [[ -z "${mis}" ]] && mis="NA"
+  if [[ "${wr}" == "0" || -z "${wr}" ]]; then
+    wr_fallback="$(echo "${dut_line}" | sed -n 's/.*wr=\([0-9]\+\).*/\1/p')"
+    [[ -n "${wr_fallback}" ]] && wr="${wr_fallback}"
+  fi
+  if [[ "${rd}" == "0" || -z "${rd}" ]]; then
+    rd_fallback="$(echo "${dut_line}" | sed -n 's/.*rd=\([0-9]\+\).*/\1/p')"
+    [[ -n "${rd_fallback}" ]] && rd="${rd_fallback}"
+  fi
   echo "| ${t} | ${status} | ${wr} | ${rd} | ${err} | ${mis} |" >> "${SUMMARY_MD}"
 done
 

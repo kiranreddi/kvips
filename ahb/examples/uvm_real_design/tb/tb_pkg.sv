@@ -119,7 +119,8 @@ package tb_pkg;
       seqr = env.get_master_sequencer(0);
       if (seqr == null) `uvm_fatal("AHB_TB", "Master sequencer not found at index 0")
       seq = new("seq");
-      seq.num_txns = $urandom_range(24, 64);
+      seq.num_txns = $urandom_range(64, 24);
+      `uvm_info("AHB_DUT_SUMMARY", $sformatf("txns=%0d", seq.num_txns), UVM_NONE)
       seq.start(seqr);
       wait (vif.HRESETn === 1'b1);
       repeat (128) @(posedge vif.HCLK);
@@ -137,7 +138,8 @@ package tb_pkg;
       seqr = env.get_master_sequencer(0);
       if (seqr == null) `uvm_fatal("AHB_TB", "Master sequencer not found at index 0")
       seq = new("seq");
-      seq.num_txns = $urandom_range(96, 192);
+      seq.num_txns = $urandom_range(192, 96);
+      `uvm_info("AHB_DUT_SUMMARY", $sformatf("txns=%0d", seq.num_txns), UVM_NONE)
       seq.start(seqr);
       wait (vif.HRESETn === 1'b1);
       repeat (256) @(posedge vif.HCLK);
@@ -155,7 +157,8 @@ package tb_pkg;
       seqr = env.get_master_sequencer(0);
       if (seqr == null) `uvm_fatal("AHB_TB", "Master sequencer not found at index 0")
       seq = new("seq");
-      seq.num_txns = $urandom_range(96, 192);
+      seq.num_txns = $urandom_range(192, 96);
+      `uvm_info("AHB_DUT_SUMMARY", $sformatf("txns=%0d", seq.num_txns), UVM_NONE)
       seq.start(seqr);
       wait (vif.HRESETn === 1'b1);
       repeat (256) @(posedge vif.HCLK);
