@@ -22,7 +22,7 @@ module tb_top;
 
   initial begin
     PCLK = 0;
-    forever #5ns PCLK = ~PCLK;
+    forever #5 PCLK = ~PCLK;
   end
 
   initial begin
