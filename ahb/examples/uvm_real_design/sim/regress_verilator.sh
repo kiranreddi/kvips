@@ -22,15 +22,38 @@ if [[ "${#TESTS[@]}" -eq 0 ]]; then
   exit 2
 fi
 
+SUMMARY_MD="${OUT}/summary.md"
+{
+  echo "# AHB Real-Design Verilator Summary"
+  echo ""
+  echo "| Test | Status | wr | rd | err | mismatch | stall_cycles |"
+  echo "|---|---:|---:|---:|---:|---:|---:|"
+} >"${SUMMARY_MD}"
+
 FIRST=1
 for t in "${TESTS[@]}"; do
   echo "==== ${t} ===="
+  status="PASS"
   if [[ "${FIRST}" -eq 1 ]]; then
-    VERILATOR_REUSE_BUILD=0 "${HERE}/run_verilator.sh" +UVM_TESTNAME="${t}" "$@"
+    VERILATOR_REUSE_BUILD=0 "${HERE}/run_verilator.sh" +UVM_TESTNAME="${t}" "$@" || status="FAIL"
     FIRST=0
   else
-    VERILATOR_REUSE_BUILD=1 "${HERE}/run_verilator.sh" +UVM_TESTNAME="${t}" "$@"
+    VERILATOR_REUSE_BUILD=1 "${HERE}/run_verilator.sh" +UVM_TESTNAME="${t}" "$@" || status="FAIL"
   fi
+  sb_line="$(grep -E "AHB SB summary:" "${OUT}/run.log" | tail -n1 || true)"
+  log_line="$(grep -E "AHB log summary:" "${OUT}/run.log" | tail -n1 || true)"
+  wr="$(echo "${sb_line}" | sed -n 's/.*wr=\([0-9]\+\).*/\1/p')"
+  rd="$(echo "${sb_line}" | sed -n 's/.*rd=\([0-9]\+\).*/\1/p')"
+  err="$(echo "${sb_line}" | sed -n 's/.*err=\([0-9]\+\).*/\1/p')"
+  mis="$(echo "${sb_line}" | sed -n 's/.*mismatch=\([0-9]\+\).*/\1/p')"
+  stalls="$(echo "${log_line}" | sed -n 's/.*stall_cycles=\([0-9]\+\).*/\1/p')"
+  [[ -z "${wr}" ]] && wr="NA"
+  [[ -z "${rd}" ]] && rd="NA"
+  [[ -z "${err}" ]] && err="NA"
+  [[ -z "${mis}" ]] && mis="NA"
+  [[ -z "${stalls}" ]] && stalls="NA"
+  echo "| ${t} | ${status} | ${wr} | ${rd} | ${err} | ${mis} | ${stalls} |" >> "${SUMMARY_MD}"
 done
 
 echo "DONE. See ${OUT}/run.log"
+echo "Summary: ${SUMMARY_MD}"

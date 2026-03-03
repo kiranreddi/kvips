@@ -50,6 +50,17 @@ package tb_pkg;
       uvm_root::get().set_report_severity_id_action(UVM_WARNING, "OBJTN_CLEAR", UVM_NO_ACTION);
       uvm_root::get().set_report_id_action("OBJTN_CLEAR", UVM_NO_ACTION);
       begin
+        uvm_phase run_phase;
+        uvm_objection run_obj;
+        run_phase = uvm_run_phase::get();
+        run_obj = (run_phase == null) ? null : run_phase.get_objection();
+        if (run_obj != null) begin
+          run_obj.set_report_severity_id_action(UVM_WARNING, "OBJTN_CLEAR", UVM_NO_ACTION);
+          run_obj.set_report_id_action("OBJTN_CLEAR", UVM_NO_ACTION);
+          run_obj.set_drain_time(this, 20_000ns);
+        end
+      end
+      begin
         ahb_objtn_clear_catcher c;
         c = new();
         uvm_report_cb::add(null, c);
@@ -106,9 +117,12 @@ package tb_pkg;
       ahb_smoke_seq#(ADDR_W, DATA_W, HRESP_W) seq;
       phase.raise_objection(this);
       seqr = env.get_master_sequencer(0);
+      if (seqr == null) `uvm_fatal("AHB_TB", "Master sequencer not found at index 0")
       seq = new("seq");
-      seq.num_txns = 20;
+      seq.num_txns = $urandom_range(24, 64);
       seq.start(seqr);
+      wait (vif.HRESETn === 1'b1);
+      repeat (128) @(posedge vif.HCLK);
       phase.drop_objection(this);
     endtask
   endclass
@@ -121,9 +135,12 @@ package tb_pkg;
       ahb_incr_burst_seq#(ADDR_W, DATA_W, HRESP_W) seq;
       phase.raise_objection(this);
       seqr = env.get_master_sequencer(0);
+      if (seqr == null) `uvm_fatal("AHB_TB", "Master sequencer not found at index 0")
       seq = new("seq");
-      seq.num_txns = 120;
+      seq.num_txns = $urandom_range(96, 192);
       seq.start(seqr);
+      wait (vif.HRESETn === 1'b1);
+      repeat (256) @(posedge vif.HCLK);
       phase.drop_objection(this);
     endtask
   endclass
@@ -136,9 +153,12 @@ package tb_pkg;
       ahb_wrap_burst_seq#(ADDR_W, DATA_W, HRESP_W) seq;
       phase.raise_objection(this);
       seqr = env.get_master_sequencer(0);
+      if (seqr == null) `uvm_fatal("AHB_TB", "Master sequencer not found at index 0")
       seq = new("seq");
-      seq.num_txns = 120;
+      seq.num_txns = $urandom_range(96, 192);
       seq.start(seqr);
+      wait (vif.HRESETn === 1'b1);
+      repeat (256) @(posedge vif.HCLK);
       phase.drop_objection(this);
     endtask
   endclass
