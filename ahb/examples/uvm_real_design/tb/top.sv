@@ -13,13 +13,9 @@ module top;
   end
 
   initial begin
-`ifdef VERILATOR
-    HRESETn = 1'b1;
-`else
     HRESETn = 1'b0;
     repeat (10) @(posedge HCLK);
     HRESETn = 1'b1;
-`endif
   end
 
   localparam int ADDR_W  = 16;
@@ -50,23 +46,19 @@ module top;
   end
 
 `ifdef VERILATOR
-  // Keep run phase alive long enough under Verilator UVM/no-DPI flow.
+  // Keep simulation running long enough under Verilator UVM/no-DPI flow.
   initial begin
-    uvm_phase run_phase_h;
-    uvm_objection run_obj_h;
-    run_phase_h = uvm_run_phase::get();
-    run_obj_h = (run_phase_h == null) ? null : run_phase_h.get_objection();
-    if (run_obj_h != null) begin
-      run_obj_h.raise_objection(null, "kvips_verilator_runtime_hold");
-      wait (HRESETn === 1'b1);
-      repeat (2000) @(posedge HCLK);
-      run_obj_h.drop_objection(null, "kvips_verilator_runtime_hold");
-    end
+    wait (HRESETn === 1'b1);
+    repeat (5000) @(posedge HCLK);
+    $finish;
   end
 `endif
 
   initial begin
     uvm_config_db#(virtual interface ahb_if #(.ADDR_W(ADDR_W), .DATA_W(DATA_W), .HRESP_W(HRESP_W)))::set(null, "*", "vif", ahb_if0);
+`ifdef VERILATOR
+    uvm_root::get().set_finish_on_completion(1'b0);
+`endif
     run_test();
   end
 endmodule

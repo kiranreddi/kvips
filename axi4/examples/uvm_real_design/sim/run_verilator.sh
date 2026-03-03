@@ -127,6 +127,7 @@ if [[ "${REUSE_BUILD}" != "1" || ! -x "${BIN}" ]]; then
     --top-module top \
     +incdir+"${UVM_HOME}" \
     +define+UVM_NO_DPI \
+    +define+UVM_USE_PROCESS_CONTAINER \
     "${UVM_HOME}/uvm_pkg.sv" \
     -f "${ABS_FILELIST}" \
     -o Vtop 2>&1 | tee "${OUT}/compile.log"

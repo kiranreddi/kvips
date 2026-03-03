@@ -116,6 +116,8 @@ package tb_pkg;
       apb_smoke_rw_seq#(ADDR_W, DATA_W) seq;
       `uvm_info("APB_TB", "apb_real_smoke_test run_phase start", UVM_LOW)
       phase.raise_objection(this);
+      if ((env.agents.size() == 0) || (env.agents[0].m_drv == null) || (env.agents[0].sequencer == null))
+        `uvm_fatal("APB_TB", "Master agent/driver/sequencer not constructed")
       seqr = env.get_master_sequencer(0);
       if (seqr == null) `uvm_fatal("APB_TB", "Master sequencer not found at index 0")
       seq = new("seq");
@@ -139,6 +141,8 @@ package tb_pkg;
       apb_random_stress_seq#(ADDR_W, DATA_W) seq;
       `uvm_info("APB_TB", "apb_real_back_to_back_test run_phase start", UVM_LOW)
       phase.raise_objection(this);
+      if ((env.agents.size() == 0) || (env.agents[0].m_drv == null) || (env.agents[0].sequencer == null))
+        `uvm_fatal("APB_TB", "Master agent/driver/sequencer not constructed")
       seqr = env.get_master_sequencer(0);
       if (seqr == null) `uvm_fatal("APB_TB", "Master sequencer not found at index 0")
       seq = new("seq");
@@ -164,6 +168,8 @@ package tb_pkg;
         phase.drop_objection(this);
         return;
       end
+      if ((env.agents.size() == 0) || (env.agents[0].m_drv == null) || (env.agents[0].sequencer == null))
+        `uvm_fatal("APB_TB", "Master agent/driver/sequencer not constructed")
       seqr = env.get_master_sequencer(0);
       if (seqr == null) `uvm_fatal("APB_TB", "Master sequencer not found at index 0")
       begin
