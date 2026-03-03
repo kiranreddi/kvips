@@ -1,4 +1,4 @@
-.PHONY: help list-tests questa questa-waves vcs xcelium verilator regress-questa regress-vcs regress-xcelium regress-verilator fsdbreport clean
+.PHONY: help list-tests questa questa-waves vcs xcelium verilator regress-questa regress-vcs regress-xcelium regress-verilator verilator-real regress-verilator-real fsdbreport clean
 
 SIM_DIR := uvm_back2back/sim
 SIM_DIR_ABS := $(abspath $(SIM_DIR))
@@ -70,6 +70,12 @@ regress-xcelium:
 
 regress-verilator:
 	@$(SIM_DIR_ABS)/regress_verilator.sh $(PLUSARGS)
+
+verilator-real:
+	@$(abspath uvm_real_design/sim)/run_verilator.sh $(COMMON_PLUSARGS)
+
+regress-verilator-real:
+	@$(abspath uvm_real_design/sim)/regress_verilator.sh $(PLUSARGS)
 
 fsdbreport:
 	@if [ -z "$(FSDB)" ]; then echo "ERROR: FSDB=<path> required"; exit 2; fi
