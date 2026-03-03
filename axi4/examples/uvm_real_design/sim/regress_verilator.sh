@@ -17,14 +17,13 @@ REGRESS_LOG="${OUT_DIR}/regress.log"
 : >"${REGRESS_LOG}"
 SUMMARY_MD="${OUT_DIR}/summary.md"
 {
-  echo "# AXI4 Real-Design Verilator Summary"
+  echo "# AXI4 DUT-Design Verilator Summary"
   echo ""
   echo "| Test | Status | wr_txns | rd_txns | wr_err | rd_mismatch_beats | rd_uninit_warn_beats |"
   echo "|---|---:|---:|---:|---:|---:|---:|"
 } >"${SUMMARY_MD}"
 
-export VERILATOR_REUSE_BUILD=1
-
+FIRST=1
 while IFS= read -r line || [[ -n "${line}" ]]; do
   case "${line}" in
     ""|\#*)
@@ -34,9 +33,15 @@ while IFS= read -r line || [[ -n "${line}" ]]; do
   test_name="$(echo "${line}" | awk '{print $1}')"
   [[ -z "${test_name}" ]] && continue
   echo "=== Running ${test_name} ===" | tee -a "${REGRESS_LOG}"
-  "${SIM_DIR}/run_verilator.sh" +UVM_TESTNAME="${test_name}" | tee "${OUT_DIR}/${test_name}.log"
+  if [[ "${FIRST}" -eq 1 ]]; then
+    VERILATOR_REUSE_BUILD=0 "${SIM_DIR}/run_verilator.sh" +UVM_TESTNAME="${test_name}" | tee "${OUT_DIR}/${test_name}.log"
+    FIRST=0
+  else
+    VERILATOR_REUSE_BUILD=1 "${SIM_DIR}/run_verilator.sh" +UVM_TESTNAME="${test_name}" | tee "${OUT_DIR}/${test_name}.log"
+  fi
+  [[ -f "${OUT_DIR}/run.log" ]] && cp -f "${OUT_DIR}/run.log" "${OUT_DIR}/${test_name}.log"
   status="PASS"
-  if grep -Eq "^UVM_(FATAL|ERROR) @" "${OUT_DIR}/${test_name}.log" || \
+  if grep -Eq "UVM_(FATAL|ERROR)" "${OUT_DIR}/${test_name}.log" || \
       grep -Eq "^%Error" "${OUT_DIR}/${test_name}.log"; then
     echo "FAIL: ${test_name}" | tee -a "${REGRESS_LOG}"
     status="FAIL"

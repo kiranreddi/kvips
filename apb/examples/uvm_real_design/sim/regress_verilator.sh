@@ -24,7 +24,7 @@ fi
 
 SUMMARY_MD="${OUT}/summary.md"
 {
-  echo "# APB Real-Design Verilator Summary"
+  echo "# APB DUT-Design Verilator Summary"
   echo ""
   echo "| Test | Status | wr | rd | err | mismatch |"
   echo "|---|---:|---:|---:|---:|---:|"
@@ -39,6 +39,10 @@ for t in "${TESTS[@]}"; do
     FIRST=0
   else
     VERILATOR_REUSE_BUILD=1 "${HERE}/run_verilator.sh" +UVM_TESTNAME="${t}" "$@" || status="FAIL"
+  fi
+  if grep -Eq "UVM_(FATAL|ERROR)" "${OUT}/run.log" || \
+     grep -Eq "^%Error" "${OUT}/run.log"; then
+    status="FAIL"
   fi
   sb_line="$(grep -E "APB SB summary:" "${OUT}/run.log" | tail -n1 || true)"
   dut_line="$(grep -E "APB_DUT_SUMMARY" "${OUT}/run.log" | tail -n1 || true)"

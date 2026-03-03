@@ -166,4 +166,20 @@ package tb_pkg;
     endtask
   endclass
 
+  // DUT naming aliases (backward-compatible with *_real_* classes)
+  class ahb_dut_smoke_test extends ahb_real_smoke_test;
+    `uvm_component_utils(ahb_dut_smoke_test)
+    function new(string name, uvm_component parent); super.new(name, parent); endfunction
+  endclass
+
+  class ahb_dut_incr_burst_test extends ahb_real_incr_burst_test;
+    `uvm_component_utils(ahb_dut_incr_burst_test)
+    function new(string name, uvm_component parent); super.new(name, parent); endfunction
+  endclass
+
+  class ahb_dut_wrap_burst_test extends ahb_real_wrap_burst_test;
+    `uvm_component_utils(ahb_dut_wrap_burst_test)
+    function new(string name, uvm_component parent); super.new(name, parent); endfunction
+  endclass
+
 endpackage
