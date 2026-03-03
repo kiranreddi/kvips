@@ -180,4 +180,20 @@ package tb_pkg;
     endtask
   endclass
 
+  // DUT naming aliases (backward-compatible with *_real_* classes)
+  class axi4_dut_smoke_test extends axi4_real_smoke_test;
+    `uvm_component_utils(axi4_dut_smoke_test)
+    function new(string name, uvm_component parent); super.new(name, parent); endfunction
+  endclass
+
+  class axi4_dut_burst_mix_test extends axi4_real_burst_mix_test;
+    `uvm_component_utils(axi4_dut_burst_mix_test)
+    function new(string name, uvm_component parent); super.new(name, parent); endfunction
+  endclass
+
+  class axi4_dut_narrow_test extends axi4_real_narrow_test;
+    `uvm_component_utils(axi4_dut_narrow_test)
+    function new(string name, uvm_component parent); super.new(name, parent); endfunction
+  endclass
+
 endpackage

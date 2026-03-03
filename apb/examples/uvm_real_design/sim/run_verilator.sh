@@ -148,7 +148,7 @@ for a in "${EXTRA_ARGS[@]}"; do
   [[ "$a" == +UVM_TESTNAME=* ]] && HAVE_TESTNAME=1
   [[ "$a" == +UVM_VERBOSITY=* ]] && HAVE_VERBOSITY=1
 done
-[[ "$HAVE_TESTNAME" -eq 0 ]] && EXTRA_ARGS+=("+UVM_TESTNAME=apb_real_smoke_test")
+[[ "$HAVE_TESTNAME" -eq 0 ]] && EXTRA_ARGS+=("+UVM_TESTNAME=apb_dut_smoke_test")
 [[ "$HAVE_VERBOSITY" -eq 0 ]] && EXTRA_ARGS+=("+UVM_VERBOSITY=UVM_LOW")
 
 "${BIN}" "${EXTRA_ARGS[@]}" | tee "${OUT}/run.log"

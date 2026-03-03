@@ -147,7 +147,7 @@ for a in "${EXTRA_ARGS[@]}"; do
   [[ "$a" == +UVM_VERBOSITY=* ]] && HAVE_VERBOSITY=1
   [[ "$a" == +KVIPS_AHB_ASSERT_OFF* ]] && HAVE_ASSERT_OFF=1
 done
-[[ "$HAVE_TESTNAME" -eq 0 ]] && EXTRA_ARGS+=("+UVM_TESTNAME=ahb_real_smoke_test")
+[[ "$HAVE_TESTNAME" -eq 0 ]] && EXTRA_ARGS+=("+UVM_TESTNAME=ahb_dut_smoke_test")
 [[ "$HAVE_VERBOSITY" -eq 0 ]] && EXTRA_ARGS+=("+UVM_VERBOSITY=UVM_LOW")
 [[ "$HAVE_ASSERT_OFF" -eq 0 ]] && EXTRA_ARGS+=("+KVIPS_AHB_ASSERT_OFF")
 

@@ -1,4 +1,4 @@
-.PHONY: help list-tests questa questa-waves vcs xcelium verilator regress-questa regress-vcs regress-xcelium regress-verilator verilator-real regress-verilator-real fsdbreport clean
+.PHONY: help list-tests questa questa-waves vcs xcelium verilator regress-questa regress-vcs regress-xcelium regress-verilator verilator-dut regress-verilator-dut verilator-real regress-verilator-real fsdbreport clean
 
 SIM_DIR := uvm_back2back/sim
 SIM_DIR_ABS := $(abspath $(SIM_DIR))
@@ -38,6 +38,8 @@ help:
 	@echo "  make regress-xcelium PLUSARGS='<...>'"
 	@echo "  make verilator      TEST=<name> UVM_VERBOSITY=<lvl> PLUSARGS='<...>'"
 	@echo "  make regress-verilator PLUSARGS='<...>'"
+	@echo "  make verilator-dut TEST=<name> UVM_VERBOSITY=<lvl> PLUSARGS='<...>'"
+	@echo "  make regress-verilator-dut PLUSARGS='<...>'"
 	@echo "  make fsdbreport     FSDB=<path> [BT=<time>] [ET=<time>]"
 	@echo "  make clean"
 	@echo ""
@@ -80,6 +82,10 @@ verilator-real:
 
 regress-verilator-real:
 	@$(RUN_PREFIX) $(abspath uvm_real_design/sim)/regress_verilator.sh $(PLUSARGS)
+
+verilator-dut: verilator-real
+
+regress-verilator-dut: regress-verilator-real
 
 fsdbreport:
 	@if [ -z "$(FSDB)" ]; then echo "ERROR: FSDB=<path> required"; exit 2; fi
