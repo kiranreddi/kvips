@@ -1,4 +1,4 @@
-.PHONY: help list-tests questa vcs xcelium verilator regress-verilator clean
+.PHONY: help list-tests questa vcs xcelium verilator regress-verilator verilator-real regress-verilator-real clean
 
 SIM_DIR := uvm_back2back/sim
 SIM_DIR_ABS := $(abspath $(SIM_DIR))
@@ -50,6 +50,11 @@ verilator:
 regress-verilator:
 	@$(SIM_DIR_ABS)/regress_verilator.sh $(PLUSARGS)
 
+verilator-real:
+	@$(abspath uvm_real_design/sim)/run_verilator.sh $(COMMON_PLUSARGS)
+
+regress-verilator-real:
+	@$(abspath uvm_real_design/sim)/regress_verilator.sh $(PLUSARGS)
+
 clean:
 	@rm -rf $(SIM_DIR)/out
-

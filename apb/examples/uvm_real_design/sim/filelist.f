@@ -1,0 +1,10 @@
++incdir+common/sv
++incdir+apb/sv/uvm
++incdir+apb/sv/assertions
++incdir+apb/sv/if
+apb/sv/if/apb_if.sv
+apb/sv/pkg/apb_types_pkg.sv
+apb/sv/pkg/apb_uvm_pkg.sv
+apb/examples/uvm_real_design/tb/dut/apb_ram_slave.sv
+apb/examples/uvm_real_design/tb/tb_pkg.sv
+apb/examples/uvm_real_design/tb/top.sv
