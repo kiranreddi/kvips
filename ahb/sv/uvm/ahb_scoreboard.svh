@@ -111,6 +111,9 @@ class ahb_scoreboard #(
       exp_write(t.addr, t.size, (t.wdata.size() != 0) ? t.wdata[0] : '0);
     end else begin
       if (is_error_resp(t)) return;
+      // The monitor emits one transaction per completed beat. For non-SINGLE
+      // bursts in DUT regressions, beat-to-address association can be ambiguous
+      // in this lightweight model, so only strict-compare SINGLE reads.
       if (t.burst != AHB_BURST_SINGLE) return;
       exp_d = exp_read(t.addr, t.size, init_ok);
       if (!init_ok && warn_uninit) begin
