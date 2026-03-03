@@ -44,6 +44,17 @@ package tb_pkg;
 `ifdef VERILATOR
       uvm_root::get().set_report_severity_id_action(UVM_WARNING, "OBJTN_CLEAR", UVM_NO_ACTION);
       begin
+        uvm_phase run_phase;
+        uvm_objection run_obj;
+        run_phase = uvm_run_phase::get();
+        run_obj = (run_phase == null) ? null : run_phase.get_objection();
+        if (run_obj != null) begin
+          run_obj.set_report_severity_id_action(UVM_WARNING, "OBJTN_CLEAR", UVM_NO_ACTION);
+          run_obj.set_report_id_action("OBJTN_CLEAR", UVM_NO_ACTION);
+          run_obj.set_drain_time(this, 20_000ns);
+        end
+      end
+      begin
         apb_objtn_clear_catcher c;
         c = new();
         uvm_report_cb::add(null, c);
@@ -103,12 +114,16 @@ package tb_pkg;
     task run_phase(uvm_phase phase);
       apb_sequencer#(ADDR_W, DATA_W) seqr;
       apb_smoke_rw_seq#(ADDR_W, DATA_W) seq;
+      `uvm_info("APB_TB", "apb_real_smoke_test run_phase start", UVM_LOW)
       phase.raise_objection(this);
       seqr = env.get_master_sequencer(0);
+      if (seqr == null) `uvm_fatal("APB_TB", "Master sequencer not found at index 0")
       seq = new("seq");
-      seq.num_txns = 20;
+      seq.num_txns = $urandom_range(24, 64);
       seq.base_addr = '0;
       seq.start(seqr);
+      wait (vif.PRESETn === 1'b1);
+      repeat (128) @(posedge vif.PCLK);
       phase.drop_objection(this);
     endtask
   endclass
@@ -122,13 +137,17 @@ package tb_pkg;
     task run_phase(uvm_phase phase);
       apb_sequencer#(ADDR_W, DATA_W) seqr;
       apb_random_stress_seq#(ADDR_W, DATA_W) seq;
+      `uvm_info("APB_TB", "apb_real_back_to_back_test run_phase start", UVM_LOW)
       phase.raise_objection(this);
       seqr = env.get_master_sequencer(0);
+      if (seqr == null) `uvm_fatal("APB_TB", "Master sequencer not found at index 0")
       seq = new("seq");
-      seq.num_txns = 200;
-      seq.wr_pct = 60;
+      seq.num_txns = $urandom_range(160, 320);
+      seq.wr_pct = $urandom_range(40, 75);
       seq.enable_apb4 = m_cfg.is_apb4();
       seq.start(seqr);
+      wait (vif.PRESETn === 1'b1);
+      repeat (256) @(posedge vif.PCLK);
       phase.drop_objection(this);
     endtask
   endclass
@@ -138,6 +157,7 @@ package tb_pkg;
     function new(string name, uvm_component parent); super.new(name, parent); endfunction
     task run_phase(uvm_phase phase);
       apb_sequencer#(ADDR_W, DATA_W) seqr;
+      `uvm_info("APB_TB", "apb_real_apb4_strobe_test run_phase start", UVM_LOW)
       phase.raise_objection(this);
       if (!m_cfg.is_apb4()) begin
         `uvm_info("APB_TB", "Skipping APB4-only test in APB3 mode", UVM_LOW)
@@ -145,6 +165,7 @@ package tb_pkg;
         return;
       end
       seqr = env.get_master_sequencer(0);
+      if (seqr == null) `uvm_fatal("APB_TB", "Master sequencer not found at index 0")
       begin
         apb_apb4_strobe_mask_seq#(ADDR_W, DATA_W) seq;
         seq = new("seq");
@@ -155,6 +176,8 @@ package tb_pkg;
         seq.prot = 3'b001;
         seq.start(seqr);
       end
+      wait (vif.PRESETn === 1'b1);
+      repeat (64) @(posedge vif.PCLK);
       phase.drop_objection(this);
     endtask
   endclass

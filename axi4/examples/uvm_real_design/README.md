@@ -7,3 +7,11 @@ Run Verilator regression:
 ```bash
 make -C axi4/examples regress-verilator-real
 ```
+
+## Results page (pretty summary)
+
+After regression, open:
+
+`/home/runner/work/kvips/kvips/axi4/examples/uvm_real_design/sim/out/verilator/summary.md`
+
+It contains a Markdown table with PASS/FAIL plus `wr_txns`, `rd_txns`, and error/mismatch counters for each test.

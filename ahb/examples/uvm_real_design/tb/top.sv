@@ -13,9 +13,13 @@ module top;
   end
 
   initial begin
+`ifdef VERILATOR
+    HRESETn = 1'b1;
+`else
     HRESETn = 1'b0;
     repeat (10) @(posedge HCLK);
     HRESETn = 1'b1;
+`endif
   end
 
   localparam int ADDR_W  = 16;

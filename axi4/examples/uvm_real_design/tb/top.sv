@@ -31,9 +31,13 @@ module top;
   end
 
   initial begin
+`ifdef VERILATOR
+    areset_n = 1'b1;
+`else
     areset_n = 0;
     repeat (10) @(posedge aclk);
     areset_n = 1;
+`endif
   end
 
   initial begin

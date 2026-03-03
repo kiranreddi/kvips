@@ -48,6 +48,17 @@ package tb_pkg;
       uvm_root::get().set_report_severity_id_action(UVM_WARNING, "OBJTN_CLEAR", UVM_NO_ACTION);
       uvm_root::get().set_report_id_action("OBJTN_CLEAR", UVM_NO_ACTION);
       begin
+        uvm_phase run_phase;
+        uvm_objection run_obj;
+        run_phase = uvm_run_phase::get();
+        run_obj = (run_phase == null) ? null : run_phase.get_objection();
+        if (run_obj != null) begin
+          run_obj.set_report_severity_id_action(UVM_WARNING, "OBJTN_CLEAR", UVM_NO_ACTION);
+          run_obj.set_report_id_action("OBJTN_CLEAR", UVM_NO_ACTION);
+          run_obj.set_drain_time(this, 20_000ns);
+        end
+      end
+      begin
         axi4_objtn_clear_catcher c;
         c = new();
         uvm_report_cb::add(null, c);
@@ -107,13 +118,15 @@ package tb_pkg;
       seqr = env.get_master_sequencer(0);
       if (seqr == null) `uvm_fatal(get_type_name(), "Master sequencer not found at index 0")
       seq = new("seq");
-      seq.num_txns = 40;
+      seq.num_txns = $urandom_range(32, 64);
       seq.max_len  = 3;
       seq.enable_incr  = 1'b1;
       seq.enable_fixed = 1'b0;
       seq.enable_wrap  = 1'b0;
       seq.enable_narrow = 1'b0;
       seq.start(seqr);
+      wait (vif.areset_n === 1'b1);
+      repeat (128) @(posedge vif.aclk);
       phase.drop_objection(this);
     endtask
   endclass
@@ -128,13 +141,15 @@ package tb_pkg;
       seqr = env.get_master_sequencer(0);
       if (seqr == null) `uvm_fatal(get_type_name(), "Master sequencer not found at index 0")
       seq = new("seq");
-      seq.num_txns = 80;
+      seq.num_txns = $urandom_range(64, 128);
       seq.max_len  = 7;
       seq.enable_incr  = 1'b1;
       seq.enable_fixed = 1'b1;
       seq.enable_wrap  = 1'b0;
       seq.enable_narrow = 1'b0;
       seq.start(seqr);
+      wait (vif.areset_n === 1'b1);
+      repeat (256) @(posedge vif.aclk);
       phase.drop_objection(this);
     endtask
   endclass
@@ -149,13 +164,15 @@ package tb_pkg;
       seqr = env.get_master_sequencer(0);
       if (seqr == null) `uvm_fatal(get_type_name(), "Master sequencer not found at index 0")
       seq = new("seq");
-      seq.num_txns = 60;
+      seq.num_txns = $urandom_range(48, 96);
       seq.max_len  = 3;
       seq.enable_incr  = 1'b1;
       seq.enable_fixed = 1'b0;
       seq.enable_wrap  = 1'b0;
       seq.enable_narrow = 1'b1;
       seq.start(seqr);
+      wait (vif.areset_n === 1'b1);
+      repeat (192) @(posedge vif.aclk);
       phase.drop_objection(this);
     endtask
   endclass

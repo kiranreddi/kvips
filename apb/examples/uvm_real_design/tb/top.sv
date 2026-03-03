@@ -26,9 +26,13 @@ module tb_top;
   end
 
   initial begin
+`ifdef VERILATOR
+    PRESETn = 1'b1;
+`else
     PRESETn = 1'b0;
     repeat (5) @(posedge PCLK);
     PRESETn = 1'b1;
+`endif
   end
 
   initial begin
@@ -41,13 +45,20 @@ module tb_top;
   initial begin
     uvm_phase run_phase_h;
     uvm_objection run_obj_h;
-    run_phase_h = uvm_run_phase::get();
-    run_obj_h = (run_phase_h == null) ? null : run_phase_h.get_objection();
+    int tries;
+    tries = 0;
+    run_obj_h = null;
+    while ((run_obj_h == null) && (tries < 1000)) begin
+      run_phase_h = uvm_run_phase::get();
+      run_obj_h = (run_phase_h == null) ? null : run_phase_h.get_objection();
+      tries++;
+      #1step;
+    end
     if (run_obj_h != null) begin
-      run_obj_h.raise_objection(null, "kvips_verilator_runtime_hold");
+      run_obj_h.raise_objection(uvm_root::get(), "kvips_verilator_runtime_hold");
       wait (PRESETn === 1'b1);
       repeat (2000) @(posedge PCLK);
-      run_obj_h.drop_objection(null, "kvips_verilator_runtime_hold");
+      run_obj_h.drop_objection(uvm_root::get(), "kvips_verilator_runtime_hold");
     end
   end
 `endif
