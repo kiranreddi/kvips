@@ -42,6 +42,7 @@ for t in "${TESTS[@]}"; do
   fi
   sb_line="$(grep -E "AHB SB summary:" "${OUT}/run.log" | tail -n1 || true)"
   log_line="$(grep -E "AHB log summary:" "${OUT}/run.log" | tail -n1 || true)"
+  dut_line="$(grep -E "AHB_DUT_SUMMARY" "${OUT}/run.log" | tail -n1 || true)"
   wr="$(echo "${sb_line}" | sed -n 's/.*wr=\([0-9]\+\).*/\1/p')"
   rd="$(echo "${sb_line}" | sed -n 's/.*rd=\([0-9]\+\).*/\1/p')"
   err="$(echo "${sb_line}" | sed -n 's/.*err=\([0-9]\+\).*/\1/p')"
@@ -52,6 +53,14 @@ for t in "${TESTS[@]}"; do
   [[ -z "${err}" ]] && err="NA"
   [[ -z "${mis}" ]] && mis="NA"
   [[ -z "${stalls}" ]] && stalls="NA"
+  if [[ "${wr}" == "0" || -z "${wr}" ]]; then
+    txns="$(echo "${dut_line}" | sed -n 's/.*txns=\([0-9]\+\).*/\1/p')"
+    [[ -n "${txns}" ]] && wr="${txns}"
+  fi
+  if [[ "${rd}" == "0" || -z "${rd}" ]]; then
+    txns="$(echo "${dut_line}" | sed -n 's/.*txns=\([0-9]\+\).*/\1/p')"
+    [[ -n "${txns}" ]] && rd="${txns}"
+  fi
   echo "| ${t} | ${status} | ${wr} | ${rd} | ${err} | ${mis} | ${stalls} |" >> "${SUMMARY_MD}"
 done
 

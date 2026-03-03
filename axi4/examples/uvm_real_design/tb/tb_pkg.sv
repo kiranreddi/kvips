@@ -118,12 +118,13 @@ package tb_pkg;
       seqr = env.get_master_sequencer(0);
       if (seqr == null) `uvm_fatal(get_type_name(), "Master sequencer not found at index 0")
       seq = new("seq");
-      seq.num_txns = $urandom_range(32, 64);
+      seq.num_txns = $urandom_range(64, 32);
       seq.max_len  = 3;
       seq.enable_incr  = 1'b1;
       seq.enable_fixed = 1'b0;
       seq.enable_wrap  = 1'b0;
       seq.enable_narrow = 1'b0;
+      `uvm_info("AXI4_DUT_SUMMARY", $sformatf("txns=%0d wr_txns=%0d rd_txns=%0d", seq.num_txns, seq.num_txns, seq.num_txns), UVM_NONE)
       seq.start(seqr);
       wait (vif.areset_n === 1'b1);
       repeat (128) @(posedge vif.aclk);
@@ -141,12 +142,13 @@ package tb_pkg;
       seqr = env.get_master_sequencer(0);
       if (seqr == null) `uvm_fatal(get_type_name(), "Master sequencer not found at index 0")
       seq = new("seq");
-      seq.num_txns = $urandom_range(64, 128);
+      seq.num_txns = $urandom_range(128, 64);
       seq.max_len  = 7;
       seq.enable_incr  = 1'b1;
       seq.enable_fixed = 1'b1;
       seq.enable_wrap  = 1'b0;
       seq.enable_narrow = 1'b0;
+      `uvm_info("AXI4_DUT_SUMMARY", $sformatf("txns=%0d wr_txns=%0d rd_txns=%0d", seq.num_txns, seq.num_txns, seq.num_txns), UVM_NONE)
       seq.start(seqr);
       wait (vif.areset_n === 1'b1);
       repeat (256) @(posedge vif.aclk);
@@ -164,12 +166,13 @@ package tb_pkg;
       seqr = env.get_master_sequencer(0);
       if (seqr == null) `uvm_fatal(get_type_name(), "Master sequencer not found at index 0")
       seq = new("seq");
-      seq.num_txns = $urandom_range(48, 96);
+      seq.num_txns = $urandom_range(96, 48);
       seq.max_len  = 3;
       seq.enable_incr  = 1'b1;
       seq.enable_fixed = 1'b0;
       seq.enable_wrap  = 1'b0;
       seq.enable_narrow = 1'b1;
+      `uvm_info("AXI4_DUT_SUMMARY", $sformatf("txns=%0d wr_txns=%0d rd_txns=%0d", seq.num_txns, seq.num_txns, seq.num_txns), UVM_NONE)
       seq.start(seqr);
       wait (vif.areset_n === 1'b1);
       repeat (192) @(posedge vif.aclk);
