@@ -500,7 +500,7 @@ Stalls:
 
 ### Integrate with Existing Testbench
 
-See [Integration Guide]({{ site.baseurl }}/docs/axi4/integration/) for detailed steps.
+See the [Integration Guide](https://github.com/kiranreddi/kvips/blob/main/axi4/docs/integration_guide.md) for detailed steps.
 
 ### Multiple Agents
 
