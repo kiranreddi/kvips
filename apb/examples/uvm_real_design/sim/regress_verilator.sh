@@ -4,6 +4,7 @@ set -euo pipefail
 HERE="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(cd "${HERE}" && git rev-parse --show-toplevel)"
 OUT="${ROOT}/apb/examples/uvm_real_design/sim/out/verilator"
+mkdir -p "${OUT}"
 
 TESTS_FILE="${HERE}/tests_questa.list"
 if [[ ! -f "${TESTS_FILE}" ]]; then
@@ -40,7 +41,7 @@ for t in "${TESTS[@]}"; do
   else
     VERILATOR_REUSE_BUILD=1 "${HERE}/run_verilator.sh" +UVM_TESTNAME="${t}" "$@" || status="FAIL"
   fi
-  if grep -Eq "UVM_(FATAL|ERROR)" "${OUT}/run.log" || \
+  if grep -Eq "^UVM_(FATAL|ERROR) .*@" "${OUT}/run.log" || \
      grep -Eq "^%Error" "${OUT}/run.log"; then
     status="FAIL"
   fi
