@@ -2,6 +2,7 @@
 
 module tb_top;
   import uvm_pkg::*;
+  import apb_uvm_pkg::*;
   import tb_pkg::*;
 
   localparam int ADDR_W = 16;
@@ -39,8 +40,19 @@ module tb_top;
 `ifdef VERILATOR
   // Keep simulation running long enough under Verilator UVM/no-DPI flow.
   initial begin
+    longint unsigned wr_cnt, rd_cnt, err_cnt;
+    bit en;
+    longint unsigned mis;
+    apb_scoreboard#(ADDR_W, DATA_W) sb_h;
     wait (PRESETn === 1'b1);
     repeat (5000) @(posedge PCLK);
+    if ($cast(sb_h, uvm_root::get().find("uvm_test_top.sb"))) begin
+      sb_h.get_summary(en, wr_cnt, rd_cnt, err_cnt, mis);
+      uvm_report_info("APB_SCB",
+        $sformatf("APB SB summary: enable=%0d wr=%0d rd=%0d err=%0d mismatch=%0d",
+          en, wr_cnt, rd_cnt, err_cnt, mis),
+        UVM_NONE);
+    end
     $finish;
   end
 `endif

@@ -2,6 +2,7 @@
 
 module top;
   import uvm_pkg::*;
+  import ahb_uvm_pkg::*;
   import tb_pkg::*;
 
   logic HCLK;
@@ -48,8 +49,18 @@ module top;
 `ifdef VERILATOR
   // Keep simulation running long enough under Verilator UVM/no-DPI flow.
   initial begin
+    bit en;
+    longint unsigned wr_cnt, rd_cnt, err_cnt, mis_cnt;
+    ahb_scoreboard#(.ADDR_W(ADDR_W), .DATA_W(DATA_W), .HRESP_W(HRESP_W)) sb_h;
     wait (HRESETn === 1'b1);
     repeat (5000) @(posedge HCLK);
+    if ($cast(sb_h, uvm_root::get().find("uvm_test_top.env.sb"))) begin
+      sb_h.get_summary(en, wr_cnt, rd_cnt, err_cnt, mis_cnt);
+      uvm_report_info("AHB_SCB",
+        $sformatf("AHB SB summary: enable=%0d wr=%0d rd=%0d err=%0d mismatch=%0d",
+          en, wr_cnt, rd_cnt, err_cnt, mis_cnt),
+        UVM_NONE);
+    end
     $finish;
   end
 `endif

@@ -56,6 +56,20 @@ class ahb_scoreboard #(
     sum_mismatch = 0;
   endfunction
 
+  function automatic void get_summary(
+    output bit enabled,
+    output longint unsigned wr_cnt,
+    output longint unsigned rd_cnt,
+    output longint unsigned err_cnt,
+    output longint unsigned mismatch_cnt
+  );
+    enabled = enable;
+    wr_cnt = sum_wr;
+    rd_cnt = sum_rd;
+    err_cnt = sum_err;
+    mismatch_cnt = sum_mismatch;
+  endfunction
+
   function void exp_write(logic [ADDR_W-1:0] addr, ahb_size_e size, logic [DATA_W-1:0] wdata);
     int unsigned sb = size_bytes(size);
     int unsigned lane = int'(addr) % data_bus_bytes();
@@ -119,4 +133,3 @@ class ahb_scoreboard #(
 endclass
 
 `endif // KVIPS_AHB_SCOREBOARD_SVH
-
