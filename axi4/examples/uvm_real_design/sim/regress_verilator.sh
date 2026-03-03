@@ -41,7 +41,7 @@ while IFS= read -r line || [[ -n "${line}" ]]; do
   fi
   [[ -f "${OUT_DIR}/run.log" ]] && cp -f "${OUT_DIR}/run.log" "${OUT_DIR}/${test_name}.log"
   status="PASS"
-  if grep -Eq "UVM_(FATAL|ERROR)" "${OUT_DIR}/${test_name}.log" || \
+  if grep -Eq "^UVM_(FATAL|ERROR) .*@" "${OUT_DIR}/${test_name}.log" || \
       grep -Eq "^%Error" "${OUT_DIR}/${test_name}.log"; then
     echo "FAIL: ${test_name}" | tee -a "${REGRESS_LOG}"
     status="FAIL"
