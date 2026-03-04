@@ -69,7 +69,6 @@ class ahb_txn_logger #(
 
   function void report_phase(uvm_phase phase);
     super.report_phase(phase);
-    if ((sum_wr == 0) && (sum_rd == 0) && (sum_err == 0) && (sum_stall == 0)) return;
     `uvm_info(RID,
       $sformatf("AHB log summary: wr=%0d rd=%0d err=%0d stall_cycles=%0d",
         sum_wr, sum_rd, sum_err, sum_stall),
