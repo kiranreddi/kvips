@@ -21,4 +21,4 @@ After regression, open:
 `/home/runner/work/kvips/kvips/ahb/examples/uvm_real_design/sim/out/verilator/summary.md`
 
 It contains a Markdown table with PASS/FAIL plus AHB counters (`wr`, `rd`, `err`, `mismatch`, `stall_cycles`) per test.
-Under Verilator UVM/no-DPI flow, an additional end-of-run `[AHB_SCB]` summary line is emitted after the timed DUT window so scoreboard counters are visible in logs even if UVM `report_phase` prints early.
+Under Verilator UVM/no-DPI flow, additional end-of-run `[AHB_SCB]` and `[AHB_LOG]` summary lines are emitted after the timed DUT window so final scoreboard/logger counters are visible in logs.
