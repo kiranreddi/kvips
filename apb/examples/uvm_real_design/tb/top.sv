@@ -52,6 +52,8 @@ module tb_top;
         $sformatf("APB SB summary: enable=%0d wr=%0d rd=%0d err=%0d mismatch=%0d",
           en, wr_cnt, rd_cnt, err_cnt, mis),
         UVM_NONE);
+      if (en && ((wr_cnt + rd_cnt) == 0))
+        uvm_report_error("APB_SCB", "APB scoreboard observed zero transactions");
     end
     $finish;
   end

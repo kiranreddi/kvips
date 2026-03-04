@@ -64,6 +64,8 @@ module top;
         $sformatf("AHB SB summary: enable=%0d wr=%0d rd=%0d err=%0d mismatch=%0d",
           en, wr_cnt, rd_cnt, err_cnt, mis_cnt),
         UVM_NONE);
+      if (en && ((wr_cnt + rd_cnt) == 0))
+        uvm_report_error("AHB_SCB", "AHB scoreboard observed zero transactions");
     end
     if ($cast(log_h, uvm_root::get().find(LOG_PATH))) begin
       log_h.get_summary(log_wr_cnt, log_rd_cnt, log_err_cnt, log_stall_cnt);
