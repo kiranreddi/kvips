@@ -35,6 +35,7 @@ class ahb_txn_logger #(
     sum_stall = 0;
   endfunction
 
+  // Read-only accessor for final summary reporting from TB top-level code.
   function automatic void get_summary(
     output longint unsigned wr_cnt,
     output longint unsigned rd_cnt,

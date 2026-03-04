@@ -49,6 +49,8 @@ module top;
 `ifdef VERILATOR
   // Keep simulation running long enough under Verilator UVM/no-DPI flow.
   initial begin
+    localparam string SB_PATH  = "uvm_test_top.env.sb";
+    localparam string LOG_PATH = "uvm_test_top.env.logger";
     bit en;
     longint unsigned wr_cnt, rd_cnt, err_cnt, mis_cnt;
     longint unsigned log_wr_cnt, log_rd_cnt, log_err_cnt, log_stall_cnt;
@@ -56,14 +58,14 @@ module top;
     ahb_txn_logger#(.ADDR_W(ADDR_W), .DATA_W(DATA_W), .HRESP_W(HRESP_W)) log_h;
     wait (HRESETn === 1'b1);
     repeat (5000) @(posedge HCLK);
-    if ($cast(sb_h, uvm_root::get().find("uvm_test_top.env.sb"))) begin
+    if ($cast(sb_h, uvm_root::get().find(SB_PATH))) begin
       sb_h.get_summary(en, wr_cnt, rd_cnt, err_cnt, mis_cnt);
       uvm_report_info("AHB_SCB",
         $sformatf("AHB SB summary: enable=%0d wr=%0d rd=%0d err=%0d mismatch=%0d",
           en, wr_cnt, rd_cnt, err_cnt, mis_cnt),
         UVM_NONE);
     end
-    if ($cast(log_h, uvm_root::get().find("uvm_test_top.env.logger"))) begin
+    if ($cast(log_h, uvm_root::get().find(LOG_PATH))) begin
       log_h.get_summary(log_wr_cnt, log_rd_cnt, log_err_cnt, log_stall_cnt);
       uvm_report_info("AHB_LOG",
         $sformatf("AHB log summary: wr=%0d rd=%0d err=%0d stall_cycles=%0d",
