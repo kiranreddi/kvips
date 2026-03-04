@@ -56,11 +56,7 @@ package axi4_types_pkg;
     input int unsigned     size,
     input int unsigned     len
   );
-    longint unsigned offset;
-    longint unsigned total;
-    offset = start_addr & longint'(12'hFFF);
-    total  = axi4_total_bytes(size, len);
-    return ((offset + total) > 4096);
+    return ((start_addr & longint'(12'hFFF)) + axi4_total_bytes(size, len)) > 4096;
   endfunction
 
   function automatic int unsigned axi4_bytes_per_beat(input int unsigned data_w);
