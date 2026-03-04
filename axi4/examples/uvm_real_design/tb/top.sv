@@ -49,13 +49,15 @@ module top;
     longint unsigned wr_txns, wr_err, rd_txns, rd_uninit, rd_mis;
     axi4_scoreboard#(ADDR_W, DATA_W, ID_W, USER_W) sb_h;
     wait (areset_n === 1'b1);
-    repeat (5000) @(posedge aclk);
+    repeat (50000) @(posedge aclk);
     if ($cast(sb_h, uvm_root::get().find("uvm_test_top.sb"))) begin
       sb_h.get_summary(en, wr_txns, wr_err, rd_txns, rd_uninit, rd_mis);
       uvm_report_info("AXI4_SCB",
         $sformatf("AXI4 SB summary: enable=%0d wr_txns=%0d wr_err=%0d rd_txns=%0d rd_mismatch_beats=%0d rd_uninit_warn_beats=%0d",
           en, wr_txns, wr_err, rd_txns, rd_mis, rd_uninit),
         UVM_NONE);
+      if (en && ((wr_txns + rd_txns) == 0))
+        uvm_report_error("AXI4_SCB", "AXI4 scoreboard observed zero transactions");
     end
     $finish;
   end
