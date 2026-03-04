@@ -35,6 +35,18 @@ class ahb_txn_logger #(
     sum_stall = 0;
   endfunction
 
+  function automatic void get_summary(
+    output longint unsigned wr_cnt,
+    output longint unsigned rd_cnt,
+    output longint unsigned err_cnt,
+    output longint unsigned stall_cnt
+  );
+    wr_cnt = sum_wr;
+    rd_cnt = sum_rd;
+    err_cnt = sum_err;
+    stall_cnt = sum_stall;
+  endfunction
+
   virtual function void write(ahb_item#(ADDR_W, DATA_W, HRESP_W) t);
     if (t == null) return;
     if (t.write) sum_wr++; else sum_rd++;
@@ -56,6 +68,7 @@ class ahb_txn_logger #(
 
   function void report_phase(uvm_phase phase);
     super.report_phase(phase);
+    if ((sum_wr == 0) && (sum_rd == 0) && (sum_err == 0) && (sum_stall == 0)) return;
     `uvm_info(RID,
       $sformatf("AHB log summary: wr=%0d rd=%0d err=%0d stall_cycles=%0d",
         sum_wr, sum_rd, sum_err, sum_stall),
@@ -65,4 +78,3 @@ class ahb_txn_logger #(
 endclass
 
 `endif // KVIPS_AHB_TXN_LOGGER_SVH
-
