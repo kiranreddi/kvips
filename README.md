@@ -376,7 +376,7 @@ We welcome contributions! Whether it's:
 4. Push to your branch (`git push origin feature/new-vip`)
 5. Open a Pull Request
 
-> See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines (coming soon)
+> Detailed contribution guidelines are coming soon. For now, use GitHub Issues/Discussions for changes and proposals.
 
 ---
 

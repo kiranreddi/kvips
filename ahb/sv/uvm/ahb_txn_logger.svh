@@ -35,6 +35,19 @@ class ahb_txn_logger #(
     sum_stall = 0;
   endfunction
 
+  // Read-only accessor for final summary reporting from TB top-level code.
+  function automatic void get_summary(
+    output longint unsigned wr_cnt,
+    output longint unsigned rd_cnt,
+    output longint unsigned err_cnt,
+    output longint unsigned stall_cnt
+  );
+    wr_cnt = sum_wr;
+    rd_cnt = sum_rd;
+    err_cnt = sum_err;
+    stall_cnt = sum_stall;
+  endfunction
+
   virtual function void write(ahb_item#(ADDR_W, DATA_W, HRESP_W) t);
     if (t == null) return;
     if (t.write) sum_wr++; else sum_rd++;
@@ -65,4 +78,3 @@ class ahb_txn_logger #(
 endclass
 
 `endif // KVIPS_AHB_TXN_LOGGER_SVH
-

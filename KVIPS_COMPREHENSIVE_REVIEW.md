@@ -343,7 +343,7 @@ endclass
 
 #### Documentation
 
-- **Main Documentation:** [pages/docs/apb-vip.md](./docs/apb-vip.md)
+- **Main Documentation:** [pages/docs/apb-vip.md](./pages/docs/apb-vip.md)
 - **Source Location:** `kvips/apb/`
 - **Examples:** `kvips/apb/examples/uvm_back2back/`
 - **Detailed Guides:**
@@ -454,7 +454,7 @@ endclass
 
 #### Documentation
 
-- **Main Documentation:** [pages/docs/ahb-vip.md](./docs/ahb-vip.md)
+- **Main Documentation:** [pages/docs/ahb-vip.md](./pages/docs/ahb-vip.md)
 - **Source Location:** `kvips/ahb/`
 - **Examples:** `kvips/ahb/examples/uvm_back2back/`
 - **Detailed Guides:**
@@ -1031,7 +1031,7 @@ endclass
 4. Attach relevant log files
 
 **Contributing:**
-See [CONTRIBUTING.md](./CONTRIBUTING.md) for guidelines on:
+Contribution guidelines are currently managed through GitHub Issues and Discussions for:
 - Code style and standards
 - Pull request process
 - Testing requirements

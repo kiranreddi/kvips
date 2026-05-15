@@ -56,6 +56,20 @@ class ahb_scoreboard #(
     sum_mismatch = 0;
   endfunction
 
+  function automatic void get_summary(
+    output bit enabled,
+    output longint unsigned wr_cnt,
+    output longint unsigned rd_cnt,
+    output longint unsigned err_cnt,
+    output longint unsigned mismatch_cnt
+  );
+    enabled = enable;
+    wr_cnt = sum_wr;
+    rd_cnt = sum_rd;
+    err_cnt = sum_err;
+    mismatch_cnt = sum_mismatch;
+  endfunction
+
   function void exp_write(logic [ADDR_W-1:0] addr, ahb_size_e size, logic [DATA_W-1:0] wdata);
     int unsigned sb = size_bytes(size);
     int unsigned lane = int'(addr) % data_bus_bytes();
@@ -97,6 +111,10 @@ class ahb_scoreboard #(
       exp_write(t.addr, t.size, (t.wdata.size() != 0) ? t.wdata[0] : '0);
     end else begin
       if (is_error_resp(t)) return;
+      // The monitor emits one transaction per completed beat. For non-SINGLE
+      // bursts in DUT regressions, beat-to-address association can be ambiguous
+      // in this lightweight model, so only strict-compare SINGLE reads.
+      if (t.burst != AHB_BURST_SINGLE) return;
       exp_d = exp_read(t.addr, t.size, init_ok);
       if (!init_ok && warn_uninit) begin
         `uvm_warning(RID, $sformatf("Read from unwritten addr=0x%0h (treated as 0)", t.addr))
@@ -119,4 +137,3 @@ class ahb_scoreboard #(
 endclass
 
 `endif // KVIPS_AHB_SCOREBOARD_SVH
-

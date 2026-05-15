@@ -1,0 +1,9 @@
++incdir+common/sv
++incdir+axi4/sv/uvm
++incdir+axi4/sv/assertions
+axi4/sv/if/axi4_if.sv
+axi4/sv/pkg/axi4_types_pkg.sv
+axi4/sv/pkg/axi4_uvm_pkg.sv
+axi4/examples/uvm_real_design/tb/dut/axi4_ram_slave.sv
+axi4/examples/uvm_real_design/tb/tb_pkg.sv
+axi4/examples/uvm_real_design/tb/top.sv
