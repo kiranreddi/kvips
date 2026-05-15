@@ -74,6 +74,7 @@ module top;
           log_wr_cnt, log_rd_cnt, log_err_cnt, log_stall_cnt),
         UVM_NONE);
     end
+    uvm_report_server::get_server().report_summarize();
     $finish;
   end
 `endif
