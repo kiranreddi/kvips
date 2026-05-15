@@ -55,6 +55,7 @@ module tb_top;
       if (en && ((wr_cnt + rd_cnt) == 0))
         uvm_report_error("APB_SCB", "APB scoreboard observed zero transactions");
     end
+    uvm_report_server::get_server().report_summarize();
     $finish;
   end
 `endif

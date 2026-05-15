@@ -59,6 +59,7 @@ module top;
       if (en && ((wr_txns + rd_txns) == 0))
         uvm_report_error("AXI4_SCB", "AXI4 scoreboard observed zero transactions");
     end
+    uvm_report_server::get_server().report_summarize();
     $finish;
   end
 `endif
