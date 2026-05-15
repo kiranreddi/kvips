@@ -60,7 +60,6 @@ class ahb_slave_driver #(
   ctrl_t ctrl_data;   // currently in data phase (when valid)
 
   int unsigned stall_rem; // remaining wait-state cycles for current data beat
-  bit          stall_armed; // selects stall_rem once per data beat
 
   `uvm_component_param_utils(ahb_slave_driver#(ADDR_W, DATA_W, HRESP_W, HAS_HMASTLOCK))
 
@@ -145,13 +144,14 @@ class ahb_slave_driver #(
       `uvm_fatal(RID, "Missing cfg in config DB (key: cfg)")
     end
     vif = cfg.vif;
+`ifndef VERILATOR
     if (vif == null) `uvm_fatal(RID, "cfg.vif is null")
+`endif
 
     // Defaults
     ctrl_pipe = clear_ctrl();
     ctrl_data = clear_ctrl();
     stall_rem = 0;
-    stall_armed = 0;
 
     vif.HREADYOUT <= 1'b1;
     vif.HRESP     <= resp_okay();
@@ -166,7 +166,6 @@ class ahb_slave_driver #(
       ctrl_pipe = clear_ctrl();
       ctrl_data = clear_ctrl();
       stall_rem = 0;
-      stall_armed = 0;
     end
 
     forever begin
@@ -176,42 +175,33 @@ class ahb_slave_driver #(
         ctrl_pipe = clear_ctrl();
         ctrl_data = clear_ctrl();
         stall_rem = 0;
-        stall_armed = 0;
         vif.HREADYOUT <= 1'b1;
         vif.HRESP     <= resp_okay();
         vif.HRDATA    <= '0;
         continue;
       end
 
-      // Manage wait-state insertion for the current data-phase beat.
-      if (ctrl_data.valid && cfg.allow_wait_states && !stall_armed) begin
-        stall_rem = (cfg.max_wait >= cfg.min_wait) ? $urandom_range(cfg.min_wait, cfg.max_wait) : cfg.min_wait;
-        stall_armed = 1'b1;
-      end
-
       if (ctrl_data.valid && (stall_rem != 0)) begin
-        // Stall cycle: keep outputs stable, hold HREADYOUT low, decrement.
-        vif.HREADYOUT <= 1'b0;
-        stall_rem--;
+        // Stall cycle: keep response/data stable and re-open HREADYOUT for the
+        // cycle in which the stalled data phase will complete.
+        if (stall_rem > 1) begin
+          stall_rem--;
+          vif.HREADYOUT <= 1'b0;
+        end else begin
+          stall_rem = 0;
+          vif.HREADYOUT <= 1'b1;
+        end
         continue;
       end
 
       // Ready to complete current beat (if any) and accept next control.
-      vif.HREADYOUT <= 1'b1;
-
-      // Complete data phase for ctrl_data (this cycle's handshake completes it).
+      // Complete data phase for ctrl_data. Read response/data were prepared
+      // when this beat entered its data phase so they are stable before HREADY.
       if (ctrl_data.valid) begin
         bit err = cfg.addr_in_error_range(ctrl_data.addr);
-        vif.HRESP  <= err ? resp_error() : resp_okay();
-        if (!ctrl_data.write) begin
-          vif.HRDATA <= read_bytes(ctrl_data.addr, ctrl_data.size);
-        end else begin
+        if (ctrl_data.write && !err) begin
           write_bytes(ctrl_data.addr, ctrl_data.size, `AHB_S_CB.HWDATA);
-          vif.HRDATA <= '0;
         end
-      end else begin
-        vif.HRESP  <= resp_okay();
-        vif.HRDATA <= '0;
       end
 
       // Shift pipeline at end of ready cycle:
@@ -220,13 +210,26 @@ class ahb_slave_driver #(
       ctrl_data = ctrl_pipe;
       ctrl_pipe = sample_ctrl();
 
-      if (!ctrl_data.valid) begin
-        stall_rem = 0;
-        stall_armed = 0;
+      if (ctrl_data.valid && cfg.allow_wait_states) begin
+        stall_rem = (cfg.max_wait >= cfg.min_wait) ? $urandom_range(cfg.min_wait, cfg.max_wait) : cfg.min_wait;
       end else begin
-        // New data beat started; choose wait-state policy fresh.
-        stall_armed = 0;
+        stall_rem = 0;
       end
+
+      if (ctrl_data.valid) begin
+        bit err = cfg.addr_in_error_range(ctrl_data.addr);
+        vif.HRESP <= err ? resp_error() : resp_okay();
+        if (!ctrl_data.write && !err) begin
+          vif.HRDATA <= read_bytes(ctrl_data.addr, ctrl_data.size);
+        end else begin
+          vif.HRDATA <= '0;
+        end
+      end else begin
+        vif.HRESP  <= resp_okay();
+        vif.HRDATA <= '0;
+      end
+
+      vif.HREADYOUT <= (ctrl_data.valid && (stall_rem != 0)) ? 1'b0 : 1'b1;
     end
   endtask
 

@@ -17,9 +17,15 @@ VERILATOR_UVM_BASE="${ROOT}/third_party/uvm_verilator"
 VERILATOR_UVM_SRC_DEFAULT="${VERILATOR_UVM_BASE}/uvm-master/src"
 
 apply_verilator_uvm_patch() {
-  local patch_file="${ROOT}/common/uvm/verilator_uvm.patch"
-  if [[ -f "${patch_file}" ]]; then
-    (cd "${VERILATOR_UVM_BASE}" && patch -p1 --forward < "${patch_file}" || true)
+  local seq_patch_file="${ROOT}/common/uvm/verilator_uvm.patch"
+  local relnotes_patch_file="${ROOT}/common/uvm/verilator_uvm_relnotes.patch"
+  local seq_target="${VERILATOR_UVM_BASE}/uvm-master/src/tlm1/uvm_sqr_connections.svh"
+  local root_target="${VERILATOR_UVM_BASE}/uvm-master/src/base/uvm_root.svh"
+  if [[ -f "${seq_patch_file}" && -f "${seq_target}" ]] && ! grep -q "local IMP m_imp;" "${seq_target}"; then
+    (cd "${VERILATOR_UVM_BASE}" && patch -s -p1 -N < "${seq_patch_file}")
+  fi
+  if [[ -f "${relnotes_patch_file}" && -f "${root_target}" ]] && ! grep -q '\$test\$plusargs("UVM_NO_RELNOTES")' "${root_target}"; then
+    (cd "${VERILATOR_UVM_BASE}" && patch -s -p1 -N < "${relnotes_patch_file}")
   fi
 }
 
@@ -119,11 +125,20 @@ if [[ "${REUSE_BUILD}" != "1" ]]; then
 fi
 
 JOBS="${VERILATOR_JOBS:-1}"
+STACK_CFLAGS="-Wno-deprecated-declarations"
+if [[ "$(uname -s)" == "Darwin" ]]; then
+  STACK_CHECK_HEADER="${OUT}/verilator_no_stack_check.h"
+  cat >"${STACK_CHECK_HEADER}" <<'EOF'
+#include <sys/resource.h>
+#define getrlimit(resource, rlim) (-1)
+EOF
+  STACK_CFLAGS="${STACK_CFLAGS} -include ${STACK_CHECK_HEADER}"
+fi
 
 BIN="${OUT}/obj_dir/Vtop"
 if [[ "${REUSE_BUILD}" != "1" || ! -x "${BIN}" ]]; then
-  ${VERILATOR_BIN} -sv --language 1800-2017 -Wno-fatal -Wno-PKGNODECL -Wno-UNDRIVEN -Wno-TIMESCALEMOD -Wno-SYNCASYNCNET -Wno-MISINDENT -Wno-WIDTHTRUNC -Wno-WIDTHEXPAND -Wno-CASTCONST -Wno-REALCVT -Wno-CONSTRAINTIGN -Wno-SELRANGE --bbox-unsup --timing --binary -j "${JOBS}" \
-    -CFLAGS "-Wno-deprecated-declarations" \
+  ${VERILATOR_BIN} -sv --language 1800-2017 -Wno-fatal -Wno-PKGNODECL -Wno-UNDRIVEN -Wno-TIMESCALEMOD -Wno-SYNCASYNCNET -Wno-MISINDENT -Wno-WIDTHTRUNC -Wno-WIDTHEXPAND -Wno-CASTCONST -Wno-REALCVT -Wno-CONSTRAINTIGN -Wno-SELRANGE --bbox-unsup --no-unlimited-stack --timing --binary -j "${JOBS}" \
+    -CFLAGS "${STACK_CFLAGS}" \
     --top-module top \
     +incdir+"${UVM_HOME}" \
     +define+UVM_NO_DPI \
@@ -142,13 +157,16 @@ EXTRA_ARGS=("$@")
 HAVE_TESTNAME=0
 HAVE_VERBOSITY=0
 HAVE_ASSERT_OFF=0
+HAVE_NO_RELNOTES=0
 for a in "${EXTRA_ARGS[@]}"; do
   [[ "$a" == +UVM_TESTNAME=* ]] && HAVE_TESTNAME=1
   [[ "$a" == +UVM_VERBOSITY=* ]] && HAVE_VERBOSITY=1
   [[ "$a" == +KVIPS_AHB_ASSERT_OFF* ]] && HAVE_ASSERT_OFF=1
+  [[ "$a" == +UVM_NO_RELNOTES ]] && HAVE_NO_RELNOTES=1
 done
 [[ "$HAVE_TESTNAME" -eq 0 ]] && EXTRA_ARGS+=("+UVM_TESTNAME=ahb_dut_smoke_test")
 [[ "$HAVE_VERBOSITY" -eq 0 ]] && EXTRA_ARGS+=("+UVM_VERBOSITY=UVM_LOW")
 [[ "$HAVE_ASSERT_OFF" -eq 0 ]] && EXTRA_ARGS+=("+KVIPS_AHB_ASSERT_OFF")
+[[ "$HAVE_NO_RELNOTES" -eq 0 ]] && EXTRA_ARGS+=("+UVM_NO_RELNOTES")
 
 "${BIN}" "${EXTRA_ARGS[@]}" | tee "${OUT}/run.log"

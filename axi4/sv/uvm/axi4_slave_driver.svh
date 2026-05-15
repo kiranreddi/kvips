@@ -156,7 +156,9 @@ class axi4_slave_driver #(
       `uvm_fatal(RID, "Missing cfg in config DB (key: cfg)")
     end
     vif = cfg.vif;
+`ifndef VERILATOR
     if (vif == null) `uvm_fatal(RID, "cfg.vif is null")
+`endif
     if (cfg.slave_mem_enable) mem = new("mem", cfg.slave_mem_bytes, cfg.slave_mem_base, cfg.slave_mem_wrap);
   endfunction
 

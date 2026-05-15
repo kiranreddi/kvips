@@ -155,7 +155,9 @@ class ahb_master_driver #(
       `uvm_fatal(RID, "Missing cfg in config DB (key: cfg)")
     end
     vif = cfg.vif;
+`ifndef VERILATOR
     if (vif == null) `uvm_fatal(RID, "cfg.vif is null")
+`endif
 
     data_valid = 0;
     drive_idle();
@@ -249,6 +251,9 @@ class ahb_master_driver #(
           vif.HPROT        <= cur_item.prot;
           if (HAS_HMASTLOCK) vif.HMASTLOCK <= cur_item.lock;
           vif.HTRANS       <= (cur_beat == 0) ? AHB_TRANS_NONSEQ : AHB_TRANS_SEQ;
+          if (cur_item.write && (cur_beat < cur_item.wdata.size())) begin
+            vif.HWDATA <= cur_item.wdata[cur_beat];
+          end
 
           // This beat becomes the data-phase beat in the next cycle.
           next_data_valid = 1;

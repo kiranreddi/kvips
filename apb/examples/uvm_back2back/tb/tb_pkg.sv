@@ -60,6 +60,10 @@ package tb_pkg;
     uvm_report_cb::add(null, c);
   end
 `endif
+`ifdef UVM_NO_DPI
+      uvm_root::get().set_report_severity_id_action(UVM_WARNING, "UVM/COMP/NAME", UVM_NO_ACTION);
+      uvm_root::get().set_report_severity_id_action(UVM_INFO, "UVM/COMP/NAMECHECK", UVM_NO_ACTION);
+`endif
 
       if (!uvm_config_db#(virtual interface apb_if #(ADDR_W, DATA_W, NSEL))::get(this, "", "vif", vif)) begin
         `uvm_fatal("APB_TB", "Missing vif in config DB (key: vif)")

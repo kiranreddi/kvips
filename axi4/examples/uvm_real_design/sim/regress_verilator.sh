@@ -23,6 +23,14 @@ SUMMARY_MD="${OUT_DIR}/summary.md"
   echo "|---|---:|---:|---:|---:|---:|---:|"
 } >"${SUMMARY_MD}"
 
+log_has_issue() {
+  local log="$1"
+  grep -Eq 'UVM/RELNOTES' "${log}" || \
+    grep -Eq '^(%Warning|%Error)' "${log}" || \
+    grep -Eq '^UVM_(WARNING|ERROR|FATAL)[[:space:]][^:]+@' "${log}" || \
+    grep -Eq '^UVM_(WARNING|ERROR|FATAL)[[:space:]]*:[[:space:]]*[1-9]' "${log}"
+}
+
 FIRST=1
 while IFS= read -r line || [[ -n "${line}" ]]; do
   case "${line}" in
@@ -34,15 +42,17 @@ while IFS= read -r line || [[ -n "${line}" ]]; do
   [[ -z "${test_name}" ]] && continue
   echo "=== Running ${test_name} ===" | tee -a "${REGRESS_LOG}"
   if [[ "${FIRST}" -eq 1 ]]; then
-    VERILATOR_REUSE_BUILD=0 "${SIM_DIR}/run_verilator.sh" +UVM_TESTNAME="${test_name}" | tee "${OUT_DIR}/${test_name}.log"
+    VERILATOR_REUSE_BUILD=0 "${SIM_DIR}/run_verilator.sh" +UVM_TESTNAME="${test_name}"
     FIRST=0
   else
-    VERILATOR_REUSE_BUILD=1 "${SIM_DIR}/run_verilator.sh" +UVM_TESTNAME="${test_name}" | tee "${OUT_DIR}/${test_name}.log"
+    VERILATOR_REUSE_BUILD=1 "${SIM_DIR}/run_verilator.sh" +UVM_TESTNAME="${test_name}"
   fi
   [[ -f "${OUT_DIR}/run.log" ]] && cp -f "${OUT_DIR}/run.log" "${OUT_DIR}/${test_name}.log"
   status="PASS"
-  if grep -Eq "^UVM_(FATAL|ERROR) .*@" "${OUT_DIR}/${test_name}.log" || \
-      grep -Eq "^%Error" "${OUT_DIR}/${test_name}.log"; then
+  if [[ -f "${OUT_DIR}/compile.log" ]] && log_has_issue "${OUT_DIR}/compile.log"; then
+    status="FAIL"
+  fi
+  if log_has_issue "${OUT_DIR}/${test_name}.log"; then
     echo "FAIL: ${test_name}" | tee -a "${REGRESS_LOG}"
     status="FAIL"
   else
@@ -69,6 +79,9 @@ while IFS= read -r line || [[ -n "${line}" ]]; do
     [[ -n "${rd_fallback}" ]] && rd_txns="${rd_fallback}"
   fi
   echo "| ${test_name} | ${status} | ${wr_txns} | ${rd_txns} | ${wr_err} | ${rd_mis} | ${rd_uninit} |" >> "${SUMMARY_MD}"
+  if [[ "${status}" == "FAIL" ]]; then
+    exit 1
+  fi
   echo "" >>"${REGRESS_LOG}"
 done <"${TESTLIST}"
 echo "Summary: ${SUMMARY_MD}" | tee -a "${REGRESS_LOG}"

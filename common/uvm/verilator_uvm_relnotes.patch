@@ -1,0 +1,13 @@
+diff --git a/uvm-master/src/base/uvm_root.svh b/uvm-master/src/base/uvm_root.svh
+index 7e77d94..7ef20c2 100644
+--- a/uvm-master/src/base/uvm_root.svh
++++ b/uvm-master/src/base/uvm_root.svh
+@@ -416,7 +416,7 @@ function void uvm_root::report_header(UVM_FILE file = 0);
+ 	srvr = uvm_report_server::get_server();
+ 	clp = uvm_cmdline_processor::get_inst();
+ 
+-	if (clp.get_arg_matches("+UVM_NO_RELNOTES", args)) return;
++	if (clp.get_arg_matches("+UVM_NO_RELNOTES", args) || $test$plusargs("UVM_NO_RELNOTES")) return;
+ 
+ 	if (!m_relnotes_done) begin
+ 	  q.push_back("\n  ***********       IMPORTANT RELEASE NOTES         ************\n");

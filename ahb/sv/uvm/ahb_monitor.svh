@@ -163,7 +163,9 @@ class ahb_monitor #(
       `uvm_fatal(RID, "Missing cfg in config DB (key: cfg)")
     end
     vif = cfg.vif;
+`ifndef VERILATOR
     if (vif == null) `uvm_fatal(RID, "cfg.vif is null")
+`endif
 
     if (!cfg.monitor_enable) begin
       // Keep component alive but inactive (avoids fork/join ordering surprises

@@ -99,7 +99,9 @@ class apb_monitor #(
       `uvm_fatal(RID, "Missing cfg in config DB (key: cfg)")
     end
     vif = cfg.vif;
+`ifndef VERILATOR
     if (vif == null) `uvm_fatal(RID, "cfg.vif is null")
+`endif
     cfg.apply_plusargs();
 
     sum_wr = 0;

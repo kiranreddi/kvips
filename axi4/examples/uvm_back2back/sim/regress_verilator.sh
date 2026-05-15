@@ -16,8 +16,15 @@ mkdir -p "${OUT_DIR}"
 REGRESS_LOG="${OUT_DIR}/regress.log"
 : >"${REGRESS_LOG}"
 
-export VERILATOR_REUSE_BUILD=1
+log_has_issue() {
+  local log="$1"
+  grep -Eq 'UVM/RELNOTES' "${log}" || \
+    grep -Eq '^(%Warning|%Error)' "${log}" || \
+    grep -Eq '^UVM_(WARNING|ERROR|FATAL)[[:space:]][^:]+@' "${log}" || \
+    grep -Eq '^UVM_(WARNING|ERROR|FATAL)[[:space:]]*:[[:space:]]*[1-9]' "${log}"
+}
 
+FIRST=1
 while IFS= read -r line || [[ -n "${line}" ]]; do
   case "${line}" in
     ""|\#*)
@@ -27,10 +34,20 @@ while IFS= read -r line || [[ -n "${line}" ]]; do
   test_name="$(echo "${line}" | awk '{print $1}')"
   [[ -z "${test_name}" ]] && continue
   echo "=== Running ${test_name} ===" | tee -a "${REGRESS_LOG}"
-  "${SIM_DIR}/run_verilator.sh" +UVM_TESTNAME="${test_name}" | tee "${OUT_DIR}/${test_name}.log"
-    if grep -Eq "^UVM_(FATAL|ERROR) @" "${OUT_DIR}/${test_name}.log" || \
-      grep -Eq "^%Error" "${OUT_DIR}/${test_name}.log"; then
+  if [[ "${FIRST}" -eq 1 ]]; then
+    VERILATOR_REUSE_BUILD=0 "${SIM_DIR}/run_verilator.sh" +UVM_TESTNAME="${test_name}"
+    FIRST=0
+  else
+    VERILATOR_REUSE_BUILD=1 "${SIM_DIR}/run_verilator.sh" +UVM_TESTNAME="${test_name}"
+  fi
+  [[ -f "${OUT_DIR}/run.log" ]] && cp -f "${OUT_DIR}/run.log" "${OUT_DIR}/${test_name}.log"
+  if [[ -f "${OUT_DIR}/compile.log" ]] && log_has_issue "${OUT_DIR}/compile.log"; then
     echo "FAIL: ${test_name}" | tee -a "${REGRESS_LOG}"
+    exit 1
+  fi
+  if log_has_issue "${OUT_DIR}/${test_name}.log"; then
+    echo "FAIL: ${test_name}" | tee -a "${REGRESS_LOG}"
+    exit 1
   else
     echo "PASS: ${test_name}" | tee -a "${REGRESS_LOG}"
   fi

@@ -1228,29 +1228,38 @@ class axi4_concurrent_rw_seq #(
     super.new(name);
   endfunction
 
+  task automatic drain_responses(
+    string label,
+    input int unsigned target,
+    ref int unsigned seen
+  );
+    axi4_item#(ADDR_W, DATA_W, ID_W, USER_W) rsp;
+    int unsigned idle_polls;
+    idle_polls = 0;
+    while (seen < target) begin
+      get_response(rsp);
+      if (rsp != null) begin
+        seen++;
+        idle_polls = 0;
+      end else begin
+        #100;
+        idle_polls++;
+      end
+      if (idle_polls > 100000) begin
+        `uvm_fatal(get_type_name(),
+          $sformatf("Timeout waiting for %s responses: seen=%0d target=%0d", label, seen, target))
+      end
+    end
+  endtask
+
   task body();
     axi4_item#(ADDR_W, DATA_W, ID_W, USER_W) wrs_b[$];
-    axi4_item#(ADDR_W, DATA_W, ID_W, USER_W) rsp;
     int unsigned issued_total;
     int unsigned rsp_seen;
-    bit send_done;
-    bit rsp_drain_done;
 
     issued_total = 0;
     rsp_seen = 0;
-    send_done = 0;
-    rsp_drain_done = 0;
-
-    fork
-      begin : rsp_drain
-        forever begin
-          if (send_done && (rsp_seen >= issued_total)) break;
-          get_response(rsp);
-          if (rsp != null) rsp_seen++;
-        end
-        rsp_drain_done = 1'b1;
-      end
-    join_none
+    set_response_queue_depth(-1);
 
     // Prefill region A with deterministic single-beat writes.
     for (int unsigned i = 0; i < num_prefill; i++) begin
@@ -1274,7 +1283,7 @@ class axi4_concurrent_rw_seq #(
     end
 
     // Ensure prefill writes completed before issuing dependent reads.
-    wait (rsp_seen >= issued_total);
+    drain_responses("prefill", issued_total, rsp_seen);
 
     // Mixed traffic: reads from A and writes to B.
     for (int unsigned k = 0; k < num_mixed; k++) begin
@@ -1325,7 +1334,7 @@ class axi4_concurrent_rw_seq #(
     end
 
     // Ensure all writes to B have completed before readback.
-    wait (rsp_seen >= issued_total);
+    drain_responses("mixed", issued_total, rsp_seen);
 
     // Readback all B writes (same shapes/addresses).
     for (int unsigned t = 0; t < wrs_b.size(); t++) begin
@@ -1345,9 +1354,7 @@ class axi4_concurrent_rw_seq #(
       issued_total++;
     end
 
-    send_done = 1'b1;
-    wait (rsp_seen >= issued_total);
-    wait (rsp_drain_done);
+    drain_responses("readback", issued_total, rsp_seen);
   endtask
 
 endclass

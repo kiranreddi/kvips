@@ -23,6 +23,14 @@ if [[ "${#TESTS[@]}" -eq 0 ]]; then
   exit 2
 fi
 
+log_has_issue() {
+  local log="$1"
+  grep -Eq 'UVM/RELNOTES' "${log}" || \
+    grep -Eq '^(%Warning|%Error)' "${log}" || \
+    grep -Eq '^UVM_(WARNING|ERROR|FATAL)[[:space:]][^:]+@' "${log}" || \
+    grep -Eq '^UVM_(WARNING|ERROR|FATAL)[[:space:]]*:[[:space:]]*[1-9]' "${log}"
+}
+
 SUMMARY_MD="${OUT}/summary.md"
 {
   echo "# APB DUT-Design Verilator Summary"
@@ -35,14 +43,18 @@ FIRST=1
 for t in "${TESTS[@]}"; do
   echo "==== ${t} ===="
   status="PASS"
+  LOG="${OUT}/${t}.log"
   if [[ "${FIRST}" -eq 1 ]]; then
     VERILATOR_REUSE_BUILD=0 "${HERE}/run_verilator.sh" +UVM_TESTNAME="${t}" "$@" || status="FAIL"
     FIRST=0
   else
     VERILATOR_REUSE_BUILD=1 "${HERE}/run_verilator.sh" +UVM_TESTNAME="${t}" "$@" || status="FAIL"
   fi
-  if grep -Eq "^UVM_(FATAL|ERROR) .*@" "${OUT}/run.log" || \
-     grep -Eq "^%Error" "${OUT}/run.log"; then
+  [[ -f "${OUT}/run.log" ]] && cp -f "${OUT}/run.log" "${LOG}"
+  if [[ -f "${OUT}/compile.log" ]] && log_has_issue "${OUT}/compile.log"; then
+    status="FAIL"
+  fi
+  if log_has_issue "${LOG}"; then
     status="FAIL"
   fi
   sb_line="$(grep -E "APB SB summary:" "${OUT}/run.log" | tail -n1 || true)"
@@ -64,6 +76,12 @@ for t in "${TESTS[@]}"; do
     [[ -n "${rd_fallback}" ]] && rd="${rd_fallback}"
   fi
   echo "| ${t} | ${status} | ${wr} | ${rd} | ${err} | ${mis} |" >> "${SUMMARY_MD}"
+  if [[ "${status}" == "FAIL" ]]; then
+    echo "FAIL: ${t}"
+    exit 1
+  else
+    echo "PASS: ${t}"
+  fi
 done
 
 echo "DONE. See ${OUT}/run.log"

@@ -16,6 +16,7 @@
   bit kvips_ahb_known_en;
   bit kvips_ahb_strict_en;
   bit kvips_ahb_full_en;
+  bit kvips_ahb_prev_not_ready;
 
   initial begin
     string s;
@@ -41,13 +42,18 @@
   wire kvips_ahb_xfer_valid = (cb_mon.HTRANS[1] == 1'b1); // NONSEQ/SEQ
 `endif
 
-  // If HREADY is low, master must hold address/control stable.
+  always @(posedge HCLK or negedge HRESETn) begin
+    if (!HRESETn) kvips_ahb_prev_not_ready <= 1'b0;
+    else          kvips_ahb_prev_not_ready <= !HREADY;
+  end
+
+  // Across extended wait states, master must hold address/control stable.
   property p_hold_ctrl_when_stalled;
     @(`AHB_CLK) disable iff (!HRESETn || !kvips_ahb_assert_en)
 `ifdef VERILATOR
-      (!HREADY) |-> ($stable(HADDR) && $stable(HTRANS) && $stable(HWRITE) && $stable(HSIZE) && $stable(HBURST) && $stable(HPROT) && $stable(HSEL));
+      (!HREADY && kvips_ahb_prev_not_ready) |-> ($stable(HADDR) && $stable(HTRANS) && $stable(HWRITE) && $stable(HSIZE) && $stable(HBURST) && $stable(HPROT) && $stable(HSEL));
 `else
-      (!cb_mon.HREADY) |-> ($stable(cb_mon.HADDR) && $stable(cb_mon.HTRANS) && $stable(cb_mon.HWRITE) && $stable(cb_mon.HSIZE) && $stable(cb_mon.HBURST) && $stable(cb_mon.HPROT) && $stable(cb_mon.HSEL));
+      (!cb_mon.HREADY && kvips_ahb_prev_not_ready) |-> ($stable(cb_mon.HADDR) && $stable(cb_mon.HTRANS) && $stable(cb_mon.HWRITE) && $stable(cb_mon.HSIZE) && $stable(cb_mon.HBURST) && $stable(cb_mon.HPROT) && $stable(cb_mon.HSEL));
 `endif
   endproperty
   a_hold_ctrl_when_stalled: assert property (p_hold_ctrl_when_stalled);
