@@ -60,6 +60,7 @@ class ahb_slave_driver #(
   ctrl_t ctrl_data;   // currently in data phase (when valid)
 
   int unsigned stall_rem; // remaining wait-state cycles for current data beat
+  bit          err_pending; // second cycle of a two-cycle ERROR response
 
   `uvm_component_param_utils(ahb_slave_driver#(ADDR_W, DATA_W, HRESP_W, HAS_HMASTLOCK))
 
@@ -152,6 +153,7 @@ class ahb_slave_driver #(
     ctrl_pipe = clear_ctrl();
     ctrl_data = clear_ctrl();
     stall_rem = 0;
+    err_pending = 0;
 
     vif.HREADYOUT <= 1'b1;
     vif.HRESP     <= resp_okay();
@@ -166,6 +168,7 @@ class ahb_slave_driver #(
       ctrl_pipe = clear_ctrl();
       ctrl_data = clear_ctrl();
       stall_rem = 0;
+      err_pending = 0;
     end
 
     forever begin
@@ -175,13 +178,19 @@ class ahb_slave_driver #(
         ctrl_pipe = clear_ctrl();
         ctrl_data = clear_ctrl();
         stall_rem = 0;
+        err_pending = 0;
         vif.HREADYOUT <= 1'b1;
         vif.HRESP     <= resp_okay();
         vif.HRDATA    <= '0;
         continue;
       end
 
-      if (ctrl_data.valid && (stall_rem != 0)) begin
+      if (ctrl_data.valid && err_pending) begin
+        // AHB two-cycle ERROR response (cycle 2), then shift below.
+        vif.HREADYOUT <= 1'b1;
+        vif.HRESP     <= resp_error();
+        err_pending = 0;
+      end else if (ctrl_data.valid && (stall_rem != 0)) begin
         // Stall cycle: keep response/data stable and re-open HREADYOUT for the
         // cycle in which the stalled data phase will complete.
         if (stall_rem > 1) begin
@@ -192,14 +201,16 @@ class ahb_slave_driver #(
           vif.HREADYOUT <= 1'b1;
         end
         continue;
-      end
-
-      // Ready to complete current beat (if any) and accept next control.
-      // Complete data phase for ctrl_data. Read response/data were prepared
-      // when this beat entered its data phase so they are stable before HREADY.
-      if (ctrl_data.valid) begin
+      end else if (ctrl_data.valid) begin
         bit err = cfg.addr_in_error_range(ctrl_data.addr);
-        if (ctrl_data.write && !err) begin
+        if (err) begin
+          // AHB two-cycle ERROR response (cycle 1).
+          vif.HREADYOUT <= 1'b0;
+          vif.HRESP     <= resp_error();
+          vif.HRDATA    <= '0;
+          err_pending = 1'b1;
+          continue;
+        end else if (ctrl_data.write) begin
           write_bytes(ctrl_data.addr, ctrl_data.size, `AHB_S_CB.HWDATA);
         end
       end
