@@ -198,9 +198,8 @@ kvips/
 │   ├── code-review.md
 │   └── faq.md
 ├── assets/                    # CSS/JS for GitHub Pages
-├── .github/workflows/         # CI/CD workflows
+├── .github/workflows/         # GitHub Actions CI/CD
 ├── .pre-commit-config.yaml   # Verilator pre-commit hooks
-├── .circleci/                 # CircleCI configuration
 └── README.md                  # This file
 ```
 
@@ -309,10 +308,12 @@ seq.start(env.axi_master.sequencer);
 
 ### CI/CD Pipeline
 
-- ✅ **Verilator** — Pre-commit linting for syntax checks
-- ✅ **GitHub Actions** — Automated compilation checks on PR
-- ✅ **CircleCI** — Multi-simulator regression testing
-- ✅ **GitHub Pages** — Auto-deployed documentation
+All automation runs on **GitHub Actions**:
+
+- ✅ **Verilator Lint** — Portable subset syntax checks on SV changes
+- ✅ **Verilator Regressions** — AXI4, APB, and AHB example suites on push/PR
+- ✅ **GitHub Pages** — Jekyll build and auto-deploy on `main`
+- ✅ **Pre-commit** — Local Verilator lint hook (optional)
 
 ---
 
