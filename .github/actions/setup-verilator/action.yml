@@ -1,0 +1,26 @@
+name: Setup Verilator
+description: Build and install a pinned Verilator release from source
+
+runs:
+  using: composite
+  steps:
+    - name: Install build dependencies
+      shell: bash
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y ccache make autoconf g++ flex bison git perl help2man libfl-dev
+
+    - name: Build Verilator
+      shell: bash
+      run: |
+        set -euo pipefail
+        VERILATOR_TAG="$(tr -d '[:space:]' < "${GITHUB_WORKSPACE}/.github/verilator-version")"
+        echo "Installing Verilator ${VERILATOR_TAG}"
+        git clone https://github.com/verilator/verilator.git /tmp/verilator
+        cd /tmp/verilator
+        git checkout "${VERILATOR_TAG}"
+        autoconf
+        ./configure
+        make -j"$(nproc)"
+        sudo make install
+        verilator --version

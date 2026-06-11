@@ -223,7 +223,6 @@ class axi4_master_driver #(
       vif.awvalid <= 1'b0;
 
       outstanding_w++;
-      wr_wait_b[ctx.tr.id].push_back(ctx);
       wr_w_q.push_back(ctx);
     end
   endtask
@@ -255,6 +254,7 @@ class axi4_master_driver #(
         @(negedge vif.aclk);
         vif.wvalid <= 1'b0;
       end
+      wr_wait_b[ctx.tr.id].push_back(ctx);
     end
   endtask
 
@@ -324,12 +324,12 @@ class axi4_master_driver #(
       vif.arregion <= ctx.tr.region;
       vif.aruser   <= ctx.tr.user;
       vif.arvalid  <= 1'b1;
-      rd_wait_r[ctx.tr.id].push_back(ctx);
       wait_ar_handshake();
       @(negedge vif.aclk);
       vif.arvalid <= 1'b0;
 
       outstanding_r++;
+      rd_wait_r[ctx.tr.id].push_back(ctx);
     end
   endtask
 

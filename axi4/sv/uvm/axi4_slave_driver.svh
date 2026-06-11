@@ -383,7 +383,7 @@ class axi4_slave_driver #(
         // Clear this ID's reservation after an exclusive write attempt.
         if (is_excl) excl_clear_reservation(cur_aw.id);
 
-        // Exclusive write updates memory only if successful.
+        // Exclusive write updates memory only if the exclusive access succeeded.
         if (cfg.slave_mem_enable) begin
           if (!is_err) begin
             if (is_excl) begin

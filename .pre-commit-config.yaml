@@ -4,7 +4,7 @@
 repos:
   # Verilator linting for SystemVerilog
   - repo: https://github.com/verilator/verilator
-    rev: v5.026  # Use the latest stable version
+    rev: v5.048
     hooks:
       - id: verilator
         name: Verilator Lint

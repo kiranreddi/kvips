@@ -9,6 +9,8 @@ on:
       - '**.v'
       - '**.vh'
       - '.github/workflows/verilator-lint.yml'
+      - '.github/verilator-version'
+      - '.github/actions/setup-verilator/**'
   pull_request:
     branches: [ main ]
     paths:
@@ -27,17 +29,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup Verilator
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y ccache make autoconf g++ flex bison git perl help2man libfl-dev
-          git clone https://github.com/verilator/verilator.git /tmp/verilator
-          cd /tmp/verilator
-          git checkout ad85d8981
-          autoconf
-          ./configure
-          make -j$(nproc)
-          sudo make install
-          verilator --version
+        uses: ./.github/actions/setup-verilator
 
       - name: Run Verilator Lint
         run: |

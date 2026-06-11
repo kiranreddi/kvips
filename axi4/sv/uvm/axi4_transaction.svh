@@ -77,13 +77,13 @@ class axi4_item #(
   // FIXED does not increment address and is exempt.
   constraint c_no_4kb_cross {
     if (!allow_4kb_cross) {
-      if (burst != AXI4_BURST_FIXED) !axi4_crosses_4kb(longint'(addr), int'(size), int'(len));
+      if (burst != AXI4_BURST_FIXED) !axi4_crosses_4kb({1'b0, addr}, int'(size), int'(len));
     }
   }
 
   // Enforce WRAP start-address alignment to the wrap container.
   constraint c_wrap_align {
-    if (!allow_wrap_misalign && (burst == AXI4_BURST_WRAP)) axi4_wrap_addr_aligned(longint'(addr), int'(size), int'(len));
+    if (!allow_wrap_misalign && (burst == AXI4_BURST_WRAP)) axi4_wrap_addr_aligned({1'b0, addr}, int'(size), int'(len));
   }
 
   function new(string name = "axi4_item");

@@ -19,7 +19,7 @@ RUN apt-get update && apt-get install -y \
 
 RUN git clone https://github.com/verilator/verilator.git /tmp/verilator \
     && cd /tmp/verilator \
-    && git checkout ad85d8981 \
+    && git checkout v5.048 \
     && autoconf \
     && ./configure \
     && make -j$(nproc) \
