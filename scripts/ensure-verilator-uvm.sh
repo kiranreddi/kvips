@@ -21,20 +21,35 @@ apply_verilator_uvm_patch() {
   local seq_target="${VERILATOR_UVM_BASE}/${VERILATOR_UVM_DIR}/src/tlm1/uvm_sqr_connections.svh"
   local root_target="${VERILATOR_UVM_BASE}/${VERILATOR_UVM_DIR}/src/base/uvm_root.svh"
   if [[ -f "${seq_patch_file}" && -f "${seq_target}" ]] && ! grep -q "local IMP m_imp;" "${seq_target}"; then
-    (cd "${VERILATOR_UVM_BASE}" && patch -s -p1 -N < "${seq_patch_file}")
+    (cd "${VERILATOR_UVM_BASE}" && patch -s -p1 -N < "${seq_patch_file}") || {
+      echo "ERROR: failed to apply ${seq_patch_file} to Verilator UVM" >&2
+      return 1
+    }
   fi
   if [[ -f "${relnotes_patch_file}" && -f "${root_target}" ]] && ! grep -q '\$test\$plusargs("UVM_NO_RELNOTES")' "${root_target}"; then
-    (cd "${VERILATOR_UVM_BASE}" && patch -s -p1 -N < "${relnotes_patch_file}")
+    (cd "${VERILATOR_UVM_BASE}" && patch -s -p1 -N < "${relnotes_patch_file}") || {
+      echo "ERROR: failed to apply ${relnotes_patch_file} to Verilator UVM" >&2
+      return 1
+    }
   fi
 }
 
 normalize_verilator_uvm_tree() {
-  local extracted
-  extracted="$(tar -tzf "${VERILATOR_UVM_TARBALL}" | head -1 | cut -d/ -f1)"
-  if [[ -n "${extracted}" && "${extracted}" != "${VERILATOR_UVM_DIR}" ]]; then
-    rm -rf "${VERILATOR_UVM_BASE}/${VERILATOR_UVM_DIR}"
-    mv "${VERILATOR_UVM_BASE}/${extracted}" "${VERILATOR_UVM_BASE}/${VERILATOR_UVM_DIR}"
+  # GitHub archive tarballs unpack as uvm-<commit>/; avoid "tar | head" (SIGPIPE + pipefail).
+  if [[ -d "${VERILATOR_UVM_BASE}/${VERILATOR_UVM_DIR}/src" ]]; then
+    return 0
   fi
+  local extracted="uvm-${VERILATOR_UVM_COMMIT}"
+  if [[ -d "${VERILATOR_UVM_BASE}/${extracted}" ]]; then
+    mv "${VERILATOR_UVM_BASE}/${extracted}" "${VERILATOR_UVM_BASE}/${VERILATOR_UVM_DIR}"
+    return 0
+  fi
+  local dir
+  for dir in "${VERILATOR_UVM_BASE}"/uvm-*; do
+    [[ -d "${dir}" ]] || continue
+    mv "${dir}" "${VERILATOR_UVM_BASE}/${VERILATOR_UVM_DIR}"
+    return 0
+  done
 }
 
 ensure_verilator_uvm() {
