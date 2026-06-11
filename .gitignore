@@ -3,6 +3,7 @@
 # Local agent instructions (do not commit)
 AGENTS.md
 agents.md
+REVIEW_HANDOFF.md
 
 # Gap Analysis - Local documentation only
 axi4/docs/avery_gap_analysis.md

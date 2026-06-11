@@ -3,8 +3,8 @@
 
 title: KVIPS
 description: >-
-  Premium SystemVerilog UVM Verification IP Library - Industry-grade 
-  protocol VIPs tested with Siemens Questa, Synopsys VCS, and Cadence Xcelium
+  Open-source SystemVerilog UVM verification IP for AMBA AXI4, APB, and AHB.
+  Verilator example regressions run in CI; commercial simulator scripts are provided.
 
 # GitHub Pages will set these automatically
 baseurl: "/kvips" # Project pages baseurl

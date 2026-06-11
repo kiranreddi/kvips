@@ -9,6 +9,11 @@ module axi4_lint_top;
   logic aclk;
   logic areset_n;
 
+  initial begin
+    aclk = 1'b0;
+    areset_n = 1'b1;
+  end
+
   axi4_if #(
     .ADDR_W(32),
     .DATA_W(64),

@@ -8,26 +8,8 @@ mkdir -p "${OUT}"
 ORIG_FILELIST="${ROOT}/apb/examples/uvm_back2back/sim/filelist.f"
 ABS_FILELIST="${OUT}/filelist.abs.f"
 
-UVM_TARBALL_URL="https://www.accellera.org/images/downloads/standards/uvm/Accellera-1800.2-2017-1.0.tar.gz"
-UVM_BASE="${ROOT}/third_party/uvm"
-UVM_SRC_DEFAULT="${UVM_BASE}/1800.2-2017-1.0/src"
-
-VERILATOR_UVM_URL="${VERILATOR_UVM_URL:-https://github.com/verilator/uvm/archive/refs/heads/master.tar.gz}"
-VERILATOR_UVM_BASE="${ROOT}/third_party/uvm_verilator"
-VERILATOR_UVM_SRC_DEFAULT="${VERILATOR_UVM_BASE}/uvm-master/src"
-
-apply_verilator_uvm_patch() {
-  local seq_patch_file="${ROOT}/common/uvm/verilator_uvm.patch"
-  local relnotes_patch_file="${ROOT}/common/uvm/verilator_uvm_relnotes.patch"
-  local seq_target="${VERILATOR_UVM_BASE}/uvm-master/src/tlm1/uvm_sqr_connections.svh"
-  local root_target="${VERILATOR_UVM_BASE}/uvm-master/src/base/uvm_root.svh"
-  if [[ -f "${seq_patch_file}" && -f "${seq_target}" ]] && ! grep -q "local IMP m_imp;" "${seq_target}"; then
-    (cd "${VERILATOR_UVM_BASE}" && patch -s -p1 -N < "${seq_patch_file}")
-  fi
-  if [[ -f "${relnotes_patch_file}" && -f "${root_target}" ]] && ! grep -q '\$test\$plusargs("UVM_NO_RELNOTES")' "${root_target}"; then
-    (cd "${VERILATOR_UVM_BASE}" && patch -s -p1 -N < "${relnotes_patch_file}")
-  fi
-}
+# shellcheck disable=SC1091
+source "${ROOT}/scripts/ensure-verilator-uvm.sh"
 
 make_abs_filelist() {
   local in="$1"
@@ -60,50 +42,12 @@ make_abs_filelist() {
   done <"${in}"
 }
 
-ensure_uvm() {
-  if [[ -n "${UVM_HOME:-}" ]]; then
-    return 0
-  fi
-  if [[ "${UVM_USE_VERILATOR:-1}" == "1" ]]; then
-    if [[ -d "${VERILATOR_UVM_SRC_DEFAULT}" ]]; then
-      export UVM_HOME="${VERILATOR_UVM_SRC_DEFAULT}"
-      apply_verilator_uvm_patch
-      return 0
-    fi
-    mkdir -p "${VERILATOR_UVM_BASE}"
-    local vtarball="${VERILATOR_UVM_BASE}/uvm-master.tar.gz"
-    if [[ ! -f "${vtarball}" ]]; then
-      echo "Downloading Verilator UVM from ${VERILATOR_UVM_URL}" >&2
-      curl -L -o "${vtarball}" "${VERILATOR_UVM_URL}"
-    fi
-    echo "Extracting Verilator UVM into ${VERILATOR_UVM_BASE}" >&2
-    tar -xvzf "${vtarball}" -C "${VERILATOR_UVM_BASE}"
-    export UVM_HOME="${VERILATOR_UVM_SRC_DEFAULT}"
-    apply_verilator_uvm_patch
-    return 0
-  fi
-  if [[ -d "${UVM_SRC_DEFAULT}" ]]; then
-    export UVM_HOME="${UVM_SRC_DEFAULT}"
-    return 0
-  fi
-
-  mkdir -p "${UVM_BASE}"
-  local tarball="${UVM_BASE}/Accellera-1800.2-2017-1.0.tar.gz"
-  if [[ ! -f "${tarball}" ]]; then
-    echo "Downloading UVM from ${UVM_TARBALL_URL}" >&2
-    curl -L -o "${tarball}" "${UVM_TARBALL_URL}"
-  fi
-  echo "Extracting UVM into ${UVM_BASE}" >&2
-  tar -xvzf "${tarball}" -C "${UVM_BASE}"
-  export UVM_HOME="${UVM_SRC_DEFAULT}"
-}
-
 if [[ ! -f "${ORIG_FILELIST}" ]]; then
   echo "ERROR: missing filelist: ${ORIG_FILELIST}"
   exit 2
 fi
 
-ensure_uvm
+ensure_verilator_uvm
 if [[ ! -d "${UVM_HOME}" ]]; then
   echo "ERROR: UVM_HOME not found: ${UVM_HOME}" >&2
   exit 2

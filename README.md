@@ -24,14 +24,14 @@
 
 ## 🎯 Overview
 
-KVIPS is a comprehensive, production-ready verification IP suite built with SystemVerilog and UVM, designed for semiconductor verification engineers. Each VIP provides:
+KVIPS is an open-source SystemVerilog UVM verification IP suite for AMBA protocols. Each VIP provides:
 
-- ✅ **Industry-standard compliance** — Full protocol adherence with built-in assertions
-- 🔧 **Highly configurable** — Extensive parameterization for diverse DUT scenarios  
-- 📊 **Rich diagnostics** — Transaction logging, coverage, and debug features
-- 🚀 **Multi-simulator support** — Tested on Siemens Questa, Synopsys VCS, Cadence Xcelium, and Verilator (example regressions)
-- 🎓 **Well-documented** — Comprehensive guides, examples, and best practices
-- 🧪 **Battle-tested** — Used in real silicon projects at leading semiconductor companies
+- **Protocol checkers** — SVA assertions and scoreboard-backed example environments
+- **Configurable agents** — Parameterized interfaces, sequences, and runtime plusargs
+- **Diagnostics** — Transaction logging, coverage hooks, and example regressions
+- **Verilator CI** — Back2back and DUT example suites run in GitHub Actions (see badges)
+- **Commercial simulator scripts** — Questa, VCS, and Xcelium example flows are provided; validate in your environment
+- **Documentation** — Guides and integration examples under [GitHub Pages](https://kiranreddi.github.io/kvips/)
 
 ---
 
@@ -39,9 +39,9 @@ KVIPS is a comprehensive, production-ready verification IP suite built with Syst
 
 | Protocol | Status | Version | Description | Documentation |
 |----------|--------|---------|-------------|---------------|
-| **AXI4 Full** | ✅ Stable | v1.0 | Complete AMBA AXI4 master/slave agents with pipelined transactions, assertions, and scoreboard | [📖 AXI4 VIP Guide](https://kiranreddi.github.io/kvips/docs/axi4-vip/) |
-| **APB** | ✅ Stable | v1.0 | AMBA APB3/APB4 master/slave agents for register access (single-image, runtime APB3/APB4 switch) | [📖 APB VIP Guide](https://kiranreddi.github.io/kvips/docs/apb-vip/) |
-| **AHB** | ✅ Stable | v1.0 | AMBA AHB-Lite/AHB Full master/slave agents with stalls, bursts, assertions, coverage, scoreboard | [📖 AHB VIP Guide](https://kiranreddi.github.io/kvips/docs/ahb-vip/) |
+| **AXI4 Full** | Example-tested | v0.1 | AXI4 master/slave agents, assertions, scoreboard examples; Verilator regressions in CI | [📖 AXI4 VIP Guide](https://kiranreddi.github.io/kvips/docs/axi4-vip/) |
+| **APB** | Example-tested | v0.1 | APB3/APB4 master/slave agents (runtime APB3/APB4 switch); Verilator regressions in CI | [📖 APB VIP Guide](https://kiranreddi.github.io/kvips/docs/apb-vip/) |
+| **AHB** | Example-tested | v0.1 | AHB-Lite oriented agents with wait states, bursts, assertions; AHB Full is partial | [📖 AHB VIP Guide](https://kiranreddi.github.io/kvips/docs/ahb-vip/) |
 | **PCIe** | 📋 Planned | - | PCIe Gen3/Gen4/Gen5 with TLP generation | - |
 | **USB 3.x** | 📋 Planned | - | USB 3.0/3.1/3.2 protocol layers | - |
 
@@ -78,11 +78,9 @@ KVIPS is a comprehensive, production-ready verification IP suite built with Syst
 <td>
 
 ### 🛠️ **Tooling**
-- Siemens Questa 2025.3_2
-- Synopsys VCS 2025.06_1
-- Cadence Xcelium 25.03.007
-- Verilator 5.x (simulation + lint)
-- GitHub Actions CI/CD
+- Verilator 5.048 (CI regressions + portable lint)
+- GitHub Actions (lint, regressions, Pages)
+- Example scripts for Questa, VCS, and Xcelium (local validation required)
 
 </td>
 <td>
@@ -294,26 +292,25 @@ seq.start(env.axi_master.sequencer);
 | **Coverage** | ⭐⭐⭐⭐☆ 4/5 | Transaction + assertions |
 | **Documentation** | ⭐⭐⭐⭐⭐ 5/5 | Comprehensive guides |
 
-**Overall Rating: 4.5/5** — Production-ready with minor enhancements
-
-> Detailed analysis in [Code Review Document](https://kiranreddi.github.io/kvips/docs/code-review/)
+> Self-assessment and gap notes: [Code Review Document](https://kiranreddi.github.io/kvips/docs/code-review/)
 
 ### Simulator Compatibility
 
-| Simulator | Version | Status | Notes |
-|-----------|---------|--------|-------|
-| Siemens Questa | 2025.3_2 | ✅ Passed | Full support, optimized |
-| Synopsys VCS | 2025.06_1 | ✅ Passed | Full support, UCLI debug |
-| Cadence Xcelium | 25.03.007 | ✅ Passed | Full support, low-power |
+| Simulator | Version (examples) | CI status | Notes |
+|-----------|-------------------|-----------|-------|
+| Verilator | 5.048 | Regressions + lint in GitHub Actions | Primary open-source validation path |
+| Siemens Questa | 2025.3_2 | Scripts provided | Run `make -C <proto>/examples questa` locally |
+| Synopsys VCS | 2025.06_1 | Scripts provided | Run `make -C <proto>/examples vcs` locally |
+| Cadence Xcelium | 25.03.007 | Scripts provided | Run `make -C <proto>/examples xcelium` locally |
 
 ### CI/CD Pipeline
 
 All automation runs on **GitHub Actions**:
 
-- ✅ **Verilator Lint** — Portable subset syntax checks on SV changes
-- ✅ **Verilator Regressions** — AXI4, APB, and AHB example suites on push/PR
-- ✅ **GitHub Pages** — Jekyll build and auto-deploy on `main`
-- ✅ **Pre-commit** — Local Verilator lint hook (optional)
+- **Verilator Lint** — Blocking portable lint for AXI4, APB, and AHB interface subsets (`make lint`)
+- **Verilator Regressions** — AXI4, APB, and AHB example suites on push/PR
+- **GitHub Pages** — Jekyll build and auto-deploy on `main`
+- **Local** — `make test-smoke`, `make test-verilator`, `make docs-build`, `make clean-all`
 
 ---
 
