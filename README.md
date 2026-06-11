@@ -395,7 +395,7 @@ KVIPS is released under the **MIT License**, allowing free use in both commercia
 ```
 MIT License
 
-Copyright (c) 2026 Kiran Reddi
+Copyright (c) 2026 Kiran Tathekalva
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
