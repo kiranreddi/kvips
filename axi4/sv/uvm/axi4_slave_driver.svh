@@ -442,6 +442,11 @@ class axi4_slave_driver #(
         wait_reset_release();
         continue;
       end
+      if (cfg.slave_force_aw_stall) begin
+        vif.awready <= 1'b0;
+        @(posedge vif.aclk);
+        continue;
+      end
       while ((cfg.slave_max_outstanding_wr != 0) &&
              (outstanding_w >= cfg.slave_max_outstanding_wr)) begin
         if (vif.areset_n !== 1'b1) break;

@@ -25,6 +25,10 @@ Common single-test usage (from repo root):
 Regression list:
 - `kvips/axi4/examples/uvm_back2back/sim/tests_questa.list`
 - Requirement coverage and open gaps: `kvips/axi4/docs/axi4_spec_coverage.md`
+- Coverage targets and simulator-neutral replay input: `kvips/axi4/docs/coverage_targets.md`
+
+AXI4-Lite is kept as a distinct, standalone interface/example under
+`kvips/axi4_lite/`; it is not represented by constraining the AXI4 Full agent.
 
 ## Repository layout
 - `kvips/axi4/sv/if/` : `axi4_if` interface + modports + included SVA

@@ -49,6 +49,7 @@ class axi4_protocol_checker #(
   longint unsigned ar_hs;
   longint unsigned r_hs;
   longint unsigned checker_errors;
+  longint unsigned sideband_errors;
 
   `uvm_component_param_utils(axi4_protocol_checker#(ADDR_W, DATA_W, ID_W, USER_W))
 
@@ -84,6 +85,34 @@ class axi4_protocol_checker #(
     `uvm_error(RID, msg)
   endfunction
 
+  function void check_sidebands(bit is_write);
+    logic [2:0] prot_v;
+    logic [3:0] cache_v;
+    logic [3:0] qos_v;
+    logic [3:0] region_v;
+    if (!cfg.sideband_policy_enable) return;
+    prot_v   = is_write ? vif.awprot   : vif.arprot;
+    cache_v  = is_write ? vif.awcache  : vif.arcache;
+    qos_v    = is_write ? vif.awqos    : vif.arqos;
+    region_v = is_write ? vif.awregion : vif.arregion;
+    if (!cfg.sideband_prot_allow_mask[prot_v]) begin
+      sideband_errors++;
+      `uvm_error(RID, $sformatf("%sPROT value %0d rejected by configured policy", is_write ? "AW" : "AR", prot_v))
+    end
+    if (!cfg.sideband_cache_allow_mask[cache_v]) begin
+      sideband_errors++;
+      `uvm_error(RID, $sformatf("%sCACHE value %0d rejected by configured policy", is_write ? "AW" : "AR", cache_v))
+    end
+    if (!cfg.sideband_qos_allow_mask[qos_v]) begin
+      sideband_errors++;
+      `uvm_error(RID, $sformatf("%sQOS value %0d rejected by configured policy", is_write ? "AW" : "AR", qos_v))
+    end
+    if (!cfg.sideband_region_allow_mask[region_v]) begin
+      sideband_errors++;
+      `uvm_error(RID, $sformatf("%sREGION value %0d rejected by configured policy", is_write ? "AW" : "AR", region_v))
+    end
+  endfunction
+
   function void complete_write_burst(int unsigned beats);
     aw_state_t aw;
     if (aw_q.size() != 0) begin
@@ -103,6 +132,7 @@ class axi4_protocol_checker #(
     aw.id = vif.awid;
     aw.beats = int'(vif.awlen) + 1;
     aw_hs++;
+    check_sidebands(1'b1);
     // W is an independent channel.  If a complete W burst arrived before AW,
     // associate it now; otherwise retain the address in AXI AW order.
     if ((early_w_bursts.size() != 0) && !w_active && (aw_q.size() == 0)) begin
@@ -143,6 +173,7 @@ class axi4_protocol_checker #(
     rd.beats_left = int'(vif.arlen) + 1;
     rd_q[vif.arid].push_back(rd);
     ar_hs++;
+    check_sidebands(1'b0);
   endfunction
 
   function void accept_r();
@@ -187,8 +218,8 @@ class axi4_protocol_checker #(
   endtask
 
   function void report_phase(uvm_phase phase);
-    `uvm_info(RID, $sformatf("Channel checker summary: AW=%0d W=%0d B=%0d AR=%0d R=%0d errors=%0d",
-                             aw_hs, w_hs, b_hs, ar_hs, r_hs, checker_errors), UVM_LOW)
+    `uvm_info(RID, $sformatf("Channel checker summary: AW=%0d W=%0d B=%0d AR=%0d R=%0d errors=%0d sideband_errors=%0d",
+                             aw_hs, w_hs, b_hs, ar_hs, r_hs, checker_errors, sideband_errors), UVM_LOW)
   endfunction
 
 endclass

@@ -1321,6 +1321,166 @@ class axi4_exclusive_fail_seq #(
 
 endclass
 
+class axi4_exclusive_cross_id_seq #(
+  int ADDR_W = 32,
+  int DATA_W = 64,
+  int ID_W   = 4,
+  int USER_W = 1
+) extends axi4_base_seq#(ADDR_W, DATA_W, ID_W, USER_W);
+
+  rand logic [ADDR_W-1:0] addr = 32'h3800;
+
+  `uvm_object_param_utils(axi4_exclusive_cross_id_seq#(ADDR_W, DATA_W, ID_W, USER_W))
+
+  function new(string name = "axi4_exclusive_cross_id_seq");
+    super.new(name);
+  endfunction
+
+  task body();
+    axi4_item#(ADDR_W, DATA_W, ID_W, USER_W) seed, exrd, other_wr, exwr, rd;
+    logic [DATA_W-1:0] seed_data;
+
+    seed = new("seed");
+    seed.is_write = 1'b1; seed.id = '0; seed.addr = addr; seed.len = 0;
+    seed.size = $clog2(DATA_W/8); seed.burst = AXI4_BURST_INCR;
+    seed.allocate_payload(); seed.data[0] = {$urandom(), $urandom()};
+    if (DATA_W <= 32) seed.data[0] = $urandom();
+    seed.strb[0] = '1; seed_data = seed.data[0];
+    start_item(seed); finish_item(seed);
+
+    exrd = new("exrd");
+    exrd.is_write = 1'b0; exrd.lock = 1'b1; exrd.id = 1; exrd.addr = addr;
+    exrd.len = 0; exrd.size = $clog2(DATA_W/8); exrd.burst = AXI4_BURST_INCR;
+    exrd.allocate_payload(); start_item(exrd); finish_item(exrd);
+    if (exrd.rresp[0] != AXI4_RESP_EXOKAY)
+      `uvm_fatal(get_type_name(), "Cross-ID exclusive read did not reserve")
+
+    // A normal write from a different ID must invalidate the reservation.
+    other_wr = new("other_wr");
+    other_wr.is_write = 1'b1; other_wr.id = 2; other_wr.addr = addr;
+    other_wr.len = 0; other_wr.size = $clog2(DATA_W/8); other_wr.burst = AXI4_BURST_INCR;
+    other_wr.allocate_payload(); other_wr.data[0] = ~seed_data; other_wr.strb[0] = '1;
+    start_item(other_wr); finish_item(other_wr);
+
+    exwr = new("exwr");
+    exwr.is_write = 1'b1; exwr.lock = 1'b1; exwr.id = 1; exwr.addr = addr;
+    exwr.len = 0; exwr.size = $clog2(DATA_W/8); exwr.burst = AXI4_BURST_INCR;
+    exwr.allocate_payload(); exwr.data[0] = {$urandom(), $urandom()};
+    if (DATA_W <= 32) exwr.data[0] = $urandom();
+    exwr.strb[0] = '1; start_item(exwr); finish_item(exwr);
+    if (exwr.bresp != AXI4_RESP_OKAY)
+      `uvm_fatal(get_type_name(), "Cross-ID invalidation did not fail exclusive write")
+
+    rd = new("rd");
+    rd.is_write = 1'b0; rd.id = 3; rd.addr = addr; rd.len = 0;
+    rd.size = $clog2(DATA_W/8); rd.burst = AXI4_BURST_INCR;
+    rd.allocate_payload(); start_item(rd); finish_item(rd);
+    if (rd.data[0] != other_wr.data[0])
+      `uvm_fatal(get_type_name(), "Cross-ID invalidating write was not retained")
+  endtask
+endclass
+
+class axi4_nonpipelined_reset_recovery_seq #(
+  int ADDR_W = 32,
+  int DATA_W = 64,
+  int ID_W   = 4,
+  int USER_W = 1
+) extends axi4_base_seq#(ADDR_W, DATA_W, ID_W, USER_W);
+
+  `uvm_object_param_utils(axi4_nonpipelined_reset_recovery_seq#(ADDR_W, DATA_W, ID_W, USER_W))
+
+  function new(string name = "axi4_nonpipelined_reset_recovery_seq");
+    super.new(name);
+  endfunction
+
+  task body();
+    axi4_item#(ADDR_W, DATA_W, ID_W, USER_W) pre, post, rd;
+    pre = new("pre_reset_long_write");
+    pre.is_write = 1'b1; pre.id = 0; pre.addr = 32'h3A000; pre.len = 8'd255;
+    pre.size = $clog2(DATA_W/8); pre.burst = AXI4_BURST_INCR;
+    pre.w_beat_gap_cycles = 1; pre.allocate_payload();
+    for (int unsigned i = 0; i < pre.num_beats(); i++) begin
+      pre.data[i] = DATA_W'(i + 32'h12340000);
+      pre.strb[i] = '1;
+    end
+    start_item(pre); finish_item(pre);
+    if (!pre.reset_aborted)
+      `uvm_fatal(get_type_name(), "Non-pipelined reset did not mark the interrupted item")
+
+    post = new("post_reset_write");
+    post.is_write = 1'b1; post.id = 1; post.addr = 32'h3B000; post.len = 0;
+    post.size = $clog2(DATA_W/8); post.burst = AXI4_BURST_INCR;
+    post.allocate_payload(); post.data[0] = '0; post.data[0][15:0] = 16'h55AA; post.strb[0] = '1;
+    start_item(post); finish_item(post);
+    if (post.reset_aborted || post.timeout_aborted)
+      `uvm_fatal(get_type_name(), "Post-reset write did not complete")
+
+    rd = new("post_reset_read");
+    rd.is_write = 1'b0; rd.id = 1; rd.addr = post.addr; rd.len = 0;
+    rd.size = post.size; rd.burst = AXI4_BURST_INCR; rd.allocate_payload();
+    start_item(rd); finish_item(rd);
+    if (rd.data[0] != post.data[0])
+      `uvm_fatal(get_type_name(), "Post-reset readback mismatch")
+  endtask
+endclass
+
+class axi4_timeout_recovery_seq #(
+  int ADDR_W = 32,
+  int DATA_W = 64,
+  int ID_W   = 4,
+  int USER_W = 1
+) extends axi4_base_seq#(ADDR_W, DATA_W, ID_W, USER_W);
+
+  `uvm_object_param_utils(axi4_timeout_recovery_seq#(ADDR_W, DATA_W, ID_W, USER_W))
+
+  function new(string name = "axi4_timeout_recovery_seq");
+    super.new(name);
+  endfunction
+
+  task body();
+    axi4_item#(ADDR_W, DATA_W, ID_W, USER_W) wr;
+    wr = new("timeout_write");
+    wr.is_write = 1'b1; wr.id = 0; wr.addr = 32'h3C000; wr.len = 0;
+    wr.size = $clog2(DATA_W/8); wr.burst = AXI4_BURST_INCR;
+    wr.allocate_payload(); wr.data[0] = '0; wr.data[0][15:0] = 16'h1234; wr.strb[0] = '1;
+    start_item(wr); finish_item(wr);
+    if (!wr.timeout_aborted)
+      `uvm_fatal(get_type_name(), "Timeout recovery did not complete the item")
+  endtask
+endclass
+
+class axi4_sideband_policy_seq #(
+  int ADDR_W = 32,
+  int DATA_W = 64,
+  int ID_W   = 4,
+  int USER_W = 1
+) extends axi4_base_seq#(ADDR_W, DATA_W, ID_W, USER_W);
+
+  `uvm_object_param_utils(axi4_sideband_policy_seq#(ADDR_W, DATA_W, ID_W, USER_W))
+
+  function new(string name = "axi4_sideband_policy_seq");
+    super.new(name);
+  endfunction
+
+  task body();
+    axi4_item#(ADDR_W, DATA_W, ID_W, USER_W) wr, rd;
+    wr = new("sideband_wr");
+    wr.is_write = 1'b1; wr.id = 0; wr.addr = 32'h3D000; wr.len = 0;
+    wr.size = $clog2(DATA_W/8); wr.burst = AXI4_BURST_INCR;
+    wr.cache = 4; wr.prot = 3; wr.qos = 1; wr.region = 1; wr.allocate_payload();
+    wr.data[0] = '0; wr.data[0][15:0] = 16'hABCD; wr.strb[0] = '1;
+    start_item(wr); finish_item(wr);
+
+    rd = new("sideband_rd");
+    rd.is_write = 1'b0; rd.id = 0; rd.addr = wr.addr; rd.len = 0;
+    rd.size = wr.size; rd.burst = AXI4_BURST_INCR;
+    rd.cache = wr.cache; rd.prot = wr.prot; rd.qos = wr.qos; rd.region = wr.region;
+    rd.allocate_payload(); start_item(rd); finish_item(rd);
+    if (rd.data[0] != wr.data[0])
+      `uvm_fatal(get_type_name(), "Sideband-policy readback mismatch")
+  endtask
+endclass
+
 class axi4_error_write_seq #(
   int ADDR_W = 32,
   int DATA_W = 64,

@@ -31,6 +31,7 @@ module top;
     test_name = "";
     void'($value$plusargs("UVM_TESTNAME=%s", test_name));
     do_midrun_reset = (test_name == "axi4_b2b_reset_recovery_test") ||
+                      (test_name == "axi4_b2b_nonpipelined_reset_test") ||
                       $test$plusargs("AXI4_RESET_PULSE");
     areset_n = 0;
     repeat (10) @(posedge aclk);

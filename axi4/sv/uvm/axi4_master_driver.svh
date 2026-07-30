@@ -200,6 +200,23 @@ class axi4_master_driver #(
     seq_item_port.put_response(rsp);
   endtask
 
+  task automatic put_timeout_response(axi4_req_ctx_t ctx, bit is_write);
+    item_t rsp;
+    if ((ctx == null) || ctx.reset_reported) return;
+    ctx.reset_reported = 1'b1;
+    rsp = new(is_write ? "timeout_wr_rsp" : "timeout_rd_rsp");
+    rsp.copy(ctx.tr);
+    rsp.timeout_aborted = 1'b1;
+    if (is_write) begin
+      rsp.bresp = AXI4_RESP_OKAY;
+    end else begin
+      rsp.allocate_payload();
+      foreach (rsp.rresp[i]) rsp.rresp[i] = AXI4_RESP_OKAY;
+    end
+    if (ctx.id_info != null) rsp.set_id_info(ctx.id_info);
+    seq_item_port.put_response(rsp);
+  endtask
+
   task automatic reset_flush_pipelined();
     if (accept_grant_active) begin
       // A reset can interrupt the tiny window between try_next_item() and
@@ -440,6 +457,8 @@ class axi4_master_driver #(
       vif.awvalid  <= 1'b1;
       wait_aw_handshake(hs_ok);
       if (!hs_ok) begin
+        if ((vif.areset_n === 1'b1) && cfg.timeout_recovery_enable)
+          put_timeout_response(ctx, 1'b1);
         vif.awvalid <= 1'b0;
         wr_active_aw = null;
         continue;
@@ -502,6 +521,8 @@ class axi4_master_driver #(
         vif.wvalid <= 1'b1;
         wait_w_handshake(hs_ok);
         if (!hs_ok) begin
+          if ((vif.areset_n === 1'b1) && cfg.timeout_recovery_enable)
+            put_timeout_response(ctx, 1'b1);
           vif.wvalid <= 1'b0;
           break;
         end
@@ -509,6 +530,8 @@ class axi4_master_driver #(
         vif.wvalid <= 1'b0;
       end
       if (!hs_ok || (vif.areset_n !== 1'b1)) begin
+        if ((vif.areset_n === 1'b1) && cfg.timeout_recovery_enable)
+          put_timeout_response(ctx, 1'b1);
         wr_active_w = null;
         continue;
       end
@@ -637,6 +660,8 @@ class axi4_master_driver #(
       vif.arvalid  <= 1'b1;
       wait_ar_handshake(hs_ok);
       if (!hs_ok) begin
+        if ((vif.areset_n === 1'b1) && cfg.timeout_recovery_enable)
+          put_timeout_response(ctx, 1'b0);
         vif.arvalid <= 1'b0;
         rd_active_ar = null;
         continue;
@@ -645,6 +670,8 @@ class axi4_master_driver #(
       vif.arvalid <= 1'b0;
 
       if ((vif.areset_n !== 1'b1) || (rd_active_ar == null)) begin
+        if ((vif.areset_n === 1'b1) && cfg.timeout_recovery_enable)
+          put_timeout_response(ctx, 1'b0);
         rd_active_ar = null;
         continue;
       end
@@ -734,7 +761,12 @@ class axi4_master_driver #(
       if (vif.awready) break;
       cycles++;
       if ((cfg.handshake_timeout_cycles != 0) && (cycles > cfg.handshake_timeout_cycles)) begin
-        `uvm_fatal(RID, "Handshake timeout on AW")
+        if (cfg.timeout_recovery_enable) begin
+          `uvm_info(RID, "Handshake timeout on AW; returning timeout-aborted item", UVM_LOW)
+          return;
+        end else begin
+          `uvm_fatal(RID, "Handshake timeout on AW")
+        end
       end
     end
     success = (vif.areset_n === 1'b1);
@@ -748,7 +780,12 @@ class axi4_master_driver #(
       if (vif.wready) break;
       cycles++;
       if ((cfg.handshake_timeout_cycles != 0) && (cycles > cfg.handshake_timeout_cycles)) begin
-        `uvm_fatal(RID, "Handshake timeout on W")
+        if (cfg.timeout_recovery_enable) begin
+          `uvm_info(RID, "Handshake timeout on W; returning timeout-aborted item", UVM_LOW)
+          return;
+        end else begin
+          `uvm_fatal(RID, "Handshake timeout on W")
+        end
       end
     end
     success = (vif.areset_n === 1'b1);
@@ -762,7 +799,12 @@ class axi4_master_driver #(
       if (vif.arready) break;
       cycles++;
       if ((cfg.handshake_timeout_cycles != 0) && (cycles > cfg.handshake_timeout_cycles)) begin
-        `uvm_fatal(RID, "Handshake timeout on AR")
+        if (cfg.timeout_recovery_enable) begin
+          `uvm_info(RID, "Handshake timeout on AR; returning timeout-aborted item", UVM_LOW)
+          return;
+        end else begin
+          `uvm_fatal(RID, "Handshake timeout on AR")
+        end
       end
     end
     success = (vif.areset_n === 1'b1);
@@ -800,7 +842,8 @@ class axi4_master_driver #(
     @(negedge vif.aclk);
     vif.awvalid <= 1'b0;
     if (!hs_ok) begin
-      tr.reset_aborted = 1'b1;
+      if (vif.areset_n === 1'b1) tr.timeout_aborted = 1'b1;
+      else                      tr.reset_aborted = 1'b1;
       drive_idle();
       return;
     end
@@ -824,7 +867,8 @@ class axi4_master_driver #(
       @(negedge vif.aclk);
       vif.wvalid <= 1'b0;
       if (!hs_ok) begin
-        tr.reset_aborted = 1'b1;
+        if (vif.areset_n === 1'b1) tr.timeout_aborted = 1'b1;
+        else                      tr.reset_aborted = 1'b1;
         drive_idle();
         return;
       end
@@ -844,7 +888,14 @@ class axi4_master_driver #(
       if (vif.bvalid) break;
       cycles++;
       if ((cfg.handshake_timeout_cycles != 0) && (cycles > cfg.handshake_timeout_cycles)) begin
-        `uvm_fatal(RID, "Timeout waiting for BVALID")
+        if (cfg.timeout_recovery_enable) begin
+          `uvm_info(RID, "Timeout waiting for BVALID; returning timeout-aborted item", UVM_LOW)
+          tr.timeout_aborted = 1'b1;
+          drive_idle();
+          return;
+        end else begin
+          `uvm_fatal(RID, "Timeout waiting for BVALID")
+        end
       end
     end
     tr.bresp = axi4_resp_e'(vif.bresp);
@@ -884,7 +935,8 @@ class axi4_master_driver #(
     @(negedge vif.aclk);
     vif.arvalid <= 1'b0;
     if (!hs_ok) begin
-      tr.reset_aborted = 1'b1;
+      if (vif.areset_n === 1'b1) tr.timeout_aborted = 1'b1;
+      else                      tr.reset_aborted = 1'b1;
       drive_idle();
       return;
     end
@@ -908,7 +960,14 @@ class axi4_master_driver #(
         if (vif.rvalid) break;
         cycles++;
         if ((cfg.handshake_timeout_cycles != 0) && (cycles > cfg.handshake_timeout_cycles)) begin
-          `uvm_fatal(RID, "Timeout waiting for RVALID")
+          if (cfg.timeout_recovery_enable) begin
+            `uvm_info(RID, "Timeout waiting for RVALID; returning timeout-aborted item", UVM_LOW)
+            tr.timeout_aborted = 1'b1;
+            drive_idle();
+            return;
+          end else begin
+            `uvm_fatal(RID, "Timeout waiting for RVALID")
+          end
         end
       end
       tr.data[i]  = vif.rdata;

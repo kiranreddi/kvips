@@ -55,6 +55,18 @@ class axi4_agent_cfg #(
   // the sequence response queue with axi4_item.reset_aborted set.  No AXI B/R
   // response is fabricated because reset has no AXI response encoding.
   bit          master_reset_flush = 1'b1;
+  // Convert handshake timeouts into a completed UVM item instead of a fatal.
+  // The AXI bus itself has no timeout response encoding.
+  bit          timeout_recovery_enable = 1'b0;
+
+  // Configurable policy masks for address-channel sidebands.  Bit N permits
+  // value N; all values are permitted by default so existing environments do
+  // not acquire an implicit security/cache/QoS policy.
+  bit          sideband_policy_enable = 1'b0;
+  logic [7:0]  sideband_prot_allow_mask = 8'hff;
+  logic [15:0] sideband_cache_allow_mask = 16'hffff;
+  logic [15:0] sideband_qos_allow_mask = 16'hffff;
+  logic [15:0] sideband_region_allow_mask = 16'hffff;
 
   // Slave: response scheduling knobs
   bit          slave_reorder_b  = 1'b0;
@@ -135,6 +147,7 @@ class axi4_agent_cfg #(
   int unsigned slave_r_resp_min   = 0;
   int unsigned slave_r_resp_max   = 0;
   bit          slave_aw_random_ready = 1'b0;
+  bit          slave_force_aw_stall = 1'b0;
   bit          slave_w_random_ready  = 1'b0;
   bit          slave_ar_random_ready = 1'b0;
   int unsigned slave_r_beat_delays[];
@@ -196,6 +209,12 @@ class axi4_agent_cfg #(
     `uvm_field_int(order_overlapping_rw, UVM_DEFAULT)
     `uvm_field_enum(axi4_rw_order_mode_e, rw_order_mode, UVM_DEFAULT)
     `uvm_field_int(master_reset_flush, UVM_DEFAULT)
+    `uvm_field_int(timeout_recovery_enable, UVM_DEFAULT)
+    `uvm_field_int(sideband_policy_enable, UVM_DEFAULT)
+    `uvm_field_int(sideband_prot_allow_mask, UVM_DEFAULT)
+    `uvm_field_int(sideband_cache_allow_mask, UVM_DEFAULT)
+    `uvm_field_int(sideband_qos_allow_mask, UVM_DEFAULT)
+    `uvm_field_int(sideband_region_allow_mask, UVM_DEFAULT)
     `uvm_field_int(slave_reorder_b, UVM_DEFAULT)
     `uvm_field_int(slave_interleave_r, UVM_DEFAULT)
     `uvm_field_int(slave_reorder_r, UVM_DEFAULT)
@@ -253,6 +272,7 @@ class axi4_agent_cfg #(
     `uvm_field_int(slave_r_resp_min, UVM_DEFAULT)
     `uvm_field_int(slave_r_resp_max, UVM_DEFAULT)
     `uvm_field_int(slave_aw_random_ready, UVM_DEFAULT)
+    `uvm_field_int(slave_force_aw_stall, UVM_DEFAULT)
     `uvm_field_int(slave_w_random_ready, UVM_DEFAULT)
     `uvm_field_int(slave_ar_random_ready, UVM_DEFAULT)
     `uvm_field_int(handshake_timeout_cycles, UVM_DEFAULT)

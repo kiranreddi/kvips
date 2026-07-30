@@ -123,7 +123,7 @@ class axi4_scoreboard #(
 
     // Reset-aborted requests never completed on an AXI response channel and
     // therefore must not mutate the scoreboard's architectural model.
-    if (t.reset_aborted) return;
+    if (t.reset_aborted || t.timeout_aborted) return;
 
     t.allocate_payload();
 

@@ -66,6 +66,15 @@ All tests live in `kvips/axi4/examples/uvm_back2back/tb/tb_pkg.sv` and are liste
 - `axi4_b2b_per_beat_rresp_delay_test` (per-beat R response timing)
 - `axi4_b2b_reset_recovery_test` (pipelined reset flush and post-reset recovery)
 - `axi4_b2b_range_aware_order_test` (disjoint-range overlap and overlapping hazard ordering)
+- `axi4_b2b_exclusive_cross_id_test` (cross-ID exclusive reservation invalidation)
+- `axi4_b2b_nonpipelined_reset_test` (reset abort and post-reset recovery without pipelining)
+- `axi4_b2b_timeout_recovery_test` (configured handshake timeout recovery)
+- `axi4_b2b_sideband_policy_test` (configurable PROT/CACHE/QOS/REGION allow masks)
+
+The separate AXI4-Lite scope is a standalone byte-strobe loopback, not a
+constrained AXI4 Full agent. Run it with `make -C kvips/axi4_lite/examples
+questa`, `vcs`, or `xcelium`; each target uses the pinned simulator module and
+is suitable for LSF submission.
 
 The normative requirement matrix and remaining limitations are in
 [`axi4/docs/axi4_spec_coverage.md`](../../docs/axi4_spec_coverage.md).

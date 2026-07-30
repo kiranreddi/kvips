@@ -94,6 +94,10 @@ For the normative requirement-by-requirement audit, see
 | Conservative ordered read/write issue | `axi4_b2b_ordered_rw_test` | `kvips/axi4/examples/uvm_back2back/tb/tb_pkg.sv` |
 | Pipelined reset flush and post-reset recovery | `axi4_b2b_reset_recovery_test` | `kvips/axi4/examples/uvm_back2back/tb/tb_pkg.sv` |
 | Range-aware disjoint/overlap ordering | `axi4_b2b_range_aware_order_test` | `kvips/axi4/examples/uvm_back2back/tb/tb_pkg.sv` |
+| Cross-ID exclusive invalidation | `axi4_b2b_exclusive_cross_id_test` | `kvips/axi4/examples/uvm_back2back/tb/tb_pkg.sv` |
+| Non-pipelined reset recovery | `axi4_b2b_nonpipelined_reset_test` | `kvips/axi4/examples/uvm_back2back/tb/tb_pkg.sv` |
+| Configured timeout recovery | `axi4_b2b_timeout_recovery_test` | `kvips/axi4/examples/uvm_back2back/tb/tb_pkg.sv` |
+| Sideband allow-mask policy | `axi4_b2b_sideband_policy_test` | `kvips/axi4/examples/uvm_back2back/tb/tb_pkg.sv` |
 
 ## Feature-to-test mapping (summary)
 | AXI feature | Covered by |
@@ -126,6 +130,10 @@ For the normative requirement-by-requirement audit, see
 | Pipelined reset-abort and recovery | `axi4_b2b_reset_recovery_test` |
 | Independent B/R order and framing checks | Always-on `axi4_protocol_checker` when enabled |
 | Range-aware cross-direction issue gating | `axi4_b2b_range_aware_order_test` |
+| Cross-ID exclusive invalidation | `axi4_b2b_exclusive_cross_id_test` |
+| Non-pipelined reset abort/recovery | `axi4_b2b_nonpipelined_reset_test` |
+| Handshake timeout recovery | `axi4_b2b_timeout_recovery_test` |
+| Configurable sideband policy | `axi4_b2b_sideband_policy_test` |
 | Basic protocol SVA (hold/size) | Always-on unless `+KVIPS_AXI4_ASSERT_OFF` |
 
 ## Not implemented yet (gaps)
@@ -134,7 +142,7 @@ These are AXI4 features not yet modeled/checked by this VIP:
 - Low-power / clock gating considerations
 - Additional multi-beat unaligned/addressing corner coverage beyond the new directed byte-lane test
 - Comprehensive SVA parity vs vendor VIPs (KVIPS includes a starter + stateful set; extend as needed)
-- Full transaction tracker/replay tooling and vendor-style coverage/performance models
-- Dedicated non-pipelined reset timing cases for every channel phase
-- AXI4-Lite interface/API (the current VIP is AXI4 Full)
+- Full transaction tracker/replay injection and vendor-style coverage/performance models
+- Exhaustive non-pipelined reset timing for every channel phase
+- Full AXI4-Lite UVM agent/API (a standalone interface/loopback example is now present)
 - The scoreboard assumes zero for unwritten memory; disable it or provide an environment-specific checker when using the slave's fill/random/X unwritten-read policies.

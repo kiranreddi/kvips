@@ -27,3 +27,7 @@ axi4_b2b_error_rate_test
 axi4_b2b_phase_control_test
 axi4_b2b_ordered_rw_test
 axi4_b2b_range_aware_order_test
+axi4_b2b_exclusive_cross_id_test
+axi4_b2b_nonpipelined_reset_test
+axi4_b2b_timeout_recovery_test
+axi4_b2b_sideband_policy_test

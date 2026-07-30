@@ -456,6 +456,86 @@ package tb_pkg;
     endtask
   endclass
 
+  class axi4_b2b_nonpipelined_reset_test extends axi4_b2b_base_test;
+    `uvm_component_utils(axi4_b2b_nonpipelined_reset_test)
+
+    function new(string name, uvm_component parent);
+      super.new(name, parent);
+    endfunction
+
+    virtual function void post_build_cfg();
+      env_cfg.agent_cfgs[0].master_pipelined = 1'b0;
+      env_cfg.agent_cfgs[0].master_w_beat_gap_min = 1;
+      env_cfg.agent_cfgs[0].master_w_beat_gap_max = 2;
+      env_cfg.agent_cfgs[1].slave_clear_mem_on_reset = 1'b1;
+    endfunction
+
+    task run_phase(uvm_phase phase);
+      axi4_sequencer#(ADDR_W, DATA_W, ID_W, USER_W) seqr;
+      axi4_nonpipelined_reset_recovery_seq#(ADDR_W, DATA_W, ID_W, USER_W) seq;
+      phase.raise_objection(this);
+      seqr = env.get_master_sequencer(0);
+      if (seqr == null) `uvm_fatal(get_type_name(), "Master sequencer not found at index 0")
+      seq = new("seq");
+      seq.start(seqr);
+      phase.drop_objection(this);
+    endtask
+  endclass
+
+  class axi4_b2b_timeout_recovery_test extends axi4_b2b_base_test;
+    `uvm_component_utils(axi4_b2b_timeout_recovery_test)
+
+    function new(string name, uvm_component parent);
+      super.new(name, parent);
+    endfunction
+
+    virtual function void post_build_cfg();
+      env_cfg.agent_cfgs[0].master_pipelined = 1'b0;
+      env_cfg.agent_cfgs[0].timeout_recovery_enable = 1'b1;
+      env_cfg.agent_cfgs[0].handshake_timeout_cycles = 5;
+      env_cfg.agent_cfgs[1].slave_force_aw_stall = 1'b1;
+    endfunction
+
+    task run_phase(uvm_phase phase);
+      axi4_sequencer#(ADDR_W, DATA_W, ID_W, USER_W) seqr;
+      axi4_timeout_recovery_seq#(ADDR_W, DATA_W, ID_W, USER_W) seq;
+      phase.raise_objection(this);
+      seqr = env.get_master_sequencer(0);
+      if (seqr == null) `uvm_fatal(get_type_name(), "Master sequencer not found at index 0")
+      seq = new("seq");
+      seq.start(seqr);
+      phase.drop_objection(this);
+    endtask
+  endclass
+
+  class axi4_b2b_sideband_policy_test extends axi4_b2b_base_test;
+    `uvm_component_utils(axi4_b2b_sideband_policy_test)
+
+    function new(string name, uvm_component parent);
+      super.new(name, parent);
+    endfunction
+
+    virtual function void post_build_cfg();
+      env_cfg.agent_cfgs[0].master_pipelined = 1'b0;
+      env_cfg.agent_cfgs[0].sideband_policy_enable = 1'b1;
+      env_cfg.agent_cfgs[0].sideband_prot_allow_mask = 8'h08;
+      env_cfg.agent_cfgs[0].sideband_cache_allow_mask = 16'h0010;
+      env_cfg.agent_cfgs[0].sideband_qos_allow_mask = 16'h0002;
+      env_cfg.agent_cfgs[0].sideband_region_allow_mask = 16'h0002;
+    endfunction
+
+    task run_phase(uvm_phase phase);
+      axi4_sequencer#(ADDR_W, DATA_W, ID_W, USER_W) seqr;
+      axi4_sideband_policy_seq#(ADDR_W, DATA_W, ID_W, USER_W) seq;
+      phase.raise_objection(this);
+      seqr = env.get_master_sequencer(0);
+      if (seqr == null) `uvm_fatal(get_type_name(), "Master sequencer not found at index 0")
+      seq = new("seq");
+      seq.start(seqr);
+      phase.drop_objection(this);
+    endtask
+  endclass
+
   class axi4_b2b_corner_case_test extends axi4_b2b_base_test;
     `uvm_component_utils(axi4_b2b_corner_case_test)
 
@@ -650,6 +730,30 @@ package tb_pkg;
       seq.addr = 32'h3000;
       seq.start(seqr);
 
+      phase.drop_objection(this);
+    endtask
+  endclass
+
+  class axi4_b2b_exclusive_cross_id_test extends axi4_b2b_base_test;
+    `uvm_component_utils(axi4_b2b_exclusive_cross_id_test)
+
+    function new(string name, uvm_component parent);
+      super.new(name, parent);
+    endfunction
+
+    virtual function void post_build_cfg();
+      env_cfg.agent_cfgs[0].master_pipelined = 1'b0;
+      env_cfg.agent_cfgs[1].slave_exclusive_enable = 1'b1;
+    endfunction
+
+    task run_phase(uvm_phase phase);
+      axi4_sequencer#(ADDR_W, DATA_W, ID_W, USER_W) seqr;
+      axi4_exclusive_cross_id_seq#(ADDR_W, DATA_W, ID_W, USER_W) seq;
+      phase.raise_objection(this);
+      seqr = env.get_master_sequencer(0);
+      if (seqr == null) `uvm_fatal(get_type_name(), "Master sequencer not found at index 0")
+      seq = new("seq");
+      seq.start(seqr);
       phase.drop_objection(this);
     endtask
   endclass
