@@ -673,6 +673,185 @@ package tb_pkg;
     endtask
   endclass
 
+  class axi4_b2b_reorder_bready_test extends axi4_b2b_base_test;
+    `uvm_component_utils(axi4_b2b_reorder_bready_test)
+
+    function new(string name, uvm_component parent);
+      super.new(name, parent);
+    endfunction
+
+    virtual function void post_build_cfg();
+      env_cfg.agent_cfgs[0].master_pipelined = 1'b1;
+      env_cfg.agent_cfgs[0].max_outstanding_reads  = 8;
+      env_cfg.agent_cfgs[0].max_outstanding_writes = 8;
+      env_cfg.agent_cfgs[0].max_outstanding_total  = 10;
+      env_cfg.agent_cfgs[0].master_bready_random = 1'b1;
+      env_cfg.agent_cfgs[0].master_bready_low_min = 1;
+      env_cfg.agent_cfgs[0].master_bready_low_max = 4;
+      env_cfg.agent_cfgs[0].master_rready_random = 1'b1;
+      env_cfg.agent_cfgs[0].master_rready_low_min = 1;
+      env_cfg.agent_cfgs[0].master_rready_low_max = 4;
+
+      // B/R may move between IDs but must retain order within each ID.
+      env_cfg.agent_cfgs[1].slave_reorder_b = 1'b1;
+      env_cfg.agent_cfgs[1].slave_reorder_r = 1'b1;
+      env_cfg.agent_cfgs[1].slave_aw_ready_min = 0;
+      env_cfg.agent_cfgs[1].slave_aw_ready_max = 3;
+      env_cfg.agent_cfgs[1].slave_w_ready_min = 0;
+      env_cfg.agent_cfgs[1].slave_w_ready_max = 3;
+      env_cfg.agent_cfgs[1].slave_ar_ready_min = 0;
+      env_cfg.agent_cfgs[1].slave_ar_ready_max = 3;
+      env_cfg.agent_cfgs[1].slave_b_resp_min = 0;
+      env_cfg.agent_cfgs[1].slave_b_resp_max = 5;
+      env_cfg.agent_cfgs[1].slave_r_resp_min = 0;
+      env_cfg.agent_cfgs[1].slave_r_resp_max = 5;
+    endfunction
+
+    task run_phase(uvm_phase phase);
+      axi4_sequencer#(ADDR_W, DATA_W, ID_W, USER_W) seqr;
+      axi4_pipelined_stress_seq#(ADDR_W, DATA_W, ID_W, USER_W) seq;
+      phase.raise_objection(this);
+      seqr = env.get_master_sequencer(0);
+      if (seqr == null) `uvm_fatal(get_type_name(), "Master sequencer not found at index 0")
+      seq = new("seq");
+      seq.num_pairs = 100;
+      seq.max_len = 15;
+      seq.base_addr = 32'hC000;
+      seq.start(seqr);
+      phase.drop_objection(this);
+    endtask
+  endclass
+
+  class axi4_b2b_region_decode_test extends axi4_b2b_base_test;
+    `uvm_component_utils(axi4_b2b_region_decode_test)
+
+    function new(string name, uvm_component parent);
+      super.new(name, parent);
+    endfunction
+
+    virtual function void post_build_cfg();
+      env_cfg.agent_cfgs[1].slave_region_decode_enable = 1'b1;
+      env_cfg.agent_cfgs[1].add_slave_region(32'hD000, 32'hDFFF);
+    endfunction
+
+    task run_phase(uvm_phase phase);
+      axi4_sequencer#(ADDR_W, DATA_W, ID_W, USER_W) seqr;
+      axi4_write_expect_resp_seq#(ADDR_W, DATA_W, ID_W, USER_W) wr;
+      axi4_read_expect_resp_seq#(ADDR_W, DATA_W, ID_W, USER_W) rd;
+      phase.raise_objection(this);
+      seqr = env.get_master_sequencer(0);
+      if (seqr == null) `uvm_fatal(get_type_name(), "Master sequencer not found at index 0")
+      wr = new("mapped_write");
+      wr.addr = 32'hD000;
+      wr.expected_bresp = AXI4_RESP_OKAY;
+      wr.start(seqr);
+      rd = new("unmapped_read");
+      rd.addr = 32'hE000;
+      rd.expected_rresp = AXI4_RESP_DECERR;
+      rd.start(seqr);
+      phase.drop_objection(this);
+    endtask
+  endclass
+
+  class axi4_b2b_error_rate_test extends axi4_b2b_base_test;
+    `uvm_component_utils(axi4_b2b_error_rate_test)
+
+    function new(string name, uvm_component parent);
+      super.new(name, parent);
+    endfunction
+
+    virtual function void post_build_cfg();
+      // 100% makes this deterministic while exercising the rate-based path.
+      env_cfg.agent_cfgs[1].slave_wr_slverr_rate_pct = 100;
+      env_cfg.agent_cfgs[1].slave_rd_decerr_rate_pct = 100;
+    endfunction
+
+    task run_phase(uvm_phase phase);
+      axi4_sequencer#(ADDR_W, DATA_W, ID_W, USER_W) seqr;
+      axi4_write_expect_resp_seq#(ADDR_W, DATA_W, ID_W, USER_W) wr;
+      axi4_read_expect_resp_seq#(ADDR_W, DATA_W, ID_W, USER_W) rd;
+      phase.raise_objection(this);
+      seqr = env.get_master_sequencer(0);
+      if (seqr == null) `uvm_fatal(get_type_name(), "Master sequencer not found at index 0")
+      wr = new("rate_write");
+      wr.addr = 32'hF000;
+      wr.expected_bresp = AXI4_RESP_SLVERR;
+      wr.start(seqr);
+      rd = new("rate_read");
+      rd.addr = 32'hF000;
+      rd.expected_rresp = AXI4_RESP_DECERR;
+      rd.start(seqr);
+      phase.drop_objection(this);
+    endtask
+  endclass
+
+  class axi4_b2b_phase_control_test extends axi4_b2b_base_test;
+    `uvm_component_utils(axi4_b2b_phase_control_test)
+
+    function new(string name, uvm_component parent);
+      super.new(name, parent);
+    endfunction
+
+    virtual function void post_build_cfg();
+      env_cfg.agent_cfgs[1].slave_max_outstanding_wr = 1;
+      env_cfg.agent_cfgs[1].slave_max_outstanding_rd = 1;
+      env_cfg.agent_cfgs[1].slave_aw_random_ready = 1'b1;
+      env_cfg.agent_cfgs[1].slave_w_random_ready = 1'b1;
+      env_cfg.agent_cfgs[1].slave_ar_random_ready = 1'b1;
+      env_cfg.agent_cfgs[1].slave_aw_ready_min = 0;
+      env_cfg.agent_cfgs[1].slave_aw_ready_max = 2;
+      env_cfg.agent_cfgs[1].slave_w_ready_min = 0;
+      env_cfg.agent_cfgs[1].slave_w_ready_max = 2;
+      env_cfg.agent_cfgs[1].slave_ar_ready_min = 0;
+      env_cfg.agent_cfgs[1].slave_ar_ready_max = 2;
+    endfunction
+
+    task run_phase(uvm_phase phase);
+      axi4_sequencer#(ADDR_W, DATA_W, ID_W, USER_W) seqr;
+      axi4_phase_api_seq#(ADDR_W, DATA_W, ID_W, USER_W) seq;
+      phase.raise_objection(this);
+      seqr = env.get_master_sequencer(0);
+      if (seqr == null) `uvm_fatal(get_type_name(), "Master sequencer not found at index 0")
+      seq = new("seq");
+      seq.base_addr = 32'h11000;
+      seq.start(seqr);
+      phase.drop_objection(this);
+    endtask
+  endclass
+
+  class axi4_b2b_ordered_rw_test extends axi4_b2b_base_test;
+    `uvm_component_utils(axi4_b2b_ordered_rw_test)
+
+    function new(string name, uvm_component parent);
+      super.new(name, parent);
+    endfunction
+
+    virtual function void post_build_cfg();
+      env_cfg.agent_cfgs[0].master_pipelined = 1'b1;
+      env_cfg.agent_cfgs[0].max_outstanding_reads = 4;
+      env_cfg.agent_cfgs[0].max_outstanding_writes = 4;
+      env_cfg.agent_cfgs[0].order_overlapping_rw = 1'b0;
+      env_cfg.agent_cfgs[1].slave_reorder_b = 1'b1;
+      env_cfg.agent_cfgs[1].slave_interleave_r = 1'b1;
+    endfunction
+
+    task run_phase(uvm_phase phase);
+      axi4_sequencer#(ADDR_W, DATA_W, ID_W, USER_W) seqr;
+      axi4_concurrent_rw_seq#(ADDR_W, DATA_W, ID_W, USER_W) seq;
+      phase.raise_objection(this);
+      seqr = env.get_master_sequencer(0);
+      if (seqr == null) `uvm_fatal(get_type_name(), "Master sequencer not found at index 0")
+      seq = new("seq");
+      seq.num_prefill = 8;
+      seq.num_mixed = 40;
+      seq.num_b_writes = 8;
+      seq.base_a = 32'h12000;
+      seq.base_b = 32'h13000;
+      seq.start(seqr);
+      phase.drop_objection(this);
+    endtask
+  endclass
+
   // Backward-compatible name (smoke).
   class axi4_b2b_test extends axi4_b2b_smoke_test;
     `uvm_component_utils(axi4_b2b_test)

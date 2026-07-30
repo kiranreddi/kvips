@@ -36,10 +36,12 @@ Regression list:
 ## Key capabilities
 - **Bursts**: INCR/FIXED/WRAP; legality enforced for generated items (INCR up to 256 beats; FIXED/WRAP up to 16; WRAP lengths 2/4/8/16)
 - **4KB rule**: generation avoids crossing; SVA checks enforce no 4KB crossing
-- **Multiple outstanding**: optional pipelined master with per-direction outstanding limits; monitor associates by **BID/RID** (supports slave B reordering and R interleaving)
+- **Multiple outstanding**: optional pipelined master with per-direction and combined outstanding limits; optional conservative cross-direction serialization; monitor associates by **BID/RID** (supports slave B/R reordering across IDs and R beat interleaving while preserving same-ID order)
 - **Exclusive accesses (AxLOCK)**: reservation tracking + EXOKAY/OKAY behavior (configurable max-bytes)
-- **Error injection**: address-range based SLVERR/DECERR injection for reads and/or writes
-- **Delays/backpressure**: master AW/AR delay, W beat gaps, randomized RREADY; slave ready/response latency knobs
+- **Error injection**: address-range and inclusive region-decode `SLVERR`/`DECERR` injection, plus per-direction error-rate injection
+- **Delays/backpressure**: master AW/AR delay, W beat gaps, randomized RREADY/BREADY; independent slave AW/W/AR/B/R timing, random READY, accumulation, and outstanding-limit controls
+- **Phase-oriented construction**: public address, data-beat, response, and READY-control helpers adapt to the transaction/configuration API
+- **Slave memory**: configurable base/size/wrap, byte backdoor helpers, and selectable unwritten-read behavior (zero/fill/random/X)
 - **Stats** (optional): cycle/handshake/stall counters, outstanding max, basic latency min/mean/max
 
 ## Debug knobs
@@ -48,6 +50,9 @@ Plusargs (demo-friendly):
 - `+VIP_TR` : UVM transaction recording hooks from monitor
 - `+VIP_STATS` : enable monitor stats summary
 - `+VIP_PIPE` / `+VIP_MAX_OUTS=<n>` : enable pipelined master and set outstanding
+
+Important memory-model note:
+- The supplied scoreboard models unwritten bytes as zero. When using `AXI4_UNINIT_FILL`, `AXI4_UNINIT_RANDOM`, or `AXI4_UNINIT_X`, disable the supplied scoreboard for those reads or replace it with an environment-specific checker.
 
 Assertions:
 - Disable all: `+KVIPS_AXI4_ASSERT_OFF`
@@ -64,6 +69,7 @@ Scoreboard:
 - `kvips/axi4/docs/integration_guide.md`
 - `kvips/axi4/docs/supported_features.md`
 - `kvips/axi4/docs/testplan.md`
+- `kvips/axi4/docs/reference_parity_audit.md`
 - `kvips/axi4/docs/assertions.md`
 - Gap analyses:
   - `kvips/axi4/docs/avery_gap_analysis.md`

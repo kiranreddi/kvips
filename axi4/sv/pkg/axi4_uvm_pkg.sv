@@ -11,6 +11,8 @@
 `ifndef KVIPS_AXI4_UVM_PKG_SV
 `define KVIPS_AXI4_UVM_PKG_SV
 
+`timescale 1ns/1ps
+
 package axi4_uvm_pkg;
 
   import uvm_pkg::*;

@@ -50,6 +50,133 @@ class axi4_item_seq #(
 
 endclass
 
+// Directed single-beat response checks.  These are deliberately small
+// building blocks for decode/error-rate tests and integration environments.
+class axi4_write_expect_resp_seq #(
+  int ADDR_W = 32,
+  int DATA_W = 64,
+  int ID_W   = 4,
+  int USER_W = 1
+) extends axi4_base_seq#(ADDR_W, DATA_W, ID_W, USER_W);
+
+  rand logic [ADDR_W-1:0] addr = '0;
+  rand logic [ID_W-1:0] id = '0;
+  rand axi4_resp_e expected_bresp = AXI4_RESP_OKAY;
+
+  `uvm_object_param_utils(axi4_write_expect_resp_seq#(ADDR_W, DATA_W, ID_W, USER_W))
+
+  function new(string name = "axi4_write_expect_resp_seq");
+    super.new(name);
+  endfunction
+
+  task body();
+    axi4_item#(ADDR_W, DATA_W, ID_W, USER_W) wr;
+    wr = new("wr");
+    wr.is_write = 1'b1;
+    wr.id = id;
+    wr.addr = addr;
+    wr.len = '0;
+    wr.size = $clog2(DATA_W/8);
+    wr.burst = AXI4_BURST_INCR;
+    wr.user = '0;
+    wr.allocate_payload();
+    wr.data[0] = {$urandom(), $urandom()};
+    if (DATA_W <= 32) wr.data[0] = $urandom();
+    wr.strb[0] = '1;
+    start_item(wr);
+    finish_item(wr);
+    if (wr.bresp != expected_bresp) begin
+      `uvm_fatal(get_type_name(), $sformatf("Expected BRESP=%0d, got %0d", expected_bresp, wr.bresp))
+    end
+  endtask
+endclass
+
+class axi4_read_expect_resp_seq #(
+  int ADDR_W = 32,
+  int DATA_W = 64,
+  int ID_W   = 4,
+  int USER_W = 1
+) extends axi4_base_seq#(ADDR_W, DATA_W, ID_W, USER_W);
+
+  rand logic [ADDR_W-1:0] addr = '0;
+  rand logic [ID_W-1:0] id = '0;
+  rand axi4_resp_e expected_rresp = AXI4_RESP_OKAY;
+
+  `uvm_object_param_utils(axi4_read_expect_resp_seq#(ADDR_W, DATA_W, ID_W, USER_W))
+
+  function new(string name = "axi4_read_expect_resp_seq");
+    super.new(name);
+  endfunction
+
+  task body();
+    axi4_item#(ADDR_W, DATA_W, ID_W, USER_W) rd;
+    rd = new("rd");
+    rd.is_write = 1'b0;
+    rd.id = id;
+    rd.addr = addr;
+    rd.len = '0;
+    rd.size = $clog2(DATA_W/8);
+    rd.burst = AXI4_BURST_INCR;
+    rd.user = '0;
+    rd.allocate_payload();
+    start_item(rd);
+    finish_item(rd);
+    if ((rd.rresp.size() != 1) || (rd.rresp[0] != expected_rresp)) begin
+      `uvm_fatal(get_type_name(), $sformatf("Expected RRESP=%0d, got %0d", expected_rresp,
+        (rd.rresp.size() == 0) ? -1 : int'(rd.rresp[0])))
+    end
+  endtask
+endclass
+
+class axi4_phase_api_seq #(
+  int ADDR_W = 32,
+  int DATA_W = 64,
+  int ID_W   = 4,
+  int USER_W = 1
+) extends axi4_base_seq#(ADDR_W, DATA_W, ID_W, USER_W);
+  localparam int STRB_W = DATA_W/8;
+  rand logic [ADDR_W-1:0] base_addr = 32'hD000;
+  `uvm_object_param_utils(axi4_phase_api_seq#(ADDR_W, DATA_W, ID_W, USER_W))
+  function new(string name = "axi4_phase_api_seq"); super.new(name); endfunction
+  task body();
+    axi4_item#(ADDR_W, DATA_W, ID_W, USER_W) wr;
+    axi4_item#(ADDR_W, DATA_W, ID_W, USER_W) rd;
+    axi4_addr_phase_item#(ADDR_W, DATA_W, ID_W, USER_W) aw;
+    axi4_addr_phase_item#(ADDR_W, DATA_W, ID_W, USER_W) ar;
+    axi4_ready_ctrl_item#(ADDR_W, DATA_W, ID_W, USER_W) ready;
+    wr = new("phase_wr");
+    aw = new("aw");
+    aw.is_write = 1'b1; aw.id = '0; aw.addr = base_addr; aw.len = 8'd3;
+    aw.size = $clog2(STRB_W); aw.burst = AXI4_BURST_INCR; aw.user = '0;
+    aw.apply_to(wr);
+    for (int unsigned i = 0; i < wr.num_beats(); i++) begin
+      axi4_wdata_beat_item#(ADDR_W, DATA_W, ID_W, USER_W) beat;
+      beat = new($sformatf("wbeat_%0d", i));
+      beat.beat_index = i;
+      beat.data = 32'hCAFE0000 + i;
+      beat.strb = '1;
+      beat.apply_to(wr);
+    end
+    ready = new("aw_delay");
+    ready.channel = AXI4_READY_AW; ready.low_min = 1; ready.low_max = 1;
+    ready.apply_to_txn(wr);
+    start_item(wr); finish_item(wr);
+    if (wr.bresp != AXI4_RESP_OKAY) `uvm_fatal(get_type_name(), "Phase API write failed")
+
+    rd = new("phase_rd");
+    ar = new("ar");
+    ar.is_write = 1'b0; ar.id = '0; ar.addr = base_addr; ar.len = 8'd3;
+    ar.size = $clog2(STRB_W); ar.burst = AXI4_BURST_INCR; ar.user = '0;
+    ar.apply_to(rd);
+    start_item(rd); finish_item(rd);
+    for (int unsigned i = 0; i < rd.num_beats(); i++) begin
+      if (rd.rresp[i] != AXI4_RESP_OKAY || rd.data[i] != (32'hCAFE0000 + i)) begin
+        `uvm_fatal(get_type_name(), $sformatf("Phase API readback failed at beat %0d", i))
+      end
+    end
+  endtask
+endclass
+
 class axi4_write_readback_seq #(
   int ADDR_W = 32,
   int DATA_W = 64,

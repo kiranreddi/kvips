@@ -17,10 +17,10 @@ From the repo root:
 - Verilator: `kvips/axi4/examples/uvm_back2back/sim/run_verilator.sh`
 
 ## Regressions via LSF (bsub)
-From the repo root:
-- Questa: `module load lsf && make -C kvips/axi4/examples regress-questa USE_LSF=1`
-- VCS: `module load lsf && make -C kvips/axi4/examples regress-vcs USE_LSF=1`
-- Xcelium: `module load lsf && make -C kvips/axi4/examples regress-xcelium USE_LSF=1`
+From the repo root, first run `source /tools/lsf/conf/profile.lsf`; then load the simulator version in the submitted job environment:
+- Questa: `module load questa/2025_3_2 && make -C kvips/axi4/examples regress-questa USE_LSF=1`
+- VCS: `module load vcs/2025.06_1 && make -C kvips/axi4/examples regress-vcs USE_LSF=1`
+- Xcelium: `module load xcelium/25.03.007 && make -C kvips/axi4/examples regress-xcelium USE_LSF=1`
 - Verilator: `make -C kvips/axi4/examples regress-verilator`
 
 ## FSDB report (Verdi)
@@ -54,3 +54,7 @@ All tests live in `kvips/axi4/examples/uvm_back2back/tb/tb_pkg.sv` and are liste
 - `axi4_b2b_incr_256beat_test` (INCR bursts up to 256 beats)
 - `axi4_b2b_delay_stress_test` (master delays + slave backpressure)
 - `axi4_b2b_concurrent_rw_test` (concurrent reads+writes + stats)
+- `axi4_b2b_reorder_bready_test` (same-ID-safe B/R reordering with BREADY/RREADY backpressure)
+- `axi4_b2b_region_decode_test` (mapped-region OKAY and unmapped DECERR)
+- `axi4_b2b_error_rate_test` (deterministic response-rate SLVERR/DECERR)
+- `axi4_b2b_phase_control_test` (phase helpers, random READY, slave limits)

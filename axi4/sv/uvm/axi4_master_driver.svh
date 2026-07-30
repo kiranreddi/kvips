@@ -44,6 +44,12 @@ class axi4_master_driver #(
   axi4_vif_t vif;
 `endif
 
+  int unsigned outstanding_w;
+  int unsigned outstanding_r;
+  bit          wr_launch_active;
+  bit          rd_launch_active;
+  semaphore    issue_order_sem;
+
 `ifdef VERILATOR
 `define AXI4_M_EVT posedge vif.aclk
 `else
@@ -65,6 +71,9 @@ class axi4_master_driver #(
 `ifndef VERILATOR
     if (vif == null) `uvm_fatal(RID, "cfg.vif is null")
 `endif
+    issue_order_sem = new(1);
+    wr_launch_active = 1'b0;
+    rd_launch_active = 1'b0;
   endfunction
 
   task automatic drive_idle();
@@ -142,9 +151,6 @@ class axi4_master_driver #(
   axi4_req_ctx_t rd_issue_q[$];
   axi4_req_ctx_t rd_wait_r[logic [ID_W-1:0]][$];
 
-  int unsigned outstanding_w;
-  int unsigned outstanding_r;
-
   task automatic pipelined_accept_loop();
     item_t req;
     wait_reset_release();
@@ -192,9 +198,23 @@ class axi4_master_driver #(
         @(posedge vif.aclk);
         continue;
       end
-      if (outstanding_w >= cfg.max_outstanding_writes) begin
+      if ((outstanding_w >= cfg.max_outstanding_writes) ||
+          ((cfg.max_outstanding_total != 0) &&
+           ((outstanding_w + outstanding_r) >= cfg.max_outstanding_total))) begin
         @(posedge vif.aclk);
         continue;
+      end
+      if (!cfg.order_overlapping_rw) begin
+        forever begin
+          issue_order_sem.get(1);
+          if (!rd_launch_active && (outstanding_r == 0)) begin
+            wr_launch_active = 1'b1;
+            issue_order_sem.put(1);
+            break;
+          end
+          issue_order_sem.put(1);
+          @(posedge vif.aclk);
+        end
       end
       ctx = wr_issue_q.pop_front();
 
@@ -223,6 +243,11 @@ class axi4_master_driver #(
       vif.awvalid <= 1'b0;
 
       outstanding_w++;
+      if (!cfg.order_overlapping_rw) begin
+        issue_order_sem.get(1);
+        wr_launch_active = 1'b0;
+        issue_order_sem.put(1);
+      end
       wr_w_q.push_back(ctx);
     end
   endtask
@@ -260,11 +285,28 @@ class axi4_master_driver #(
 
   task automatic pipelined_b_loop();
     axi4_req_ctx_t ctx;
+    int unsigned bready_low_left;
     wait_reset_release();
+    bready_low_left = 0;
     forever begin
-      // Drive BREADY whenever we have outstanding writes.
+      // Drive BREADY whenever we have outstanding writes, with optional
+      // controlled backpressure for B-channel stress.
       @(negedge vif.aclk);
-      vif.bready <= (outstanding_w != 0);
+      if (outstanding_w == 0) begin
+        vif.bready <= 1'b0;
+      end else if (cfg.master_bready_random) begin
+        if (bready_low_left != 0) begin
+          vif.bready <= 1'b0;
+          bready_low_left--;
+        end else if (($urandom_range(0, 9) == 0) && (cfg.master_bready_low_max != 0)) begin
+          bready_low_left = rand_in_range(cfg.master_bready_low_min, cfg.master_bready_low_max);
+          vif.bready <= (bready_low_left == 0);
+        end else begin
+          vif.bready <= 1'b1;
+        end
+      end else begin
+        vif.bready <= 1'b1;
+      end
 
       @(posedge vif.aclk);
       if (!(vif.bvalid && vif.bready)) begin
@@ -298,9 +340,23 @@ class axi4_master_driver #(
         @(posedge vif.aclk);
         continue;
       end
-      if (outstanding_r >= cfg.max_outstanding_reads) begin
+      if ((outstanding_r >= cfg.max_outstanding_reads) ||
+          ((cfg.max_outstanding_total != 0) &&
+           ((outstanding_w + outstanding_r) >= cfg.max_outstanding_total))) begin
         @(posedge vif.aclk);
         continue;
+      end
+      if (!cfg.order_overlapping_rw) begin
+        forever begin
+          issue_order_sem.get(1);
+          if (!wr_launch_active && (outstanding_w == 0)) begin
+            rd_launch_active = 1'b1;
+            issue_order_sem.put(1);
+            break;
+          end
+          issue_order_sem.put(1);
+          @(posedge vif.aclk);
+        end
       end
       ctx = rd_issue_q.pop_front();
 
@@ -329,6 +385,11 @@ class axi4_master_driver #(
       vif.arvalid <= 1'b0;
 
       outstanding_r++;
+      if (!cfg.order_overlapping_rw) begin
+        issue_order_sem.get(1);
+        rd_launch_active = 1'b0;
+        issue_order_sem.put(1);
+      end
       rd_wait_r[ctx.tr.id].push_back(ctx);
     end
   endtask

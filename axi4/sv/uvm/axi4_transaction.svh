@@ -153,4 +153,92 @@ class axi4_item #(
 
 endclass
 
+// Public phase-level helpers.  They adapt to the reusable transaction item
+// instead of exposing driver-private implementation state.
+class axi4_addr_phase_item #(
+  int ADDR_W = 32, int DATA_W = 64, int ID_W = 4, int USER_W = 1
+) extends uvm_sequence_item;
+  rand bit                is_write;
+  rand logic [ID_W-1:0]   id;
+  rand logic [ADDR_W-1:0] addr;
+  rand logic [7:0]        len;
+  rand logic [2:0]        size;
+  rand axi4_burst_e       burst;
+  rand bit                lock;
+  rand logic [3:0]        cache;
+  rand logic [2:0]        prot;
+  rand logic [3:0]        qos;
+  rand logic [3:0]        region;
+  rand logic [USER_W-1:0] user;
+  `uvm_object_param_utils(axi4_addr_phase_item#(ADDR_W, DATA_W, ID_W, USER_W))
+  function new(string name = "axi4_addr_phase_item"); super.new(name); endfunction
+  function void apply_to(axi4_item#(ADDR_W, DATA_W, ID_W, USER_W) txn);
+    txn.is_write = is_write; txn.id = id; txn.addr = addr; txn.len = len;
+    txn.size = size; txn.burst = burst; txn.lock = lock; txn.cache = cache;
+    txn.prot = prot; txn.qos = qos; txn.region = region; txn.user = user;
+    txn.allocate_payload();
+  endfunction
+endclass
+
+class axi4_wdata_beat_item #(
+  int ADDR_W = 32, int DATA_W = 64, int ID_W = 4, int USER_W = 1
+) extends uvm_sequence_item;
+  localparam int STRB_W = DATA_W/8;
+  rand int unsigned          beat_index;
+  rand logic [DATA_W-1:0]    data;
+  rand logic [STRB_W-1:0]    strb;
+  `uvm_object_param_utils(axi4_wdata_beat_item#(ADDR_W, DATA_W, ID_W, USER_W))
+  function new(string name = "axi4_wdata_beat_item"); super.new(name); strb = '1; endfunction
+  function void apply_to(axi4_item#(ADDR_W, DATA_W, ID_W, USER_W) txn);
+    txn.allocate_payload();
+    if (!txn.is_write || (beat_index >= txn.num_beats())) begin
+      `uvm_error("AXI4_PHASE", "Invalid write-data beat application")
+      return;
+    end
+    txn.data[beat_index] = data;
+    txn.strb[beat_index] = strb;
+  endfunction
+endclass
+
+class axi4_rdata_beat_item #(
+  int ADDR_W = 32, int DATA_W = 64, int ID_W = 4, int USER_W = 1
+) extends uvm_sequence_item;
+  rand int unsigned          beat_index;
+  rand logic [DATA_W-1:0]    data;
+  rand axi4_resp_e           resp;
+  rand bit                   last;
+  `uvm_object_param_utils(axi4_rdata_beat_item#(ADDR_W, DATA_W, ID_W, USER_W))
+  function new(string name = "axi4_rdata_beat_item"); super.new(name); resp = AXI4_RESP_OKAY; endfunction
+  function void apply_to(axi4_item#(ADDR_W, DATA_W, ID_W, USER_W) txn);
+    txn.allocate_payload();
+    if (txn.is_write || (beat_index >= txn.num_beats())) begin
+      `uvm_error("AXI4_PHASE", "Invalid read-data beat application")
+      return;
+    end
+    txn.data[beat_index] = data;
+    txn.rresp[beat_index] = resp;
+  endfunction
+endclass
+
+class axi4_resp_phase_item #(
+  int ADDR_W = 32, int DATA_W = 64, int ID_W = 4, int USER_W = 1
+) extends uvm_sequence_item;
+  rand bit                is_write;
+  rand logic [ID_W-1:0]   id;
+  rand axi4_resp_e        resp;
+  rand logic [USER_W-1:0] user;
+  rand bit                last;
+  `uvm_object_param_utils(axi4_resp_phase_item#(ADDR_W, DATA_W, ID_W, USER_W))
+  function new(string name = "axi4_resp_phase_item"); super.new(name); resp = AXI4_RESP_OKAY; last = 1'b1; endfunction
+  function void apply_to(axi4_item#(ADDR_W, DATA_W, ID_W, USER_W) txn, int unsigned beat_index = 0);
+    txn.user = user;
+    if (is_write) txn.bresp = resp;
+    else begin
+      txn.allocate_payload();
+      if (beat_index >= txn.num_beats()) `uvm_error("AXI4_PHASE", "Invalid read-response beat application")
+      else txn.rresp[beat_index] = resp;
+    end
+  endfunction
+endclass
+
 `endif // KVIPS_AXI4_TRANSACTION_SVH

@@ -13,6 +13,7 @@ class axi4_slave_mem #(
   localparam int STRB_W = DATA_W/8;
 
   byte unsigned mem[];
+  bit           valid[];
   int unsigned  mem_bytes;
   longint unsigned mem_base;
   bit             mem_wrap;
@@ -28,55 +29,92 @@ class axi4_slave_mem #(
     mem_base  = base;
     mem_wrap  = wrap;
     mem = new[mem_bytes];
+    valid = new[mem_bytes];
     foreach (mem[i]) mem[i] = 8'h00;
+    foreach (valid[i]) valid[i] = 1'b0;
+  endfunction
+
+  function automatic bit map_addr(longint unsigned addr, output int unsigned idx);
+    longint unsigned idx_l;
+    if ((mem_bytes == 0) || (addr < mem_base)) return 1'b0;
+    idx_l = addr - mem_base;
+    if (mem_wrap) idx_l = idx_l % longint'(mem_bytes);
+    if (idx_l >= longint'(mem_bytes)) return 1'b0;
+    idx = int'(idx_l);
+    return 1'b1;
+  endfunction
+
+  function void clear();
+    foreach (mem[i]) mem[i] = 8'h00;
+    foreach (valid[i]) valid[i] = 1'b0;
+  endfunction
+
+  function void backdoor_write_byte(longint unsigned addr, byte unsigned data);
+    int unsigned idx;
+    if (map_addr(addr, idx)) begin
+      mem[idx] = data;
+      valid[idx] = 1'b1;
+    end
+  endfunction
+
+  function byte unsigned backdoor_read_byte(longint unsigned addr);
+    int unsigned idx;
+    if (map_addr(addr, idx)) return mem[idx];
+    return '0;
   endfunction
 
   function void write_beat(logic [ADDR_W-1:0] addr, logic [DATA_W-1:0] data, logic [STRB_W-1:0] strb);
     longint unsigned base;
     longint unsigned stride;
-    longint unsigned mem_bytes_l;
     base = longint'(addr);
     stride = longint'(STRB_W);
-    mem_bytes_l = longint'(mem_bytes);
     base = (base / stride) * stride; // align to data-bus word
     for (int unsigned b = 0; b < STRB_W; b++) begin
       if (strb[b]) begin
-        longint unsigned idx_l;
         longint unsigned a;
         int unsigned idx;
         a = base + longint'(b);
-        if (a < mem_base) continue;
-        idx_l = a - mem_base;
-        if (mem_wrap && (mem_bytes_l != 0)) idx_l = idx_l % mem_bytes_l;
-        if (idx_l < mem_bytes_l) begin
-          idx = int'(idx_l);
+        if (map_addr(a, idx)) begin
           mem[idx] = data[8*b +: 8];
+          valid[idx] = 1'b1;
         end
       end
     end
   endfunction
 
   function logic [DATA_W-1:0] read_beat(logic [ADDR_W-1:0] addr);
+    bit ignored;
+    return read_beat_policy(addr, AXI4_UNINIT_ZERO, 8'h00, ignored);
+  endfunction
+
+  function logic [DATA_W-1:0] read_beat_policy(
+    logic [ADDR_W-1:0] addr,
+    axi4_uninit_read_policy_e policy,
+    logic [7:0] fill,
+    output bit had_uninit
+  );
     logic [DATA_W-1:0] data;
     longint unsigned base;
     longint unsigned stride;
-    longint unsigned mem_bytes_l;
     base = longint'(addr);
     stride = longint'(STRB_W);
-    mem_bytes_l = longint'(mem_bytes);
     base = (base / stride) * stride; // align to data-bus word
     data = '0;
+    had_uninit = 1'b0;
     for (int unsigned b = 0; b < STRB_W; b++) begin
-      longint unsigned idx_l;
       longint unsigned a;
       int unsigned idx;
       a = base + longint'(b);
-      if (a < mem_base) continue;
-      idx_l = a - mem_base;
-      if (mem_wrap && (mem_bytes_l != 0)) idx_l = idx_l % mem_bytes_l;
-      if (idx_l < mem_bytes_l) begin
-        idx = int'(idx_l);
+      if (map_addr(a, idx) && valid[idx]) begin
         data[8*b +: 8] = mem[idx];
+      end else begin
+        had_uninit = 1'b1;
+        case (policy)
+          AXI4_UNINIT_FILL:   data[8*b +: 8] = fill;
+          AXI4_UNINIT_RANDOM: data[8*b +: 8] = $urandom_range(255, 0);
+          AXI4_UNINIT_X:      data[8*b +: 8] = 'x;
+          default:             data[8*b +: 8] = '0;
+        endcase
       end
     end
     return data;
@@ -131,6 +169,8 @@ class axi4_slave_driver #(
 
   aw_t aw_q[$];
   ar_t ar_q[$];
+  int unsigned outstanding_w;
+  int unsigned outstanding_r;
 
   typedef struct {
     bit              valid;
@@ -200,6 +240,94 @@ class axi4_slave_driver #(
     repeat (c) @(posedge vif.aclk);
   endtask
 
+  task automatic maybe_wait_channel_cycles(
+    int unsigned channel_min,
+    int unsigned channel_max,
+    int unsigned fallback_min,
+    int unsigned fallback_max
+  );
+    if ((channel_min != 0) || (channel_max != 0)) begin
+      maybe_wait_cycles(channel_min, channel_max);
+    end else begin
+      maybe_wait_cycles(fallback_min, fallback_max);
+    end
+  endtask
+
+  function automatic bit txn_outside_regions(
+    logic [ADDR_W-1:0] addr,
+    logic [7:0] len,
+    logic [2:0] size,
+    axi4_burst_e burst
+  );
+    if (!cfg.slave_region_decode_enable) return 1'b0;
+    for (int unsigned i = 0; i <= int'(len); i++) begin
+      longint unsigned beat_addr;
+      int unsigned bytes_per_beat;
+      beat_addr = axi4_beat_addr(longint'(addr), int'(size), int'(len), burst, i);
+      bytes_per_beat = axi4_size_to_bytes(int'(size));
+      for (int unsigned b = 0; b < bytes_per_beat; b++) begin
+        bit mapped;
+        mapped = 1'b0;
+        for (int unsigned r = 0; r < cfg.slave_region_start.size(); r++) begin
+          longint unsigned start_addr;
+          longint unsigned end_addr;
+          start_addr = longint'(cfg.slave_region_start[r]);
+          end_addr = longint'(cfg.slave_region_end[r]);
+          if (end_addr < start_addr) begin
+            longint unsigned tmp;
+            tmp = start_addr;
+            start_addr = end_addr;
+            end_addr = tmp;
+          end
+          if (((beat_addr + b) >= start_addr) && ((beat_addr + b) <= end_addr)) mapped = 1'b1;
+        end
+        if (!mapped) return 1'b1;
+      end
+    end
+    return 1'b0;
+  endfunction
+
+  function automatic bit choose_rate_error(bit is_read, output axi4_resp_e resp);
+    int unsigned roll;
+    int unsigned decerr_rate;
+    int unsigned slverr_rate;
+    decerr_rate = is_read ? cfg.slave_rd_decerr_rate_pct : cfg.slave_wr_decerr_rate_pct;
+    slverr_rate = is_read ? cfg.slave_rd_slverr_rate_pct : cfg.slave_wr_slverr_rate_pct;
+    if (decerr_rate > 100) decerr_rate = 100;
+    if (slverr_rate > (100 - decerr_rate)) slverr_rate = 100 - decerr_rate;
+    roll = $urandom_range(99, 0);
+    if (roll < decerr_rate) begin
+      resp = AXI4_RESP_DECERR;
+      return 1'b1;
+    end
+    if (roll < (decerr_rate + slverr_rate)) begin
+      resp = AXI4_RESP_SLVERR;
+      return 1'b1;
+    end
+    resp = AXI4_RESP_OKAY;
+    return 1'b0;
+  endfunction
+
+  function automatic logic [DATA_W-1:0] read_mem_beat(logic [ADDR_W-1:0] addr);
+    logic [DATA_W-1:0] data;
+    bit had_uninit;
+    data = mem.read_beat_policy(addr, cfg.slave_uninit_read_policy, cfg.slave_uninit_fill, had_uninit);
+    if (had_uninit && cfg.slave_uninit_read_warn) begin
+      `uvm_warning(RID, $sformatf("Read from unwritten slave memory at 0x%0h", addr))
+    end
+    return data;
+  endfunction
+
+  function void backdoor_write_byte(longint unsigned addr, byte unsigned data);
+    if (mem == null) `uvm_fatal(RID, "backdoor_write_byte requires cfg.slave_mem_enable=1")
+    mem.backdoor_write_byte(addr, data);
+  endfunction
+
+  function byte unsigned backdoor_read_byte(longint unsigned addr);
+    if (mem == null) `uvm_fatal(RID, "backdoor_read_byte requires cfg.slave_mem_enable=1")
+    return mem.backdoor_read_byte(addr);
+  endfunction
+
   function automatic bit exclusive_req_legal(logic [ADDR_W-1:0] addr, logic [7:0] len, logic [2:0] size, axi4_burst_e burst);
     longint unsigned bytes_per_beat;
     longint unsigned total_bytes;
@@ -215,15 +343,12 @@ class axi4_slave_driver #(
   endfunction
 
   function automatic bit txn_overlaps_err_range(logic [ADDR_W-1:0] addr, logic [7:0] len, logic [2:0] size, axi4_burst_e burst);
-    longint unsigned txn_start_b;
-    longint unsigned txn_end_b;
+    longint unsigned beat_addr;
     longint unsigned cfg_start_b;
     longint unsigned cfg_end_b;
-    longint unsigned total_bytes;
+    longint unsigned bytes_per_beat;
     if (!cfg.slave_err_enable) return 1'b0;
-    total_bytes = axi4_total_bytes(int'(size), int'(len));
-    txn_start_b = longint'(addr);
-    txn_end_b   = (total_bytes == 0) ? txn_start_b : (txn_start_b + total_bytes - 1);
+    bytes_per_beat = axi4_size_to_bytes(int'(size));
     cfg_start_b = longint'(cfg.slave_err_start);
     cfg_end_b   = longint'(cfg.slave_err_end);
     if (cfg_end_b < cfg_start_b) begin
@@ -232,7 +357,16 @@ class axi4_slave_driver #(
       cfg_start_b = cfg_end_b;
       cfg_end_b   = t;
     end
-    return (txn_start_b <= cfg_end_b) && (txn_end_b >= cfg_start_b);
+    // A WRAP burst is not a contiguous range from AxADDR.  Check each byte of
+    // each actual beat address so error injection matches the memory accesses
+    // for INCR, FIXED, and WRAP transfers alike.
+    for (int unsigned i = 0; i <= int'(len); i++) begin
+      beat_addr = axi4_beat_addr(longint'(addr), int'(size), int'(len), burst, i);
+      for (int unsigned b = 0; b < bytes_per_beat; b++) begin
+        if (((beat_addr + b) >= cfg_start_b) && ((beat_addr + b) <= cfg_end_b)) return 1'b1;
+      end
+    end
+    return 1'b0;
   endfunction
 
   function automatic void excl_set_reservation(logic [ID_W-1:0] id, logic [ADDR_W-1:0] addr, logic [7:0] len, logic [2:0] size, axi4_burst_e burst);
@@ -275,33 +409,71 @@ class axi4_slave_driver #(
   endfunction
 
   task run_phase(uvm_phase phase);
-    fork
-      aw_accept_loop();
-      w_accept_loop();
-      b_respond_loop();
-      ar_accept_loop();
-      r_respond_loop();
-    join
+    forever begin
+      drive_idle();
+      while (vif.areset_n !== 1'b1) @(posedge vif.aclk);
+      fork : slave_active
+        aw_accept_loop();
+        w_accept_loop();
+        b_respond_loop();
+        ar_accept_loop();
+        r_respond_loop();
+        begin
+          @(negedge vif.areset_n);
+        end
+      join_any
+      disable slave_active;
+      aw_q.delete();
+      ar_q.delete();
+      b_q.delete();
+      excl_by_id.delete();
+      outstanding_w = 0;
+      outstanding_r = 0;
+      if (cfg.slave_clear_mem_on_reset && (mem != null)) mem.clear();
+    end
   endtask
 
   task automatic aw_accept_loop();
     aw_t aw;
     wait_reset_release();
     forever begin
-      maybe_wait_cycles(cfg.ready_min, cfg.ready_max);
+      while ((cfg.slave_max_outstanding_wr != 0) &&
+             (outstanding_w >= cfg.slave_max_outstanding_wr)) @(posedge vif.aclk);
+      maybe_wait_channel_cycles(cfg.slave_aw_ready_min, cfg.slave_aw_ready_max, cfg.ready_min, cfg.ready_max);
       @(negedge vif.aclk);
       vif.awready <= 1'b1;
-      do @(posedge vif.aclk); while (!(vif.awvalid && vif.awready));
+      if (cfg.slave_aw_random_ready) begin
+        forever begin
+          @(posedge vif.aclk);
+          if (vif.awvalid && vif.awready) break;
+          @(negedge vif.aclk);
+          vif.awready <= 1'b0;
+          maybe_wait_channel_cycles(cfg.slave_aw_ready_min, cfg.slave_aw_ready_max, cfg.ready_min, cfg.ready_max);
+          @(negedge vif.aclk);
+          vif.awready <= 1'b1;
+        end
+      end else begin
+        do @(posedge vif.aclk); while (!(vif.awvalid && vif.awready));
+      end
       aw.id    = vif.awid;
       aw.addr  = vif.awaddr;
       aw.len   = vif.awlen;
       aw.size  = vif.awsize;
       aw.burst = axi4_burst_e'(vif.awburst);
       aw.lock  = vif.awlock;
-      aw.err   = (cfg.slave_err_on_write && txn_overlaps_err_range(aw.addr, aw.len, aw.size, aw.burst));
       aw.err_resp = cfg.slave_err_resp;
+      aw.err = 1'b0;
+      if (txn_outside_regions(aw.addr, aw.len, aw.size, aw.burst)) begin
+        aw.err = 1'b1;
+        aw.err_resp = AXI4_RESP_DECERR;
+      end else if (cfg.slave_err_on_write && txn_overlaps_err_range(aw.addr, aw.len, aw.size, aw.burst)) begin
+        aw.err = 1'b1;
+      end else if (choose_rate_error(1'b0, aw.err_resp)) begin
+        aw.err = 1'b1;
+      end
       aw.user  = vif.awuser;
       aw_q.push_back(aw);
+      outstanding_w++;
       if (cfg.trace_enable) `uvm_info(RID, $sformatf("AW accepted id=0x%0h addr=0x%0h len=%0d", aw.id, aw.addr, aw.len), UVM_MEDIUM)
       @(negedge vif.aclk);
       vif.awready <= 1'b0;
@@ -342,10 +514,22 @@ class axi4_slave_driver #(
         end
       end
 
-      maybe_wait_cycles(cfg.ready_min, cfg.ready_max);
+      maybe_wait_channel_cycles(cfg.slave_w_ready_min, cfg.slave_w_ready_max, cfg.ready_min, cfg.ready_max);
       @(negedge vif.aclk);
       vif.wready <= 1'b1;
-      do @(posedge vif.aclk); while (!(vif.wvalid && vif.wready));
+      if (cfg.slave_w_random_ready) begin
+        forever begin
+          @(posedge vif.aclk);
+          if (vif.wvalid && vif.wready) break;
+          @(negedge vif.aclk);
+          vif.wready <= 1'b0;
+          maybe_wait_channel_cycles(cfg.slave_w_ready_min, cfg.slave_w_ready_max, cfg.ready_min, cfg.ready_max);
+          @(negedge vif.aclk);
+          vif.wready <= 1'b1;
+        end
+      end else begin
+        do @(posedge vif.aclk); while (!(vif.wvalid && vif.wready));
+      end
       if (is_excl || is_err) begin
         if (beat_idx < buf_data.size()) begin
           buf_data[beat_idx] = vif.wdata;
@@ -418,6 +602,23 @@ class axi4_slave_driver #(
 
   b_t b_q[$];
 
+  // AXI4 permits response reordering between IDs, but preserves issue order
+  // for transactions that share an ID.  Return a random queue entry that is
+  // the oldest pending response for its ID.
+  function automatic int find_b_eligible_idx();
+    int eligible[$];
+    foreach (b_q[i]) begin
+      bit older_same_id;
+      older_same_id = 1'b0;
+      for (int j = 0; j < i; j++) begin
+        if (b_q[j].id == b_q[i].id) older_same_id = 1'b1;
+      end
+      if (!older_same_id) eligible.push_back(i);
+    end
+    if (eligible.size() == 0) return -1;
+    return eligible[$urandom_range(0, eligible.size()-1)];
+  endfunction
+
   function void b_push(logic [ID_W-1:0] id, axi4_resp_e resp, logic [USER_W-1:0] user);
     b_t b;
     b.id   = id;
@@ -425,6 +626,28 @@ class axi4_slave_driver #(
     b.user = user;
     b_q.push_back(b);
   endfunction
+
+  function automatic int find_r_eligible_idx();
+    int eligible[$];
+    foreach (ar_q[i]) begin
+      bit older_same_id;
+      older_same_id = 1'b0;
+      for (int j = 0; j < i; j++) begin
+        if (ar_q[j].id == ar_q[i].id) older_same_id = 1'b1;
+      end
+      if (!older_same_id) eligible.push_back(i);
+    end
+    if (eligible.size() == 0) return -1;
+    return eligible[$urandom_range(0, eligible.size()-1)];
+  endfunction
+
+  task automatic maybe_wait_r_beat(int unsigned beat_idx);
+    if (beat_idx < cfg.slave_r_beat_delays.size()) begin
+      repeat (cfg.slave_r_beat_delays[beat_idx]) @(posedge vif.aclk);
+    end else if (beat_idx == 0) begin
+      maybe_wait_channel_cycles(cfg.slave_r_resp_min, cfg.slave_r_resp_max, cfg.resp_min, cfg.resp_max);
+    end
+  endtask
 
   task automatic b_respond_loop();
     b_t b;
@@ -435,10 +658,17 @@ class axi4_slave_driver #(
         @(posedge vif.aclk);
         continue;
       end
-      maybe_wait_cycles(cfg.resp_min, cfg.resp_max);
+      if (cfg.slave_reorder_b && (cfg.slave_b_accum_cycles != 0)) begin
+        repeat (cfg.slave_b_accum_cycles) @(posedge vif.aclk);
+      end
+      maybe_wait_channel_cycles(cfg.slave_b_resp_min, cfg.slave_b_resp_max, cfg.resp_min, cfg.resp_max);
       if (cfg.slave_reorder_b && (b_q.size() > 1)) begin
-        int unsigned idx;
-        idx = $urandom_range(0, b_q.size()-1);
+        int idx;
+        idx = find_b_eligible_idx();
+        if (idx < 0) begin
+          @(posedge vif.aclk);
+          continue;
+        end
         b = b_q[idx];
         b_q.delete(idx);
       end else begin
@@ -461,6 +691,7 @@ class axi4_slave_driver #(
       end
       @(negedge vif.aclk);
       vif.bvalid <= 1'b0;
+      if (outstanding_w != 0) outstanding_w--;
     end
   endtask
 
@@ -468,10 +699,24 @@ class axi4_slave_driver #(
     ar_t ar;
     wait_reset_release();
     forever begin
-      maybe_wait_cycles(cfg.ready_min, cfg.ready_max);
+      while ((cfg.slave_max_outstanding_rd != 0) &&
+             (outstanding_r >= cfg.slave_max_outstanding_rd)) @(posedge vif.aclk);
+      maybe_wait_channel_cycles(cfg.slave_ar_ready_min, cfg.slave_ar_ready_max, cfg.ready_min, cfg.ready_max);
       @(negedge vif.aclk);
       vif.arready <= 1'b1;
-      do @(posedge vif.aclk); while (!(vif.arvalid && vif.arready));
+      if (cfg.slave_ar_random_ready) begin
+        forever begin
+          @(posedge vif.aclk);
+          if (vif.arvalid && vif.arready) break;
+          @(negedge vif.aclk);
+          vif.arready <= 1'b0;
+          maybe_wait_channel_cycles(cfg.slave_ar_ready_min, cfg.slave_ar_ready_max, cfg.ready_min, cfg.ready_max);
+          @(negedge vif.aclk);
+          vif.arready <= 1'b1;
+        end
+      end else begin
+        do @(posedge vif.aclk); while (!(vif.arvalid && vif.arready));
+      end
       ar.id    = vif.arid;
       ar.addr  = vif.araddr;
       ar.len   = vif.arlen;
@@ -480,8 +725,13 @@ class axi4_slave_driver #(
       ar.lock  = vif.arlock;
       ar.user  = vif.aruser;
       ar.resp  = AXI4_RESP_OKAY;
-      if (cfg.slave_err_on_read && txn_overlaps_err_range(ar.addr, ar.len, ar.size, ar.burst)) begin
+      if (txn_outside_regions(ar.addr, ar.len, ar.size, ar.burst)) begin
+        ar.resp = AXI4_RESP_DECERR;
+        excl_clear_reservation(ar.id);
+      end else if (cfg.slave_err_on_read && txn_overlaps_err_range(ar.addr, ar.len, ar.size, ar.burst)) begin
         ar.resp = cfg.slave_err_resp;
+        excl_clear_reservation(ar.id);
+      end else if (choose_rate_error(1'b1, ar.resp)) begin
         excl_clear_reservation(ar.id);
       end else if (ar.lock && cfg.slave_exclusive_enable) begin
         if (exclusive_req_legal(ar.addr, ar.len, ar.size, ar.burst)) begin
@@ -493,6 +743,7 @@ class axi4_slave_driver #(
         end
       end
       ar_q.push_back(ar);
+      outstanding_r++;
       if (cfg.trace_enable) `uvm_info(RID, $sformatf("AR accepted id=0x%0h addr=0x%0h len=%0d", ar.id, ar.addr, ar.len), UVM_MEDIUM)
       @(negedge vif.aclk);
       vif.arready <= 1'b0;
@@ -504,23 +755,37 @@ class axi4_slave_driver #(
     int unsigned beats;
     logic [ADDR_W-1:0] beat_addr;
     int unsigned cycles;
+    int idx;
     wait_reset_release();
     forever begin
       if (ar_q.size() == 0) begin
         @(posedge vif.aclk);
         continue;
       end
-      ar = ar_q.pop_front();
+      if (cfg.slave_reorder_r && (cfg.slave_r_accum_cycles != 0)) begin
+        repeat (cfg.slave_r_accum_cycles) @(posedge vif.aclk);
+      end
+      if (cfg.slave_reorder_r && (ar_q.size() > 1)) begin
+        idx = find_r_eligible_idx();
+        if (idx < 0) begin
+          @(posedge vif.aclk);
+          continue;
+        end
+        ar = ar_q[idx];
+        ar_q.delete(idx);
+      end else begin
+        ar = ar_q.pop_front();
+      end
       beats = int'(ar.len) + 1;
-      maybe_wait_cycles(cfg.resp_min, cfg.resp_max);
       for (int unsigned i = 0; i < beats; i++) begin
         longint unsigned a;
+        maybe_wait_r_beat(i);
         a = axi4_beat_addr(longint'(ar.addr), int'(ar.size), int'(ar.len), ar.burst, i);
         beat_addr = a[ADDR_W-1:0];
         @(negedge vif.aclk);
         vif.rid    <= ar.id;
         vif.rdata  <= ((ar.resp == AXI4_RESP_SLVERR) || (ar.resp == AXI4_RESP_DECERR)) ? '0
-                       : (cfg.slave_mem_enable ? mem.read_beat(beat_addr) : '0);
+                       : (cfg.slave_mem_enable ? read_mem_beat(beat_addr) : '0);
         vif.rresp  <= ar.resp;
         vif.rlast  <= (i == (beats-1));
         vif.ruser  <= ar.user;
@@ -538,6 +803,7 @@ class axi4_slave_driver #(
         @(negedge vif.aclk);
         vif.rvalid <= 1'b0;
       end
+      if (outstanding_r != 0) outstanding_r--;
     end
   endtask
 
@@ -577,6 +843,10 @@ class axi4_slave_driver #(
         continue;
       end
 
+      if (cfg.slave_r_accum_cycles != 0) begin
+        repeat (cfg.slave_r_accum_cycles) @(posedge vif.aclk);
+      end
+
       begin
         logic [ID_W-1:0] ids[$];
         logic [ID_W-1:0] pick_id;
@@ -589,14 +859,14 @@ class axi4_slave_driver #(
         pick_id = ids[$urandom_range(0, ids.size()-1)];
         st = active[pick_id];
 
-        maybe_wait_cycles(cfg.resp_min, cfg.resp_max);
+        maybe_wait_r_beat(st.beat_idx);
         a = axi4_beat_addr(longint'(st.ar.addr), int'(st.ar.size), int'(st.ar.len), st.ar.burst, st.beat_idx);
         beat_addr = a[ADDR_W-1:0];
 
         @(negedge vif.aclk);
         vif.rid    <= st.ar.id;
         vif.rdata  <= ((st.ar.resp == AXI4_RESP_SLVERR) || (st.ar.resp == AXI4_RESP_DECERR)) ? '0
-                       : (cfg.slave_mem_enable ? mem.read_beat(beat_addr) : '0);
+                       : (cfg.slave_mem_enable ? read_mem_beat(beat_addr) : '0);
         vif.rresp  <= st.ar.resp;
         vif.rlast  <= (st.beat_idx == (st.beats-1));
         vif.ruser  <= st.ar.user;
@@ -617,6 +887,7 @@ class axi4_slave_driver #(
         st.beat_idx++;
         if (st.beat_idx >= st.beats) begin
           void'(active.delete(pick_id));
+          if (outstanding_r != 0) outstanding_r--;
         end else begin
           active[pick_id] = st;
         end

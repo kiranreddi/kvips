@@ -22,6 +22,23 @@ package axi4_types_pkg;
     AXI4_RESP_DECERR = 2'b11
   } axi4_resp_e;
 
+  // Policy for bytes that have not yet been written in the built-in slave
+  // memory.  The default preserves the historical KVIPS behavior (zeros).
+  typedef enum int unsigned {
+    AXI4_UNINIT_ZERO   = 0,
+    AXI4_UNINIT_FILL   = 1,
+    AXI4_UNINIT_RANDOM = 2,
+    AXI4_UNINIT_X      = 3
+  } axi4_uninit_read_policy_e;
+
+  typedef enum int unsigned {
+    AXI4_READY_AW = 0,
+    AXI4_READY_W  = 1,
+    AXI4_READY_B  = 2,
+    AXI4_READY_AR = 3,
+    AXI4_READY_R  = 4
+  } axi4_ready_channel_e;
+
   // Utility helpers (protocol-level)
   function automatic int unsigned axi4_size_to_bytes(input int unsigned size);
     return (1 << size);

@@ -25,11 +25,16 @@ This document maps **implemented** AXI4 VIP functionality to runnable tests and 
 - WSTRB honored by slave memory model and scoreboard (lane-aligned to bus word)
 
 ### Backpressure / latency
-- Slave READY and response latency knobs (`ready_min/max`, `resp_min/max`)
+- Legacy slave READY/response latency knobs (`ready_min/max`, `resp_min/max`)
+- Independent AW/W/AR/B/R timing controls and optional per-beat R delays
+- Pipelined master RREADY and BREADY backpressure controls
+- Slave random-READY controls, response accumulation windows, and outstanding limits
 
 ### Multiple outstanding / reordering / interleaving
 - Master pipelined mode with configurable outstanding depth
-- Slave response scheduling knobs (B reordering, R beat interleaving across IDs)
+- Slave B and whole-burst R reordering across IDs, preserving issue order within an ID
+- Slave R beat interleaving across IDs, preserving per-ID beat order
+- Optional conservative read/write serialization for environments that require no cross-direction overlap
 
 ### Exclusive accesses (AXI4 LOCK)
 - Slave reservation tracking (per-ID) with EXOKAY on successful exclusive read/write
@@ -37,7 +42,19 @@ This document maps **implemented** AXI4 VIP functionality to runnable tests and 
 
 ### Error response injection
 - Address-range based `SLVERR/DECERR` injection for reads and/or writes
+- Inclusive address-region decoding with `DECERR` on an unmapped byte
+- Per-direction `SLVERR`/`DECERR` response-rate injection
 - Error writes do not update memory (self-checked)
+
+### Slave memory model
+- Configurable base, size, and optional address wrapping
+- Byte backdoor read/write helpers on `axi4_slave_driver`
+- Configurable unwritten-byte response policy (zero, fill, random, or X)
+- Optional clear on reset
+
+### Phase-oriented API
+- Public address, write-data beat, read-data beat, response, and READY-control helper items
+- Helpers adapt to `axi4_item` and configuration without exposing driver-private state
 
 ## Regression tests
 | Feature area | Test | Where |
@@ -58,6 +75,11 @@ This document maps **implemented** AXI4 VIP functionality to runnable tests and 
 | INCR bursts up to 256 beats | `axi4_b2b_incr_256beat_test` | `kvips/axi4/examples/uvm_back2back/tb/tb_pkg.sv` |
 | Master delay/backpressure knobs | `axi4_b2b_delay_stress_test` | `kvips/axi4/examples/uvm_back2back/tb/tb_pkg.sv` |
 | Concurrent reads+writes | `axi4_b2b_concurrent_rw_test` | `kvips/axi4/examples/uvm_back2back/tb/tb_pkg.sv` |
+| Same-ID-safe B/R reordering + BREADY/RREADY backpressure | `axi4_b2b_reorder_bready_test` | `kvips/axi4/examples/uvm_back2back/tb/tb_pkg.sv` |
+| Region decode (mapped OKAY, unmapped DECERR) | `axi4_b2b_region_decode_test` | `kvips/axi4/examples/uvm_back2back/tb/tb_pkg.sv` |
+| Deterministic rate-based SLVERR/DECERR | `axi4_b2b_error_rate_test` | `kvips/axi4/examples/uvm_back2back/tb/tb_pkg.sv` |
+| Phase helpers, random READY, and slave outstanding limits | `axi4_b2b_phase_control_test` | `kvips/axi4/examples/uvm_back2back/tb/tb_pkg.sv` |
+| Conservative ordered read/write issue | `axi4_b2b_ordered_rw_test` | `kvips/axi4/examples/uvm_back2back/tb/tb_pkg.sv` |
 
 ## Feature-to-test mapping (summary)
 | AXI feature | Covered by |
@@ -77,6 +99,11 @@ This document maps **implemented** AXI4 VIP functionality to runnable tests and 
 | INCR up to 256 beats | `axi4_b2b_incr_256beat_test` |
 | Master delays + read backpressure | `axi4_b2b_delay_stress_test` |
 | Concurrent read/write traffic | `axi4_b2b_concurrent_rw_test` |
+| Same-ID response ordering under B/R reordering | `axi4_b2b_reorder_bready_test` |
+| BREADY backpressure | `axi4_b2b_reorder_bready_test` |
+| Address-region decode and response rates | `axi4_b2b_region_decode_test`, `axi4_b2b_error_rate_test` |
+| Phase helpers and reactive flow control | `axi4_b2b_phase_control_test` |
+| Conservative cross-direction ordering | `axi4_b2b_ordered_rw_test` |
 | Basic protocol SVA (hold/size) | Always-on unless `+KVIPS_AXI4_ASSERT_OFF` |
 
 ## Not implemented yet (gaps)
@@ -85,3 +112,5 @@ These are AXI4 features not yet modeled/checked by this initial VIP:
 - Low-power / clock gating considerations
 - Protocol corner cases (additional unaligned/addressing corner coverage beyond current directed set)
 - Comprehensive SVA parity vs vendor VIPs (KVIPS includes a starter + stateful set; extend as needed)
+- Full transaction tracker/replay tooling and vendor-style coverage/performance models
+- The scoreboard assumes zero for unwritten memory; disable it or provide an environment-specific checker when using the slave's fill/random/X unwritten-read policies.

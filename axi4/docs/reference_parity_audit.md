@@ -1,0 +1,59 @@
+# AXI4 Reference-Parity Audit
+
+This audit compares KVIPS AXI4 with the locally available, working AXI4
+reference implementation used during this review. It records behavioral
+coverage, not source compatibility: KVIPS keeps its own parameterization,
+layout, and vendor-neutral API.
+
+## Closed in this revision
+
+- B response selection may reorder between IDs but never bypasses an older
+  transaction with the same ID.
+- Whole-burst R response selection has the same per-ID ordering guarantee.
+- Address-range error injection evaluates every actual beat address, including
+  WRAP bursts; it no longer assumes a WRAP transfer is contiguous.
+- The pipelined master supports a combined outstanding limit and optional
+  BREADY randomization in addition to existing RREADY randomization.
+- The slave provides independent AW/W/AR/B/R timing controls, optional per-R-
+  beat delays, region decode, deterministic/random error-rate injection, and
+  selectable unwritten-memory behavior.
+- New runnable tests cover response reordering/backpressure, region decode,
+  and error-rate paths.
+- The slave now supports random READY toggling, response accumulation windows,
+  outstanding limits, and reset-time queue/reservation flushing.
+- Address, write-beat, read-beat, response, and READY-control helper items are
+  available for phase-oriented sequence construction.
+- The pipelined master provides an optional conservative cross-direction
+  serialization policy for environments that require ordered read/write issue.
+
+## Present in the reference but not yet at KVIPS parity
+
+| Area | Why it remains a gap |
+|---|---|
+| Sequence-library breadth | The reference has a much broader set of directed negative, boundary, overlap, replay, and project-specific DMA sequences. KVIPS has core burst, lane, corner, pipeline, exclusive, error, phase, and concurrent-R/W sequences, but not all variants. |
+| Master overlap ordering | `order_overlapping_rw=0` safely serializes opposite-direction traffic. It is conservative: it does not yet inspect ranges to permit independent reads and writes concurrently. |
+| Reset recovery | The reactive slave flushes queues and reservations on reset. The master does not yet synthesize/reset-abort responses for every in-flight pipelined request, and reset-during-traffic tests are still needed. |
+| Checker depth | KVIPS has useful SVA and a readback scoreboard, not an exhaustive AMBA/QVIP/Avery assertion suite or response-order protocol checker. |
+| Coverage and performance | Monitor-based functional coverage and basic statistics exist. Toggle coverage, latency distributions, occupancy/bandwidth models, and closure targets comparable to the reference are absent. |
+| Trace/replay | UVM recording and text logging exist; dedicated transaction-tracker and beat-replay CSV tooling do not. |
+| Integration collateral | Reference DMA and DUT/RTL tests are project-specific. KVIPS should add generic integration examples only when a vendor-neutral contract is defined. |
+
+## Required next work before claiming full vendor-VIP parity
+
+1. Make master reset behavior transactional: flush or abort every in-flight
+   request deterministically and add reset-during-AW/W/B/AR/R tests.
+2. Refine conservative read/write serialization into range-aware RAW/WAR/WAW
+   ordering, then add directed overlap tests.
+3. Add a response-order checker and assertion/negative tests for each
+   documented AXI rule.
+4. Expand coverage/performance and add a measurable coverage-closure plan.
+5. Add portable replay/tracker tooling and then consider generic replacements
+   for the reference's DMA and DUT
+   integration sequences; do not import project-specific collateral into KVIPS.
+
+## Verification record for this revision
+
+The full `tests_questa.list` back-to-back suite is submitted through LSF for
+the supported Questa, VCS, and Xcelium versions. The exact job results belong
+in release/CI records rather than this source document, because they are
+environment- and revision-specific.
