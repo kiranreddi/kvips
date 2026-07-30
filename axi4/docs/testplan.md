@@ -37,7 +37,10 @@ For the normative requirement-by-requirement audit, see
 - Master pipelined mode with configurable outstanding depth
 - Slave B and whole-burst R reordering across IDs, preserving issue order within an ID
 - Slave R beat interleaving across IDs, preserving per-ID beat order
-- Optional conservative read/write serialization for environments that require no cross-direction overlap
+- Optional conservative read/write serialization or range-aware overlap gating
+- Independent interface channel checker for B/R association, same-ID order,
+  beat counts, and RLAST framing
+- Pipelined reset flush with one `reset_aborted` response per accepted request
 
 ### Exclusive accesses (AXI4 LOCK)
 - Slave reservation tracking (per-ID) with EXOKAY on successful exclusive read/write
@@ -89,6 +92,8 @@ For the normative requirement-by-requirement audit, see
 | Deterministic rate-based SLVERR/DECERR | `axi4_b2b_error_rate_test` | `kvips/axi4/examples/uvm_back2back/tb/tb_pkg.sv` |
 | Phase helpers, random READY, and slave outstanding limits | `axi4_b2b_phase_control_test` | `kvips/axi4/examples/uvm_back2back/tb/tb_pkg.sv` |
 | Conservative ordered read/write issue | `axi4_b2b_ordered_rw_test` | `kvips/axi4/examples/uvm_back2back/tb/tb_pkg.sv` |
+| Pipelined reset flush and post-reset recovery | `axi4_b2b_reset_recovery_test` | `kvips/axi4/examples/uvm_back2back/tb/tb_pkg.sv` |
+| Range-aware disjoint/overlap ordering | `axi4_b2b_range_aware_order_test` | `kvips/axi4/examples/uvm_back2back/tb/tb_pkg.sv` |
 
 ## Feature-to-test mapping (summary)
 | AXI feature | Covered by |
@@ -118,6 +123,9 @@ For the normative requirement-by-requirement audit, see
 | Address-region decode and response rates | `axi4_b2b_region_decode_test`, `axi4_b2b_error_rate_test` |
 | Phase helpers and reactive flow control | `axi4_b2b_phase_control_test` |
 | Conservative cross-direction ordering | `axi4_b2b_ordered_rw_test` |
+| Pipelined reset-abort and recovery | `axi4_b2b_reset_recovery_test` |
+| Independent B/R order and framing checks | Always-on `axi4_protocol_checker` when enabled |
+| Range-aware cross-direction issue gating | `axi4_b2b_range_aware_order_test` |
 | Basic protocol SVA (hold/size) | Always-on unless `+KVIPS_AXI4_ASSERT_OFF` |
 
 ## Not implemented yet (gaps)
@@ -127,6 +135,6 @@ These are AXI4 features not yet modeled/checked by this VIP:
 - Additional multi-beat unaligned/addressing corner coverage beyond the new directed byte-lane test
 - Comprehensive SVA parity vs vendor VIPs (KVIPS includes a starter + stateful set; extend as needed)
 - Full transaction tracker/replay tooling and vendor-style coverage/performance models
-- Deterministic master reset-abort/drain behavior and reset-during-traffic tests
+- Dedicated non-pipelined reset timing cases for every channel phase
 - AXI4-Lite interface/API (the current VIP is AXI4 Full)
 - The scoreboard assumes zero for unwritten memory; disable it or provide an environment-specific checker when using the slave's fill/random/X unwritten-read policies.

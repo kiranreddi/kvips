@@ -28,6 +28,7 @@ package axi4_uvm_pkg;
   `include "axi4_master_driver.svh"
   `include "axi4_slave_driver.svh"
   `include "axi4_monitor.svh"
+  `include "axi4_protocol_checker.svh"
   `include "axi4_txn_logger.svh"
   `include "axi4_scoreboard.svh"
   `include "axi4_agent.svh"

@@ -875,6 +875,103 @@ class axi4_same_id_pipeline_seq #(
   endtask
 endclass
 
+// Reset-recovery sequence.  The pre-reset writes are intentionally independent
+// of the post-reset checks: reset-aborted requests must not be treated as
+// successful architectural writes.
+class axi4_reset_recovery_seq #(
+  int ADDR_W = 32,
+  int DATA_W = 64,
+  int ID_W   = 4,
+  int USER_W = 1
+) extends axi4_base_seq#(ADDR_W, DATA_W, ID_W, USER_W);
+
+  localparam int STRB_W = DATA_W/8;
+  rand int unsigned num_pre_reset = 64;
+  rand int unsigned num_post_reset = 8;
+  rand logic [ADDR_W-1:0] pre_base_addr = 32'h22000;
+  rand logic [ADDR_W-1:0] post_base_addr = 32'h24000;
+
+  `uvm_object_param_utils(axi4_reset_recovery_seq#(ADDR_W, DATA_W, ID_W, USER_W))
+
+  function new(string name = "axi4_reset_recovery_seq");
+    super.new(name);
+  endfunction
+
+  task automatic drain_responses(input int unsigned target, output int unsigned aborted);
+    axi4_item#(ADDR_W, DATA_W, ID_W, USER_W) rsp;
+    aborted = 0;
+    for (int unsigned i = 0; i < target; i++) begin
+      get_response(rsp);
+      if ((rsp != null) && rsp.reset_aborted) aborted++;
+    end
+  endtask
+
+  task body();
+    int unsigned aborted;
+    set_response_queue_depth(-1);
+
+    for (int unsigned i = 0; i < num_pre_reset; i++) begin
+      axi4_item#(ADDR_W, DATA_W, ID_W, USER_W) wr;
+      wr = new($sformatf("pre_reset_wr_%0d", i));
+      wr.is_write = 1'b1;
+      wr.id = i[ID_W-1:0];
+      wr.addr = pre_base_addr + i*STRB_W;
+      wr.len = 8'd0;
+      wr.size = $clog2(STRB_W);
+      wr.burst = AXI4_BURST_INCR;
+      wr.user = '0;
+      wr.allocate_payload();
+      wr.data[0] = {$urandom(), $urandom()};
+      if (DATA_W <= 32) wr.data[0] = $urandom();
+      wr.strb[0] = '1;
+      start_item(wr);
+      finish_item(wr);
+    end
+
+    drain_responses(num_pre_reset, aborted);
+    if (aborted == 0) begin
+      `uvm_fatal(get_type_name(), "Reset recovery test did not observe any aborted request")
+    end
+
+    // Verify that traffic can resume after reset without depending on the
+    // state of any request that was interrupted.
+    for (int unsigned i = 0; i < num_post_reset; i++) begin
+      axi4_item#(ADDR_W, DATA_W, ID_W, USER_W) wr;
+      wr = new($sformatf("post_reset_wr_%0d", i));
+      wr.is_write = 1'b1;
+      wr.id = i + 8'h8;
+      wr.addr = post_base_addr + i*STRB_W;
+      wr.len = 8'd0;
+      wr.size = $clog2(STRB_W);
+      wr.burst = AXI4_BURST_INCR;
+      wr.user = '0;
+      wr.allocate_payload();
+      wr.data[0] = 64'h5A00_0000 + i;
+      if (DATA_W <= 32) wr.data[0] = 32'h5A00_0000 + i;
+      wr.strb[0] = '1;
+      start_item(wr);
+      finish_item(wr);
+    end
+    drain_responses(num_post_reset, aborted);
+
+    for (int unsigned i = 0; i < num_post_reset; i++) begin
+      axi4_item#(ADDR_W, DATA_W, ID_W, USER_W) rd;
+      rd = new($sformatf("post_reset_rd_%0d", i));
+      rd.is_write = 1'b0;
+      rd.id = i + 8'h8;
+      rd.addr = post_base_addr + i*STRB_W;
+      rd.len = 8'd0;
+      rd.size = $clog2(STRB_W);
+      rd.burst = AXI4_BURST_INCR;
+      rd.user = '0;
+      rd.allocate_payload();
+      start_item(rd);
+      finish_item(rd);
+    end
+    drain_responses(num_post_reset, aborted);
+  endtask
+endclass
+
 // Directed sequence: corner cases around burst length extremes and 4KB boundaries.
 class axi4_corner_case_seq #(
   int ADDR_W = 32,

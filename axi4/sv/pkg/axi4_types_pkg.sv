@@ -39,6 +39,12 @@ package axi4_types_pkg;
     AXI4_READY_R  = 4
   } axi4_ready_channel_e;
 
+  typedef enum int unsigned {
+    AXI4_RW_ORDER_ALLOW       = 0,
+    AXI4_RW_ORDER_SERIALIZE   = 1,
+    AXI4_RW_ORDER_RANGE_AWARE = 2
+  } axi4_rw_order_mode_e;
+
   // Utility helpers (protocol-level)
   function automatic int unsigned axi4_size_to_bytes(input int unsigned size);
     return (1 << size);

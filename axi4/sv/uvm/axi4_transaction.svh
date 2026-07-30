@@ -41,6 +41,9 @@ class axi4_item #(
 
   axi4_resp_e               bresp;
   axi4_resp_e               rresp[];
+  // Set by a pipelined master when reset flushes an in-flight request.  This
+  // is a UVM-side completion marker; AXI has no response encoding for reset.
+  bit                        reset_aborted = 1'b0;
 
   rand logic [USER_W-1:0]   user;
 
@@ -146,6 +149,7 @@ class axi4_item #(
     `uvm_field_array_int(strb, UVM_DEFAULT)
     `uvm_field_enum(axi4_resp_e, bresp, UVM_DEFAULT)
     `uvm_field_array_enum(axi4_resp_e, rresp, UVM_DEFAULT)
+    `uvm_field_int(reset_aborted, UVM_DEFAULT)
     `uvm_field_int(user, UVM_DEFAULT)
     `uvm_field_int(allow_4kb_cross, UVM_DEFAULT)
     `uvm_field_int(allow_wrap_misalign, UVM_DEFAULT)

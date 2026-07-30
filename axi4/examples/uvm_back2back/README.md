@@ -64,6 +64,8 @@ All tests live in `kvips/axi4/examples/uvm_back2back/tb/tb_pkg.sv` and are liste
 - `axi4_b2b_wrap_burst_test` (dedicated legal WRAP traffic)
 - `axi4_b2b_same_id_pipeline_test` (same-ID response-order stress)
 - `axi4_b2b_per_beat_rresp_delay_test` (per-beat R response timing)
+- `axi4_b2b_reset_recovery_test` (pipelined reset flush and post-reset recovery)
+- `axi4_b2b_range_aware_order_test` (disjoint-range overlap and overlapping hazard ordering)
 
 The normative requirement matrix and remaining limitations are in
 [`axi4/docs/axi4_spec_coverage.md`](../../docs/axi4_spec_coverage.md).

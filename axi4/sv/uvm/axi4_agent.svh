@@ -20,6 +20,7 @@ class axi4_agent #(
   axi4_master_driver#(ADDR_W, DATA_W, ID_W, USER_W) m_drv;
   axi4_slave_driver#(ADDR_W, DATA_W, ID_W, USER_W)  s_drv;
   axi4_monitor#(ADDR_W, DATA_W, ID_W, USER_W)      monitor;
+  axi4_protocol_checker#(ADDR_W, DATA_W, ID_W, USER_W) protocol_checker;
 
   `uvm_component_param_utils(axi4_agent#(ADDR_W, DATA_W, ID_W, USER_W))
 
@@ -37,6 +38,10 @@ class axi4_agent #(
     if (cfg.monitor_enable) begin
       monitor = axi4_monitor#(ADDR_W, DATA_W, ID_W, USER_W)::type_id::create("monitor", this);
       uvm_config_db#(axi4_agent_cfg#(ADDR_W, DATA_W, ID_W, USER_W))::set(this, "monitor", "cfg", cfg);
+      if (cfg.protocol_checker_enable) begin
+        protocol_checker = axi4_protocol_checker#(ADDR_W, DATA_W, ID_W, USER_W)::type_id::create("protocol_checker", this);
+        uvm_config_db#(axi4_agent_cfg#(ADDR_W, DATA_W, ID_W, USER_W))::set(this, "protocol_checker", "cfg", cfg);
+      end
     end
 
     if (cfg.is_master) begin

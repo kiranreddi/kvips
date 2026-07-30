@@ -121,6 +121,10 @@ class axi4_scoreboard #(
   virtual function void write(axi4_item#(ADDR_W, DATA_W, ID_W, USER_W) t);
     if (t == null) return;
 
+    // Reset-aborted requests never completed on an AXI response channel and
+    // therefore must not mutate the scoreboard's architectural model.
+    if (t.reset_aborted) return;
+
     t.allocate_payload();
 
     if (t.is_write) begin

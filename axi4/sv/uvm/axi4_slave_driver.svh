@@ -409,20 +409,21 @@ class axi4_slave_driver #(
   endfunction
 
   task run_phase(uvm_phase phase);
+    drive_idle();
+    fork
+      aw_accept_loop();
+      w_accept_loop();
+      b_respond_loop();
+      ar_accept_loop();
+      r_respond_loop();
+      slave_reset_loop();
+    join
+  endtask
+
+  task automatic slave_reset_loop();
     forever begin
+      @(negedge vif.areset_n);
       drive_idle();
-      while (vif.areset_n !== 1'b1) @(posedge vif.aclk);
-      fork : slave_active
-        aw_accept_loop();
-        w_accept_loop();
-        b_respond_loop();
-        ar_accept_loop();
-        r_respond_loop();
-        begin
-          @(negedge vif.areset_n);
-        end
-      join_any
-      disable slave_active;
       aw_q.delete();
       ar_q.delete();
       b_q.delete();
@@ -437,14 +438,24 @@ class axi4_slave_driver #(
     aw_t aw;
     wait_reset_release();
     forever begin
+      if (vif.areset_n !== 1'b1) begin
+        wait_reset_release();
+        continue;
+      end
       while ((cfg.slave_max_outstanding_wr != 0) &&
-             (outstanding_w >= cfg.slave_max_outstanding_wr)) @(posedge vif.aclk);
+             (outstanding_w >= cfg.slave_max_outstanding_wr)) begin
+        if (vif.areset_n !== 1'b1) break;
+        @(posedge vif.aclk);
+      end
+      if (vif.areset_n !== 1'b1) continue;
       maybe_wait_channel_cycles(cfg.slave_aw_ready_min, cfg.slave_aw_ready_max, cfg.ready_min, cfg.ready_max);
+      if (vif.areset_n !== 1'b1) continue;
       @(negedge vif.aclk);
       vif.awready <= 1'b1;
       if (cfg.slave_aw_random_ready) begin
         forever begin
           @(posedge vif.aclk);
+          if (vif.areset_n !== 1'b1) break;
           if (vif.awvalid && vif.awready) break;
           @(negedge vif.aclk);
           vif.awready <= 1'b0;
@@ -453,7 +464,11 @@ class axi4_slave_driver #(
           vif.awready <= 1'b1;
         end
       end else begin
-        do @(posedge vif.aclk); while (!(vif.awvalid && vif.awready));
+        do @(posedge vif.aclk); while ((vif.areset_n === 1'b1) && !(vif.awvalid && vif.awready));
+      end
+      if (vif.areset_n !== 1'b1) begin
+        vif.awready <= 1'b0;
+        continue;
       end
       aw.id    = vif.awid;
       aw.addr  = vif.awaddr;
@@ -492,6 +507,11 @@ class axi4_slave_driver #(
     bit                is_err;
     wait_reset_release();
     forever begin
+      if (vif.areset_n !== 1'b1) begin
+        have_aw = 1'b0;
+        wait_reset_release();
+        continue;
+      end
       if (!have_aw) begin
         if (aw_q.size() == 0) begin
           @(posedge vif.aclk);
@@ -515,11 +535,16 @@ class axi4_slave_driver #(
       end
 
       maybe_wait_channel_cycles(cfg.slave_w_ready_min, cfg.slave_w_ready_max, cfg.ready_min, cfg.ready_max);
+      if (vif.areset_n !== 1'b1) begin
+        have_aw = 1'b0;
+        continue;
+      end
       @(negedge vif.aclk);
       vif.wready <= 1'b1;
       if (cfg.slave_w_random_ready) begin
         forever begin
           @(posedge vif.aclk);
+          if (vif.areset_n !== 1'b1) break;
           if (vif.wvalid && vif.wready) break;
           @(negedge vif.aclk);
           vif.wready <= 1'b0;
@@ -528,7 +553,12 @@ class axi4_slave_driver #(
           vif.wready <= 1'b1;
         end
       end else begin
-        do @(posedge vif.aclk); while (!(vif.wvalid && vif.wready));
+        do @(posedge vif.aclk); while ((vif.areset_n === 1'b1) && !(vif.wvalid && vif.wready));
+      end
+      if (vif.areset_n !== 1'b1) begin
+        vif.wready <= 1'b0;
+        have_aw = 1'b0;
+        continue;
       end
       if (is_excl || is_err) begin
         if (beat_idx < buf_data.size()) begin
@@ -652,8 +682,13 @@ class axi4_slave_driver #(
   task automatic b_respond_loop();
     b_t b;
     int unsigned cycles;
+    bit reset_abort;
     wait_reset_release();
     forever begin
+      if (vif.areset_n !== 1'b1) begin
+        wait_reset_release();
+        continue;
+      end
       if (b_q.size() == 0) begin
         @(posedge vif.aclk);
         continue;
@@ -662,6 +697,7 @@ class axi4_slave_driver #(
         repeat (cfg.slave_b_accum_cycles) @(posedge vif.aclk);
       end
       maybe_wait_channel_cycles(cfg.slave_b_resp_min, cfg.slave_b_resp_max, cfg.resp_min, cfg.resp_max);
+      if (vif.areset_n !== 1'b1) continue;
       if (cfg.slave_reorder_b && (b_q.size() > 1)) begin
         int idx;
         idx = find_b_eligible_idx();
@@ -681,13 +717,22 @@ class axi4_slave_driver #(
       vif.bvalid <= 1'b1;
 
       cycles = 0;
+      reset_abort = 1'b0;
       while (1) begin
         @(posedge vif.aclk);
+        if (vif.areset_n !== 1'b1) begin
+          reset_abort = 1'b1;
+          break;
+        end
         if (vif.bvalid && vif.bready) break;
         cycles++;
         if ((cfg.handshake_timeout_cycles != 0) && (cycles > cfg.handshake_timeout_cycles)) begin
           `uvm_fatal(RID, "Timeout waiting for BREADY")
         end
+      end
+      if (reset_abort) begin
+        drive_idle();
+        continue;
       end
       @(negedge vif.aclk);
       vif.bvalid <= 1'b0;
@@ -699,14 +744,24 @@ class axi4_slave_driver #(
     ar_t ar;
     wait_reset_release();
     forever begin
+      if (vif.areset_n !== 1'b1) begin
+        wait_reset_release();
+        continue;
+      end
       while ((cfg.slave_max_outstanding_rd != 0) &&
-             (outstanding_r >= cfg.slave_max_outstanding_rd)) @(posedge vif.aclk);
+             (outstanding_r >= cfg.slave_max_outstanding_rd)) begin
+        if (vif.areset_n !== 1'b1) break;
+        @(posedge vif.aclk);
+      end
+      if (vif.areset_n !== 1'b1) continue;
       maybe_wait_channel_cycles(cfg.slave_ar_ready_min, cfg.slave_ar_ready_max, cfg.ready_min, cfg.ready_max);
+      if (vif.areset_n !== 1'b1) continue;
       @(negedge vif.aclk);
       vif.arready <= 1'b1;
       if (cfg.slave_ar_random_ready) begin
         forever begin
           @(posedge vif.aclk);
+          if (vif.areset_n !== 1'b1) break;
           if (vif.arvalid && vif.arready) break;
           @(negedge vif.aclk);
           vif.arready <= 1'b0;
@@ -715,7 +770,11 @@ class axi4_slave_driver #(
           vif.arready <= 1'b1;
         end
       end else begin
-        do @(posedge vif.aclk); while (!(vif.arvalid && vif.arready));
+        do @(posedge vif.aclk); while ((vif.areset_n === 1'b1) && !(vif.arvalid && vif.arready));
+      end
+      if (vif.areset_n !== 1'b1) begin
+        vif.arready <= 1'b0;
+        continue;
       end
       ar.id    = vif.arid;
       ar.addr  = vif.araddr;
@@ -756,8 +815,13 @@ class axi4_slave_driver #(
     logic [ADDR_W-1:0] beat_addr;
     int unsigned cycles;
     int idx;
+    bit reset_abort;
     wait_reset_release();
     forever begin
+      if (vif.areset_n !== 1'b1) begin
+        wait_reset_release();
+        continue;
+      end
       if (ar_q.size() == 0) begin
         @(posedge vif.aclk);
         continue;
@@ -777,9 +841,18 @@ class axi4_slave_driver #(
         ar = ar_q.pop_front();
       end
       beats = int'(ar.len) + 1;
+      reset_abort = 1'b0;
       for (int unsigned i = 0; i < beats; i++) begin
         longint unsigned a;
+        if (vif.areset_n !== 1'b1) begin
+          reset_abort = 1'b1;
+          break;
+        end
         maybe_wait_r_beat(i);
+        if (vif.areset_n !== 1'b1) begin
+          reset_abort = 1'b1;
+          break;
+        end
         a = axi4_beat_addr(longint'(ar.addr), int'(ar.size), int'(ar.len), ar.burst, i);
         beat_addr = a[ADDR_W-1:0];
         @(negedge vif.aclk);
@@ -794,15 +867,24 @@ class axi4_slave_driver #(
         cycles = 0;
         while (1) begin
           @(posedge vif.aclk);
+          if (vif.areset_n !== 1'b1) begin
+            reset_abort = 1'b1;
+            break;
+          end
           if (vif.rvalid && vif.rready) break;
           cycles++;
           if ((cfg.handshake_timeout_cycles != 0) && (cycles > cfg.handshake_timeout_cycles)) begin
             `uvm_fatal(RID, "Timeout waiting for RREADY")
           end
         end
+        if (reset_abort) begin
+          drive_idle();
+          break;
+        end
         @(negedge vif.aclk);
         vif.rvalid <= 1'b0;
       end
+      if (reset_abort) continue;
       if (outstanding_r != 0) outstanding_r--;
     end
   endtask
@@ -820,6 +902,12 @@ class axi4_slave_driver #(
 
     wait_reset_release();
     forever begin
+      if (vif.areset_n !== 1'b1) begin
+        rd_by_id.delete();
+        active.delete();
+        wait_reset_release();
+        continue;
+      end
       // Move any newly accepted ARs into per-ID queues.
       while (ar_q.size() != 0) begin
         ar_t tmp;
@@ -854,12 +942,15 @@ class axi4_slave_driver #(
         logic [ADDR_W-1:0] beat_addr;
         int unsigned cycles;
         longint unsigned a;
+        bit reset_abort;
 
         foreach (active[id]) ids.push_back(id);
         pick_id = ids[$urandom_range(0, ids.size()-1)];
         st = active[pick_id];
 
+        if (vif.areset_n !== 1'b1) continue;
         maybe_wait_r_beat(st.beat_idx);
+        if (vif.areset_n !== 1'b1) continue;
         a = axi4_beat_addr(longint'(st.ar.addr), int'(st.ar.size), int'(st.ar.len), st.ar.burst, st.beat_idx);
         beat_addr = a[ADDR_W-1:0];
 
@@ -873,13 +964,22 @@ class axi4_slave_driver #(
         vif.rvalid <= 1'b1;
 
         cycles = 0;
+        reset_abort = 1'b0;
         while (1) begin
           @(posedge vif.aclk);
+          if (vif.areset_n !== 1'b1) begin
+            reset_abort = 1'b1;
+            break;
+          end
           if (vif.rvalid && vif.rready) break;
           cycles++;
           if ((cfg.handshake_timeout_cycles != 0) && (cycles > cfg.handshake_timeout_cycles)) begin
             `uvm_fatal(RID, "Timeout waiting for RREADY")
           end
+        end
+        if (reset_abort) begin
+          drive_idle();
+          continue;
         end
         @(negedge vif.aclk);
         vif.rvalid <= 1'b0;

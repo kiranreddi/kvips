@@ -355,6 +355,17 @@ class axi4_monitor #(
     forever begin
       @(`AXI4_MON_EVT);
 
+      if (vif.areset_n !== 1'b1) begin
+        // Reset terminates any partially observed burst.  Do not let stale
+        // AW/AR state associate post-reset traffic with pre-reset responses.
+        aw_q.delete();
+        foreach (wr_wait_b[id]) wr_wait_b[id].delete();
+        wr_wait_b.delete();
+        have_aw = 1'b0;
+        tr = null;
+        continue;
+      end
+
       if (`AXI4_MON_CB.awvalid && `AXI4_MON_CB.awready) begin
         a_chan_t tmp;
         sum_aw_hs++;
@@ -459,6 +470,12 @@ class axi4_monitor #(
     while (vif.areset_n !== 1'b1) @(`AXI4_MON_EVT);
     forever begin
       @(`AXI4_MON_EVT);
+
+      if (vif.areset_n !== 1'b1) begin
+        foreach (rd_q[id]) rd_q[id].delete();
+        rd_q.delete();
+        continue;
+      end
 
       if (`AXI4_MON_CB.arvalid && `AXI4_MON_CB.arready) begin
         rd_state_t st;

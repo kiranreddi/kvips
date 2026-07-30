@@ -26,6 +26,11 @@ class axi4_agent_cfg #(
   // same vif to avoid duplicate transaction capture.
   bit monitor_enable = 1'b1;
 
+  // Independent channel-order checker.  It is normally enabled with the
+  // passive monitor and catches orphaned/mis-ordered B/R traffic directly
+  // from the interface, rather than relying on monitor reconstruction.
+  bit protocol_checker_enable = 1'b1;
+
   bit trace_enable = 1'b0;
 
   // Transaction recording (UVM transaction viewing)
@@ -43,6 +48,13 @@ class axi4_agent_cfg #(
   // pipelined master. This is useful when an environment requires explicit
   // read/write ordering rather than allowing overlap.
   bit          order_overlapping_rw = 1'b1;
+  // Optional dependency-aware alternative to the legacy all-or-nothing
+  // opposite-direction serialization policy.
+  axi4_rw_order_mode_e rw_order_mode = AXI4_RW_ORDER_ALLOW;
+  // In pipelined mode, flush in-flight requests on reset and return them to
+  // the sequence response queue with axi4_item.reset_aborted set.  No AXI B/R
+  // response is fabricated because reset has no AXI response encoding.
+  bit          master_reset_flush = 1'b1;
 
   // Slave: response scheduling knobs
   bit          slave_reorder_b  = 1'b0;
@@ -173,6 +185,7 @@ class axi4_agent_cfg #(
     `uvm_field_int(is_master, UVM_DEFAULT)
     `uvm_field_int(is_slave,  UVM_DEFAULT)
     `uvm_field_int(monitor_enable, UVM_DEFAULT)
+    `uvm_field_int(protocol_checker_enable, UVM_DEFAULT)
     `uvm_field_int(trace_enable, UVM_DEFAULT)
     `uvm_field_int(tr_record_enable, UVM_DEFAULT)
     `uvm_field_string(tr_stream_name, UVM_DEFAULT)
@@ -181,6 +194,8 @@ class axi4_agent_cfg #(
     `uvm_field_int(max_outstanding_writes, UVM_DEFAULT)
     `uvm_field_int(max_outstanding_total, UVM_DEFAULT)
     `uvm_field_int(order_overlapping_rw, UVM_DEFAULT)
+    `uvm_field_enum(axi4_rw_order_mode_e, rw_order_mode, UVM_DEFAULT)
+    `uvm_field_int(master_reset_flush, UVM_DEFAULT)
     `uvm_field_int(slave_reorder_b, UVM_DEFAULT)
     `uvm_field_int(slave_interleave_r, UVM_DEFAULT)
     `uvm_field_int(slave_reorder_r, UVM_DEFAULT)
