@@ -2,6 +2,9 @@
 
 This document maps **implemented** AXI4 VIP functionality to runnable tests and highlights **gaps** to implement next.
 
+For the normative requirement-by-requirement audit, see
+[`axi4_spec_coverage.md`](axi4_spec_coverage.md).
+
 ## Conventions
 - VIP: `kvips/axi4/sv/pkg/axi4_uvm_pkg.sv`
 - Example regression: `kvips/axi4/examples/uvm_back2back/`
@@ -63,10 +66,16 @@ This document maps **implemented** AXI4 VIP functionality to runnable tests and 
 | Burst types (INCR/FIXED/WRAP) | `axi4_b2b_burst_types_test` | `kvips/axi4/examples/uvm_back2back/tb/tb_pkg.sv` |
 | Backpressure | `axi4_b2b_backpressure_test` | `kvips/axi4/examples/uvm_back2back/tb/tb_pkg.sv` |
 | SIZE+lane sweep (directed narrow/full) | `axi4_b2b_lane_sweep_test` | `kvips/axi4/examples/uvm_back2back/tb/tb_pkg.sv` |
+| Explicit WSTRB patterns (full/alternating/zero) | `axi4_b2b_strobe_patterns_test` | `kvips/axi4/examples/uvm_back2back/tb/tb_pkg.sv` |
+| Unaligned byte lanes | `axi4_b2b_unaligned_byte_test` | `kvips/axi4/examples/uvm_back2back/tb/tb_pkg.sv` |
+| FIXED narrow bursts | `axi4_b2b_fixed_narrow_test` | `kvips/axi4/examples/uvm_back2back/tb/tb_pkg.sv` |
+| WRAP-only burst stimulus | `axi4_b2b_wrap_burst_test` | `kvips/axi4/examples/uvm_back2back/tb/tb_pkg.sv` |
 | Corner cases (4KB edge, length extremes) | `axi4_b2b_corner_case_test` | `kvips/axi4/examples/uvm_back2back/tb/tb_pkg.sv` |
 | Randomized features (sizes/len/burst/id) | `axi4_b2b_randomized_features_test` | `kvips/axi4/examples/uvm_back2back/tb/tb_pkg.sv` |
 | Multiple outstanding + response reordering/interleaving | `axi4_b2b_pipelined_outstanding_test` | `kvips/axi4/examples/uvm_back2back/tb/tb_pkg.sv` |
 | Master-side RREADY backpressure (pipelined) | `axi4_b2b_pipelined_rready_backpressure_test` | `kvips/axi4/examples/uvm_back2back/tb/tb_pkg.sv` |
+| Same-ID pipelined response ordering | `axi4_b2b_same_id_pipeline_test` | `kvips/axi4/examples/uvm_back2back/tb/tb_pkg.sv` |
+| Per-beat R response delays | `axi4_b2b_per_beat_rresp_delay_test` | `kvips/axi4/examples/uvm_back2back/tb/tb_pkg.sv` |
 | Exclusive: success path | `axi4_b2b_exclusive_basic_test` | `kvips/axi4/examples/uvm_back2back/tb/tb_pkg.sv` |
 | Exclusive: fail path (invalidation) | `axi4_b2b_exclusive_fail_test` | `kvips/axi4/examples/uvm_back2back/tb/tb_pkg.sv` |
 | Exclusive: configurable restriction behavior | `axi4_b2b_exclusive_illegal_test` | `kvips/axi4/examples/uvm_back2back/tb/tb_pkg.sv` |
@@ -89,9 +98,14 @@ This document maps **implemented** AXI4 VIP functionality to runnable tests and 
 | LEN 1..16 beats | `axi4_b2b_backpressure_test`, `axi4_b2b_randomized_features_test` |
 | SIZE 1B..bus-width | `axi4_b2b_lane_sweep_test`, `axi4_b2b_randomized_features_test` |
 | Narrow write strobes | `axi4_b2b_lane_sweep_test`, `axi4_b2b_randomized_features_test` |
+| Explicit WSTRB patterns and zero-strobe behavior | `axi4_b2b_strobe_patterns_test` |
+| Unaligned byte lanes | `axi4_b2b_unaligned_byte_test` |
+| FIXED narrow and WRAP-only traffic | `axi4_b2b_fixed_narrow_test`, `axi4_b2b_wrap_burst_test` |
 | 4KB “edge of window” cases | `axi4_b2b_corner_case_test` |
 | ID propagation (no interleaving) | `axi4_b2b_randomized_features_test` |
 | Outstanding + B reorder + R interleave | `axi4_b2b_pipelined_outstanding_test` |
+| Deterministic same-ID pipelined issue | `axi4_b2b_same_id_pipeline_test` |
+| Per-beat R response delay | `axi4_b2b_per_beat_rresp_delay_test` |
 | Master RREADY backpressure | `axi4_b2b_pipelined_rready_backpressure_test` |
 | Exclusive success/fail semantics | `axi4_b2b_exclusive_basic_test`, `axi4_b2b_exclusive_fail_test` |
 | Exclusive configurable restriction | `axi4_b2b_exclusive_illegal_test` |
@@ -107,10 +121,12 @@ This document maps **implemented** AXI4 VIP functionality to runnable tests and 
 | Basic protocol SVA (hold/size) | Always-on unless `+KVIPS_AXI4_ASSERT_OFF` |
 
 ## Not implemented yet (gaps)
-These are AXI4 features not yet modeled/checked by this initial VIP:
+These are AXI4 features not yet modeled/checked by this VIP:
 - Full AXI4 protection/cache/QoS/region semantics beyond signal presence
 - Low-power / clock gating considerations
-- Protocol corner cases (additional unaligned/addressing corner coverage beyond current directed set)
+- Additional multi-beat unaligned/addressing corner coverage beyond the new directed byte-lane test
 - Comprehensive SVA parity vs vendor VIPs (KVIPS includes a starter + stateful set; extend as needed)
 - Full transaction tracker/replay tooling and vendor-style coverage/performance models
+- Deterministic master reset-abort/drain behavior and reset-during-traffic tests
+- AXI4-Lite interface/API (the current VIP is AXI4 Full)
 - The scoreboard assumes zero for unwritten memory; disable it or provide an environment-specific checker when using the slave's fill/random/X unwritten-read policies.

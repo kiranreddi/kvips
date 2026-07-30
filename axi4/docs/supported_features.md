@@ -11,6 +11,9 @@ The VIP is parameterized by:
 Target protocol: AXI4 (full). The initial implementation focuses on:
 - Independent read/write address channels
 - Bursts (INCR/FIXED/WRAP addressing supported in the example slave + scoreboard)
+- AXI4 burst legality checks include INCR/FIXED/WRAP length rules, WRAP
+  alignment, a 4KB total transaction-size cap, and no crossing of a 4KB
+  boundary for advancing bursts.
 - ID field carried end-to-end
 - Address sideband attributes supported on the bus:
   - `axi4_item.cache`, `axi4_item.prot`, `axi4_item.qos`, `axi4_item.region`

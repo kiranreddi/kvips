@@ -25,15 +25,30 @@ layout, and vendor-neutral API.
   available for phase-oriented sequence construction.
 - The pipelined master provides an optional conservative cross-direction
   serialization policy for environments that require ordered read/write issue.
+- The AXI4 transaction constraint and interface SVA now enforce the 4KB total
+  transaction-size cap in addition to the no-crossing rule.
+- Portable directed tests now cover explicit full/alternating/zero WSTRB,
+  unaligned byte lanes, fixed narrow bursts, dedicated WRAP bursts, same-ID
+  pipelining, and per-beat R-response delays.
+
+## Spec audit
+
+`axi4/docs/axi4_spec_coverage.md` is the normative AXI4 requirement matrix.
+It separates rules that are enforced from traffic that is stimulated and
+results that are merely observed.  The default back-to-back list is now 27
+tests.  The larger local comparison inventory is 68 test classes, but includes
+two base classes, nine DMA-derived classes, overlapping stress/statistics
+variants, and integration-specific tests; it is not a one-to-one compliance
+target.
 
 ## Present in the reference but not yet at KVIPS parity
 
 | Area | Why it remains a gap |
 |---|---|
-| Sequence-library breadth | The reference has a much broader set of directed negative, boundary, overlap, replay, and project-specific DMA sequences. KVIPS has core burst, lane, corner, pipeline, exclusive, error, phase, and concurrent-R/W sequences, but not all variants. |
+| Sequence-library breadth | The reference has a much broader set of directed negative, boundary, overlap, replay, and project-specific DMA sequences. KVIPS now has explicit portable strobe, unaligned-byte, fixed-narrow, WRAP-only, same-ID, and per-beat-delay tests, but not all variants. |
 | Master overlap ordering | `order_overlapping_rw=0` safely serializes opposite-direction traffic. It is conservative: it does not yet inspect ranges to permit independent reads and writes concurrently. |
 | Reset recovery | The reactive slave flushes queues and reservations on reset. The master does not yet synthesize/reset-abort responses for every in-flight pipelined request, and reset-during-traffic tests are still needed. |
-| Checker depth | KVIPS has useful SVA and a readback scoreboard, not an exhaustive AMBA/QVIP/Avery assertion suite or response-order protocol checker. |
+| Checker depth | KVIPS has useful SVA and a readback scoreboard, including the 4KB total-size cap, but not an exhaustive AMBA assertion suite or response-order protocol checker. |
 | Coverage and performance | Monitor-based functional coverage and basic statistics exist. Toggle coverage, latency distributions, occupancy/bandwidth models, and closure targets comparable to the reference are absent. |
 | Trace/replay | UVM recording and text logging exist; dedicated transaction-tracker and beat-replay CSV tooling do not. |
 | Integration collateral | Reference DMA and DUT/RTL tests are project-specific. KVIPS should add generic integration examples only when a vendor-neutral contract is defined. |

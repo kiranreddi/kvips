@@ -44,6 +44,10 @@ function automatic longint unsigned kvips_total_bytes(input logic [7:0] len, inp
   return (longint'(len) + 1) * kvips_bytes_per_beat(size);
 endfunction
 
+function automatic bit kvips_transaction_size_legal(input logic [7:0] len, input logic [2:0] size);
+  return (kvips_total_bytes(len, size) <= 4096);
+endfunction
+
 function automatic bit kvips_wrap_len_legal(input logic [7:0] len);
   return (len == 8'd1) || (len == 8'd3) || (len == 8'd7) || (len == 8'd15);
 endfunction
@@ -202,6 +206,26 @@ property kvips_p_ar_len_legal;
 `endif
 endproperty
 a_kvips_ar_len_legal: assert property (kvips_p_ar_len_legal);
+
+property kvips_p_aw_transaction_size_legal;
+  @(`AXI4_CLK) disable iff (!areset_n || !kvips_axi4_assertions_on || !kvips_axi4_burst_checks_on)
+`ifdef VERILATOR
+    awvalid |-> kvips_transaction_size_legal(awlen, awsize);
+`else
+    mon_cb.awvalid |-> kvips_transaction_size_legal(mon_cb.awlen, mon_cb.awsize);
+`endif
+endproperty
+a_kvips_aw_transaction_size_legal: assert property (kvips_p_aw_transaction_size_legal);
+
+property kvips_p_ar_transaction_size_legal;
+  @(`AXI4_CLK) disable iff (!areset_n || !kvips_axi4_assertions_on || !kvips_axi4_burst_checks_on)
+`ifdef VERILATOR
+    arvalid |-> kvips_transaction_size_legal(arlen, arsize);
+`else
+    mon_cb.arvalid |-> kvips_transaction_size_legal(mon_cb.arlen, mon_cb.arsize);
+`endif
+endproperty
+a_kvips_ar_transaction_size_legal: assert property (kvips_p_ar_transaction_size_legal);
 
 property kvips_p_aw_wrap_len_legal;
   @(`AXI4_CLK) disable iff (!areset_n || !kvips_axi4_assertions_on || !kvips_axi4_burst_checks_on)

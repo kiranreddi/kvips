@@ -77,6 +77,10 @@ class axi4_item #(
   // FIXED does not increment address and is exempt.
   constraint c_no_4kb_cross {
     if (!allow_4kb_cross) {
+      // AXI4 also caps the total transaction size at 4KB.  Keep this
+      // separate from address-crossing so FIXED bursts are not exempt from
+      // the size limit merely because their address does not advance.
+      axi4_total_bytes(int'(size), int'(len)) <= 4096;
       if (burst != AXI4_BURST_FIXED) !axi4_crosses_4kb({1'b0, addr}, int'(size), int'(len));
     }
   }

@@ -690,6 +690,191 @@ class axi4_lane_sweep_seq #(
 
 endclass
 
+// Directed WSTRB patterns, including a zero-strobe write.  Each pattern uses
+// a separate bus word so the expected value is unambiguous and byte-accurate.
+class axi4_strobe_patterns_seq #(
+  int ADDR_W = 32,
+  int DATA_W = 64,
+  int ID_W   = 4,
+  int USER_W = 1
+) extends axi4_base_seq#(ADDR_W, DATA_W, ID_W, USER_W);
+
+  localparam int STRB_W = DATA_W/8;
+  rand logic [ADDR_W-1:0] base_addr = 32'h3000;
+  rand logic [ID_W-1:0]   id        = '0;
+
+  `uvm_object_param_utils(axi4_strobe_patterns_seq#(ADDR_W, DATA_W, ID_W, USER_W))
+
+  function new(string name = "axi4_strobe_patterns_seq");
+    super.new(name);
+  endfunction
+
+  task body();
+    logic [STRB_W-1:0] masks[$];
+    logic [STRB_W-1:0] alternating;
+    alternating = '0;
+    for (int unsigned b = 0; b < STRB_W; b++) begin
+      if ((b % 2) == 0) alternating[b] = 1'b1;
+    end
+    masks.push_back('1);
+    masks.push_back(alternating);
+    masks.push_back(~alternating);
+    masks.push_back('0);
+
+    foreach (masks[p]) begin
+      axi4_item#(ADDR_W, DATA_W, ID_W, USER_W) wr;
+      axi4_item#(ADDR_W, DATA_W, ID_W, USER_W) rd;
+      logic [DATA_W-1:0] expected;
+      logic [ADDR_W-1:0] addr;
+
+      expected = '0;
+      for (int unsigned b = 0; b < STRB_W; b++) begin
+        if (masks[p][b]) expected[8*b +: 8] = 8'h40 + p + b;
+      end
+      addr = base_addr + p*STRB_W;
+
+      wr = new($sformatf("strobe_wr_%0d", p));
+      wr.is_write = 1'b1; wr.id = id; wr.addr = addr; wr.len = 8'd0;
+      wr.size = $clog2(STRB_W); wr.burst = AXI4_BURST_INCR; wr.user = '0;
+      wr.allocate_payload(); wr.data[0] = expected; wr.strb[0] = masks[p];
+      start_item(wr); finish_item(wr);
+
+      rd = new($sformatf("strobe_rd_%0d", p));
+      rd.is_write = 1'b0; rd.id = id; rd.addr = addr; rd.len = 8'd0;
+      rd.size = $clog2(STRB_W); rd.burst = AXI4_BURST_INCR; rd.user = '0;
+      rd.allocate_payload(); start_item(rd); finish_item(rd);
+      if (rd.rresp.size() != 1 || rd.rresp[0] != AXI4_RESP_OKAY)
+        `uvm_fatal(get_type_name(), $sformatf("WSTRB response failed for pattern %0d", p))
+      if (rd.data[0] !== expected)
+        `uvm_fatal(get_type_name(), $sformatf("WSTRB mismatch pattern=%0d exp=0x%0h got=0x%0h", p, expected, rd.data[0]))
+    end
+  endtask
+endclass
+
+// Directed unaligned byte transfers.  The address intentionally moves across
+// lanes while each transfer remains a legal one-byte AXI transfer.
+class axi4_unaligned_byte_seq #(
+  int ADDR_W = 32,
+  int DATA_W = 64,
+  int ID_W   = 4,
+  int USER_W = 1
+) extends axi4_base_seq#(ADDR_W, DATA_W, ID_W, USER_W);
+
+  localparam int STRB_W = DATA_W/8;
+  rand logic [ADDR_W-1:0] base_addr = 32'h5000;
+  rand logic [ID_W-1:0]   id        = '0;
+
+  `uvm_object_param_utils(axi4_unaligned_byte_seq#(ADDR_W, DATA_W, ID_W, USER_W))
+
+  function new(string name = "axi4_unaligned_byte_seq");
+    super.new(name);
+  endfunction
+
+  task body();
+    for (int unsigned lane = 0; lane < STRB_W; lane++) begin
+      axi4_item#(ADDR_W, DATA_W, ID_W, USER_W) wr;
+      axi4_item#(ADDR_W, DATA_W, ID_W, USER_W) rd;
+      logic [ADDR_W-1:0] addr;
+      logic [7:0] value;
+      value = 8'h90 + lane;
+      // Use a new bus word per lane; the byte offset within that word is
+      // intentionally unaligned relative to the bus width.
+      addr = base_addr + lane*STRB_W + lane;
+
+      wr = new($sformatf("unaligned_wr_%0d", lane));
+      wr.is_write = 1'b1; wr.id = id; wr.addr = addr; wr.len = 8'd0;
+      wr.size = 3'd0; wr.burst = AXI4_BURST_INCR; wr.user = '0;
+      wr.allocate_payload(); wr.data[0] = '0;
+      wr.data[0][8*lane +: 8] = value;
+      wr.strb[0] = '0;
+      wr.strb[0][lane] = 1'b1;
+      start_item(wr); finish_item(wr);
+
+      rd = new($sformatf("unaligned_rd_%0d", lane));
+      rd.is_write = 1'b0; rd.id = id; rd.addr = addr; rd.len = 8'd0;
+      rd.size = 3'd0; rd.burst = AXI4_BURST_INCR; rd.user = '0;
+      rd.allocate_payload(); start_item(rd); finish_item(rd);
+      if (rd.rresp.size() != 1 || rd.rresp[0] != AXI4_RESP_OKAY)
+        `uvm_fatal(get_type_name(), $sformatf("Unaligned response failed lane=%0d", lane))
+      begin
+        logic [DATA_W-1:0] expected;
+        expected = '0;
+        expected[8*lane +: 8] = value;
+        if (rd.data[0] !== expected)
+        `uvm_fatal(get_type_name(), $sformatf("Unaligned mismatch lane=%0d exp=0x%0h got=0x%0h", lane,
+          expected, rd.data[0]))
+      end
+    end
+  endtask
+endclass
+
+// Same-ID pipelined traffic is intentionally separate from random-ID stress:
+// it makes the specification's per-ID response ordering requirement observable.
+class axi4_same_id_pipeline_seq #(
+  int ADDR_W = 32,
+  int DATA_W = 64,
+  int ID_W   = 4,
+  int USER_W = 1
+) extends axi4_base_seq#(ADDR_W, DATA_W, ID_W, USER_W);
+
+  localparam int STRB_W = DATA_W/8;
+  rand int unsigned num_txns = 32;
+  rand logic [ADDR_W-1:0] base_addr = 32'h7000;
+  rand logic [ID_W-1:0]   id = '0;
+
+  `uvm_object_param_utils(axi4_same_id_pipeline_seq#(ADDR_W, DATA_W, ID_W, USER_W))
+
+  function new(string name = "axi4_same_id_pipeline_seq");
+    super.new(name);
+  endfunction
+
+  task body();
+    axi4_item#(ADDR_W, DATA_W, ID_W, USER_W) wrs[$];
+    axi4_item#(ADDR_W, DATA_W, ID_W, USER_W) rsp;
+    int unsigned seen;
+    set_response_queue_depth(-1);
+    seen = 0;
+    fork
+      begin
+        while (seen < num_txns) begin
+          get_response(rsp);
+          if (rsp != null) seen++;
+        end
+      end
+    join_none
+
+    for (int unsigned i = 0; i < num_txns; i++) begin
+      axi4_item#(ADDR_W, DATA_W, ID_W, USER_W) wr;
+      wr = new($sformatf("same_id_wr_%0d", i));
+      wr.is_write = 1'b1; wr.id = id; wr.addr = base_addr + i*STRB_W;
+      wr.len = 8'd0; wr.size = $clog2(STRB_W); wr.burst = AXI4_BURST_INCR; wr.user = '0;
+      wr.allocate_payload(); wr.data[0] = {$urandom(), $urandom()};
+      if (DATA_W <= 32) wr.data[0] = $urandom();
+      wr.strb[0] = '1;
+      start_item(wr); finish_item(wr); wrs.push_back(wr);
+    end
+    wait (seen == num_txns);
+
+    seen = 0;
+    fork
+      begin
+        while (seen < num_txns) begin
+          get_response(rsp);
+          if (rsp != null) seen++;
+        end
+      end
+    join_none
+    foreach (wrs[i]) begin
+      axi4_item#(ADDR_W, DATA_W, ID_W, USER_W) rd;
+      rd = new($sformatf("same_id_rd_%0d", i));
+      rd.is_write = 1'b0; rd.id = id; rd.addr = wrs[i].addr; rd.len = 8'd0;
+      rd.size = wrs[i].size; rd.burst = wrs[i].burst; rd.user = '0;
+      rd.allocate_payload(); start_item(rd); finish_item(rd);
+    end
+    wait (seen == num_txns);
+  endtask
+endclass
+
 // Directed sequence: corner cases around burst length extremes and 4KB boundaries.
 class axi4_corner_case_seq #(
   int ADDR_W = 32,

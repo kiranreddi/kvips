@@ -51,4 +51,5 @@ The runnable AXI4 source and tests are the source of truth.
 - `axi4/docs/testplan.md`
 - `axi4/docs/supported_features.md`
 - `axi4/docs/reference_parity_audit.md`
+- `axi4/docs/axi4_spec_coverage.md`
 - `axi4/examples/uvm_back2back/sim/tests_questa.list`

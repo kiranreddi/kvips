@@ -58,3 +58,12 @@ All tests live in `kvips/axi4/examples/uvm_back2back/tb/tb_pkg.sv` and are liste
 - `axi4_b2b_region_decode_test` (mapped-region OKAY and unmapped DECERR)
 - `axi4_b2b_error_rate_test` (deterministic response-rate SLVERR/DECERR)
 - `axi4_b2b_phase_control_test` (phase helpers, random READY, slave limits)
+- `axi4_b2b_strobe_patterns_test` (full, alternating, and zero WSTRB)
+- `axi4_b2b_unaligned_byte_test` (unaligned byte-lane accesses)
+- `axi4_b2b_fixed_narrow_test` (FIXED bursts with narrow SIZE)
+- `axi4_b2b_wrap_burst_test` (dedicated legal WRAP traffic)
+- `axi4_b2b_same_id_pipeline_test` (same-ID response-order stress)
+- `axi4_b2b_per_beat_rresp_delay_test` (per-beat R response timing)
+
+The normative requirement matrix and remaining limitations are in
+[`axi4/docs/axi4_spec_coverage.md`](../../docs/axi4_spec_coverage.md).

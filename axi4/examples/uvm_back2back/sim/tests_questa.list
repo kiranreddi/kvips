@@ -2,6 +2,10 @@ axi4_b2b_test
 axi4_b2b_burst_types_test
 axi4_b2b_backpressure_test
 axi4_b2b_lane_sweep_test
+axi4_b2b_strobe_patterns_test
+axi4_b2b_unaligned_byte_test
+axi4_b2b_fixed_narrow_test
+axi4_b2b_wrap_burst_test
 axi4_b2b_corner_case_test
 axi4_b2b_randomized_features_test
 axi4_b2b_pipelined_outstanding_test
@@ -15,6 +19,8 @@ axi4_b2b_exclusive_illegal_test
 axi4_b2b_delay_stress_test
 axi4_b2b_concurrent_rw_test
 axi4_b2b_reorder_bready_test
+axi4_b2b_same_id_pipeline_test
+axi4_b2b_per_beat_rresp_delay_test
 axi4_b2b_region_decode_test
 axi4_b2b_error_rate_test
 axi4_b2b_phase_control_test

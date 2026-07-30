@@ -24,6 +24,7 @@ Common single-test usage (from repo root):
 
 Regression list:
 - `kvips/axi4/examples/uvm_back2back/sim/tests_questa.list`
+- Requirement coverage and open gaps: `kvips/axi4/docs/axi4_spec_coverage.md`
 
 ## Repository layout
 - `kvips/axi4/sv/if/` : `axi4_if` interface + modports + included SVA
