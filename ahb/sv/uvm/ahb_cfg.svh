@@ -54,6 +54,8 @@ class ahb_cfg #(
   bit          insert_idles        = 1'b0;
   int unsigned idle_gap_min        = 0;
   int unsigned idle_gap_max        = 0;
+  bit          insert_busy         = 1'b0;
+  int unsigned busy_pct            = 20;
 
   // Expected transfer sizes (coverage + legality knobs). These are primarily
   // used by the monitor/coverage model to avoid "unreachable bins" when the
@@ -65,9 +67,17 @@ class ahb_cfg #(
   bit allow_size_32 = 1'b1;
   bit allow_size_64 = 1'b1;
 
-  // Advanced responses (AHB Full only). KVIPS currently supports OKAY/ERROR in
-  // the slave responder; RETRY/SPLIT are modeled as disabled by default.
+  // Advanced responses (AHB Full only). RETRY/SPLIT are disabled by default;
+  // directed force or percentage controls enable the reference encodings.
   bit          allow_retry_split   = 1'b0;
+  bit          force_resp_enable   = 1'b0;
+  ahb_resp_e   force_resp          = AHB_RESP_OKAY;
+  int unsigned retry_pct           = 0;
+  int unsigned split_pct           = 0;
+
+  // Protocol legality policy. AHB transfers must be aligned to HSIZE, fit the
+  // configured data bus, and a burst must not cross a 1KB boundary.
+  bit          strict_legality_enable = 1'b1;
 
   // Checks/coverage/logging
   bit monitor_enable  = 1'b1;
@@ -102,6 +112,39 @@ class ahb_cfg #(
     if ($test$plusargs("KVIPS_AHB_TRACE")) trace_enable = 1'b1;
     if ($test$plusargs("KVIPS_AHB_TR_RECORD")) tr_record_enable = 1'b1;
     if ($value$plusargs("KVIPS_AHB_TIMEOUT=%d", v)) handshake_timeout_cycles = v;
+    if ($value$plusargs("KVIPS_AHB_BUSY_PCT=%d", v)) begin
+      insert_busy = (v != 0);
+      busy_pct = (v > 100) ? 100 : v;
+    end
+  endfunction
+
+  function int unsigned bus_bytes();
+    return DATA_W / 8;
+  endfunction
+
+  function int unsigned transfer_bytes(ahb_size_e size);
+    return (1 << int'(size));
+  endfunction
+
+  function bit legal_transfer(logic [ADDR_W-1:0] addr,
+                              ahb_size_e size,
+                              ahb_burst_e burst,
+                              int unsigned beats);
+    int unsigned bytes;
+    int unsigned span;
+    bytes = transfer_bytes(size);
+    if (bytes == 0 || bytes > bus_bytes()) return 1'b0;
+    if ((int'(addr) % bytes) != 0) return 1'b0;
+    if (beats == 0) return 1'b0;
+    if (burst inside {AHB_BURST_WRAP4, AHB_BURST_WRAP8, AHB_BURST_WRAP16}) begin
+      if ((burst == AHB_BURST_WRAP4 && beats != 4) ||
+          (burst == AHB_BURST_WRAP8 && beats != 8) ||
+          (burst == AHB_BURST_WRAP16 && beats != 16)) return 1'b0;
+      span = bytes * beats;
+      if ((int'(addr) % span) != 0) return 1'b0;
+    end
+    if (((int'(addr) & 10'h3ff) + (bytes * beats)) > 1024) return 1'b0;
+    return 1'b1;
   endfunction
 
   function bit is_full();
@@ -145,11 +188,18 @@ class ahb_cfg #(
     `uvm_field_int(insert_idles, UVM_DEFAULT)
     `uvm_field_int(idle_gap_min, UVM_DEFAULT)
     `uvm_field_int(idle_gap_max, UVM_DEFAULT)
+    `uvm_field_int(insert_busy, UVM_DEFAULT)
+    `uvm_field_int(busy_pct, UVM_DEFAULT)
     `uvm_field_int(allow_size_8, UVM_DEFAULT)
     `uvm_field_int(allow_size_16, UVM_DEFAULT)
     `uvm_field_int(allow_size_32, UVM_DEFAULT)
     `uvm_field_int(allow_size_64, UVM_DEFAULT)
     `uvm_field_int(allow_retry_split, UVM_DEFAULT)
+    `uvm_field_int(force_resp_enable, UVM_DEFAULT)
+    `uvm_field_enum(ahb_resp_e, force_resp, UVM_DEFAULT)
+    `uvm_field_int(retry_pct, UVM_DEFAULT)
+    `uvm_field_int(split_pct, UVM_DEFAULT)
+    `uvm_field_int(strict_legality_enable, UVM_DEFAULT)
     `uvm_field_int(monitor_enable, UVM_DEFAULT)
     `uvm_field_int(coverage_enable, UVM_DEFAULT)
     `uvm_field_int(trace_enable, UVM_DEFAULT)

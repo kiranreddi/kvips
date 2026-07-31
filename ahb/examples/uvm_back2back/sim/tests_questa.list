@@ -6,4 +6,8 @@ ahb_wrap_burst_test
 ahb_back_to_back_test
 ahb_error_response_test
 ahb_random_stress_test
-
+ahb_busy_test
+ahb_boundary_test
+ahb_full_retry_test
+ahb_full_split_test
+ahb_reset_recovery_test

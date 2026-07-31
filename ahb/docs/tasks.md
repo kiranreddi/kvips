@@ -22,9 +22,10 @@ This file is a permanent, in-repo task checklist for the AHB VIP. Do not delete 
 
 ## Examples + tests
 
-- [ ] `examples/uvm_back2back` testbench compiles
-- [x] Test list includes: smoke, single rw, wait-state, incr burst, wrap burst, back-to-back, error response, random stress
+- [x] `examples/uvm_back2back` testbench compiles
+- [x] Test list includes smoke, single rw, wait-state, incr burst, wrap burst, back-to-back, error response, random stress, BUSY, boundary, Full RETRY/SPLIT, and reset recovery
 - [x] Simulator scripts: Questa/VCS/Xcelium
+- [x] Serial Questa/VCS/Xcelium regression scripts with Full-mode plusarg handling
 - [x] Example README describes how to run + debug
 
 ## Documentation
@@ -35,7 +36,6 @@ This file is a permanent, in-repo task checklist for the AHB VIP. Do not delete 
 - [x] `docs/assertions.md` (assertion list + disable switches)
 - [x] `docs/testplan.md` mapping tests to AHB features
 - [x] `docs/directory_structure.md`
-- [ ] Top-level `kvips/README.md` updated (AHB entry)
 - [x] Top-level `kvips/README.md` updated (AHB entry)
 - [x] `kvips/docs/getting-started.md` updated (AHB quickstart)
 - [x] `kvips/AGENTS.md` updated with AHB context
@@ -43,5 +43,5 @@ This file is a permanent, in-repo task checklist for the AHB VIP. Do not delete 
 ## Quality gates (best-effort in this environment)
 
 - [ ] Verilator lint clean (where applicable) / no obvious SV syntax issues
-- [ ] Example compiles on at least one available simulator flow
-- [ ] All tests pass in the example environment
+- [x] Example compiles on Questa, VCS, and Xcelium LSF flows
+- [x] All directed tests pass in the validated simulator flows

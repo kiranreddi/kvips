@@ -14,6 +14,11 @@ This file maps AHB features to example tests in `kvips/ahb/examples/uvm_back2bac
 | `ahb_back_to_back_test` | Throughput | back-to-back transfers, mixed burst/size, stress |
 | `ahb_error_response_test` | Error handling | ERROR responses via address-range injection |
 | `ahb_random_stress_test` | Coverage-driven stress | random mix of size/burst/rw, occasional lock |
+| `ahb_busy_test` | BUSY control phase | BUSY between INCR16 beats, burst-state preservation, HNONSEC transport |
+| `ahb_boundary_test` | Boundary legality | aligned INCR4 ending exactly at a 1KB boundary |
+| `ahb_full_retry_test` | AHB Full response | directed two-cycle RETRY response (`+AHB_MODE=AHB_FULL`) |
+| `ahb_full_split_test` | AHB Full response | directed two-cycle SPLIT response (`+AHB_MODE=AHB_FULL`) |
+| `ahb_reset_recovery_test` | Reset robustness | reset asserted during active traffic, pipeline flush/recovery |
 
 ## Coverage targets (v0.1)
 
@@ -22,6 +27,5 @@ Monitor coverpoints:
 - Size bins (8/16/32/64)
 - Burst bins (SINGLE/INCR*/WRAP*)
 - Stall bins (0/1/2-3/4-7/8+)
-- Response bins (OKAY/ERROR)
+- Response bins (OKAY/ERROR; RETRY/SPLIT are directed Full-mode bins)
 - Crosses: (rw x size), (burst x stall)
-

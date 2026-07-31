@@ -49,6 +49,7 @@ class ahb_monitor #(
     ahb_size_e         size;
     ahb_burst_e        burst;
     logic [3:0]        prot;
+    bit                nonsec;
     bit                lock;
   } ctrl_t;
 
@@ -79,12 +80,6 @@ class ahb_monitor #(
       bins b16  = {AHB_SIZE_16};
       bins b32  = {AHB_SIZE_32};
       bins b64  = {AHB_SIZE_64};
-      // Ignore bins that are structurally impossible for a given DATA_W.
-      // (This is parameter-driven, so it avoids URG "shape" explosion.)
-      ignore_bins dis64 = {AHB_SIZE_64} iff (DATA_W < 64);
-      // In AHB-Lite integration (HRESP_W==1) we treat these ports as simple
-      // register-style access paths: focus coverage on SIZE_32.
-      ignore_bins lite_non32 = {AHB_SIZE_8, AHB_SIZE_16, AHB_SIZE_64} iff (HRESP_W == 1);
     }
 
     cp_burst: coverpoint burst {
@@ -96,9 +91,6 @@ class ahb_monitor #(
       bins wrap4  = {AHB_BURST_WRAP4};
       bins wrap8  = {AHB_BURST_WRAP8};
       bins wrap16 = {AHB_BURST_WRAP16};
-      // Same AHB-Lite integration assumption: only SINGLE transfers expected.
-      ignore_bins lite_non_single = {AHB_BURST_INCR, AHB_BURST_INCR4, AHB_BURST_INCR8, AHB_BURST_INCR16,
-                                     AHB_BURST_WRAP4, AHB_BURST_WRAP8, AHB_BURST_WRAP16} iff (HRESP_W == 1);
     }
 
     cp_stall: coverpoint stall_cycles {
@@ -140,6 +132,7 @@ class ahb_monitor #(
     c.size  = ahb_size_e'(`AHB_MON_CB.HSIZE);
     c.burst = ahb_burst_e'(`AHB_MON_CB.HBURST);
     c.prot  = `AHB_MON_CB.HPROT;
+    c.nonsec = `AHB_MON_CB.HNONSEC;
     c.lock  = `AHB_MON_CB.HMASTLOCK;
     return c;
   endfunction
@@ -152,6 +145,7 @@ class ahb_monitor #(
     c.size  = AHB_SIZE_8;
     c.burst = AHB_BURST_SINGLE;
     c.prot  = '0;
+    c.nonsec = 1'b0;
     c.lock  = 1'b0;
     return c;
   endfunction
@@ -210,6 +204,7 @@ class ahb_monitor #(
         t.size  = ctrl_data.size;
         t.burst = ctrl_data.burst;
         t.prot  = ctrl_data.prot;
+        t.nonsec = ctrl_data.nonsec;
         t.lock  = ctrl_data.lock;
         t.len   = 1;
         t.post_randomize();

@@ -20,6 +20,7 @@ If your DUT provides both `HREADY` and `HREADYOUT` separately, connect them as d
 ### A) DUT is an AHB slave (VIP master drives it)
 
 - VIP master drives: `HADDR/HTRANS/HWRITE/HSIZE/HBURST/HPROT/HWDATA/HSEL`
+- For AHB5-capable integrations, the master also drives `HNONSEC`; it defaults to Secure/0 for legacy traffic.
 - DUT drives: `HREADY/HRESP/HRDATA` (or `HREADYOUT` if it is the selected slave)
 
 Configure the agent as master, ACTIVE:
@@ -59,6 +60,9 @@ s_agent_cfg.cfg = s_cfg;
 Protocol mode:
 - `+AHB_MODE=AHB_LITE` (default)
 - `+AHB_MODE=AHB_FULL`
+- `+KVIPS_AHB_BUSY_PCT=<0..100>` enables master BUSY insertion in burst traffic
+- `+KVIPS_AHB_BUSY_ON` permits BUSY when strict SVA mode is enabled
+- `+KVIPS_AHB_ASSERT_STRICT_ON` enables strict optional checks
 
 Assertions:
 - Disable all assertions: `+KVIPS_AHB_ASSERT_OFF`
@@ -72,7 +76,13 @@ Scoreboard:
 Logger:
 - Disable logger prints: `+KVIPS_AHB_LOG_OFF`
 
+Full response examples:
+
+- `ahb_full_retry_test` and `ahb_full_split_test` set the responder's directed
+  Full-mode response and must be run with `+AHB_MODE=AHB_FULL`.
+- The example models response encoding and two-cycle timing; it does not model
+  interconnect arbitration or `HSPLITx` ownership.
+
 ## 4) Multi-agent environments
 
 `ahb_env` supports an array of agents (via `ahb_env_cfg.agent_cfgs[]`). In a typical single-bus setup, use one master agent + one slave agent sharing the same `vif`.
-

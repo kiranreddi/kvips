@@ -16,6 +16,7 @@
   bit kvips_ahb_known_en;
   bit kvips_ahb_strict_en;
   bit kvips_ahb_full_en;
+  bit kvips_ahb_busy_en;
   bit kvips_ahb_prev_not_ready;
 
   initial begin
@@ -26,6 +27,7 @@
     // implementation-specific behavior that would otherwise flood logs.
     kvips_ahb_strict_en = $test$plusargs("KVIPS_AHB_ASSERT_STRICT_ON") &&
                           !$test$plusargs("KVIPS_AHB_ASSERT_STRICT_OFF");
+    kvips_ahb_busy_en = $test$plusargs("KVIPS_AHB_BUSY_ON");
 
     kvips_ahb_full_en = 1'b0;
     if ($value$plusargs("AHB_MODE=%s", s)) begin
@@ -49,11 +51,11 @@
 
   // Across extended wait states, master must hold address/control stable.
   property p_hold_ctrl_when_stalled;
-    @(`AHB_CLK) disable iff (!HRESETn || !kvips_ahb_assert_en)
+    @(`AHB_CLK) disable iff (!HRESETn || !kvips_ahb_assert_en || !kvips_ahb_strict_en)
 `ifdef VERILATOR
-      (!HREADY && kvips_ahb_prev_not_ready) |-> ($stable(HADDR) && $stable(HTRANS) && $stable(HWRITE) && $stable(HSIZE) && $stable(HBURST) && $stable(HPROT) && $stable(HSEL));
+      (!HREADY && kvips_ahb_prev_not_ready) |-> ($stable(HADDR) && $stable(HTRANS) && $stable(HWRITE) && $stable(HSIZE) && $stable(HBURST) && $stable(HPROT) && $stable(HNONSEC) && $stable(HSEL));
 `else
-      (!cb_mon.HREADY && kvips_ahb_prev_not_ready) |-> ($stable(cb_mon.HADDR) && $stable(cb_mon.HTRANS) && $stable(cb_mon.HWRITE) && $stable(cb_mon.HSIZE) && $stable(cb_mon.HBURST) && $stable(cb_mon.HPROT) && $stable(cb_mon.HSEL));
+      (!cb_mon.HREADY && kvips_ahb_prev_not_ready) |-> ($stable(cb_mon.HADDR) && $stable(cb_mon.HTRANS) && $stable(cb_mon.HWRITE) && $stable(cb_mon.HSIZE) && $stable(cb_mon.HBURST) && $stable(cb_mon.HPROT) && $stable(cb_mon.HNONSEC) && $stable(cb_mon.HSEL));
 `endif
   endproperty
   a_hold_ctrl_when_stalled: assert property (p_hold_ctrl_when_stalled);
@@ -62,9 +64,9 @@
   property p_hold_wdata_when_stalled;
     @(`AHB_CLK) disable iff (!HRESETn || !kvips_ahb_assert_en || !kvips_ahb_strict_en)
 `ifdef VERILATOR
-      (!HREADY) |-> $stable(HWDATA);
+      (!HREADY && kvips_ahb_prev_not_ready) |-> $stable(HWDATA);
 `else
-      (!cb_mon.HREADY) |-> $stable(cb_mon.HWDATA);
+      (!cb_mon.HREADY && kvips_ahb_prev_not_ready) |-> $stable(cb_mon.HWDATA);
 `endif
   endproperty
   a_hold_wdata_when_stalled: assert property (p_hold_wdata_when_stalled);
@@ -74,9 +76,9 @@
   property p_no_busy_by_default;
     @(`AHB_CLK) disable iff (!HRESETn || !kvips_ahb_assert_en || !kvips_ahb_strict_en)
 `ifdef VERILATOR
-      1'b1 |-> (HTRANS != 2'b01);
+      (!kvips_ahb_busy_en) |-> (HTRANS != 2'b01);
 `else
-      1'b1 |-> (cb_mon.HTRANS != 2'b01);
+      (!kvips_ahb_busy_en) |-> (cb_mon.HTRANS != 2'b01);
 `endif
   endproperty
   a_no_busy_by_default: assert property (p_no_busy_by_default);

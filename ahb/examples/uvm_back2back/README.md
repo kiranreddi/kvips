@@ -11,12 +11,17 @@ From `kvips/ahb/examples/`:
 - Run (VCS): `make vcs TEST=ahb_smoke_test SEED=1`
 - Run (Xcelium): `make xcelium TEST=ahb_smoke_test SEED=1`
 - Run (Verilator): `make verilator TEST=ahb_smoke_test`
+- Run complete Questa/VCS/Xcelium lists: `make regress-questa`, `make regress-vcs`, or `make regress-xcelium`
 
 ## Protocol mode
 
 Select mode at runtime:
 - `+AHB_MODE=AHB_LITE` (default)
 - `+AHB_MODE=AHB_FULL`
+
+The Full RETRY/SPLIT tests add `+AHB_MODE=AHB_FULL` automatically in the
+regression scripts. BUSY and reset recovery are covered by
+`ahb_busy_test` and `ahb_reset_recovery_test`.
 
 ## Notes
 
@@ -28,4 +33,3 @@ Select mode at runtime:
 From `kvips/ahb/examples/`:
 
 - `make regress-verilator`
-

@@ -15,6 +15,7 @@ class ahb_item #(
   rand ahb_size_e         size;
   rand ahb_burst_e        burst;
   rand logic [3:0]        prot;
+  rand bit                nonsec;
   rand bit                lock;
 
   // For HBURST=INCR, len is randomized (bounded by cfg.max_incr_len).
@@ -84,6 +85,7 @@ class ahb_item #(
     `uvm_field_enum(ahb_size_e, size, UVM_DEFAULT)
     `uvm_field_enum(ahb_burst_e, burst, UVM_DEFAULT)
     `uvm_field_int(prot, UVM_DEFAULT)
+    `uvm_field_int(nonsec, UVM_DEFAULT)
     `uvm_field_int(lock, UVM_DEFAULT)
     `uvm_field_int(len, UVM_DEFAULT)
     `uvm_field_array_int(wdata, UVM_DEFAULT)

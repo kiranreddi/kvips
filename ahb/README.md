@@ -13,7 +13,7 @@ Mode is selected at runtime:
 - `+AHB_MODE=AHB_LITE` (default)
 - `+AHB_MODE=AHB_FULL`
 
-AHB-Lite mode restricts responses to OKAY/ERROR and assumes a single master (no arbitration). AHB Full mode enables optional signals and (optionally) extended responses; the reference implementation currently focuses on OKAY/ERROR for both modes.
+AHB-Lite mode restricts responses to OKAY/ERROR and assumes a single master (no arbitration). AHB Full mode enables the superset response encoding, including directed RETRY/SPLIT responses, while the reference example remains a single-master/single-slave bus model.
 
 ### Directory structure
 - `kvips/ahb/sv/if/` – `ahb_if.sv` (AHB interface + clocking + assertions include)
@@ -28,6 +28,9 @@ From `kvips/ahb/examples/`:
 - Run Questa: `make questa TEST=ahb_smoke_test`
 - Run VCS: `make vcs TEST=ahb_smoke_test`
 - Run Xcelium: `make xcelium TEST=ahb_smoke_test`
+- Run the complete Questa regression: `make regress-questa`
+- Run the complete VCS regression: `make regress-vcs`
+- Run the complete Xcelium regression: `make regress-xcelium`
 
 If you need LSF to access tools, use `USE_LSF=1` and set `LSF_BSUB` for your site.
 
@@ -39,5 +42,5 @@ See `kvips/ahb/docs/` for:
 - Testplan mapping
 
 ### Status / pending
-- Implemented: single-bus AHB-Lite style master+slave VIP with bursts, stalls, error injection, monitor coverage, scoreboard, and a back-to-back example.
-- Pending: AHB Full multi-master semantics (arbitration), RETRY/SPLIT support, BUSY insertion, stricter burst legality assertions, and richer transaction recording. See `kvips/ahb/docs/supported_features.md`.
+- Implemented: single-bus AHB-Lite/Full master+slave VIP with legal burst generation, BUSY insertion, wait states, error injection, directed RETRY/SPLIT response encoding, HNONSEC transport, monitor coverage, beat-accurate scoreboard checking, reset recovery, and back-to-back examples.
+- Pending: multi-master arbitration/HMASTER scheduling, HSPLIT routing and interconnect decode, security policy semantics for HNONSEC, and full transaction-recording integration. See `kvips/ahb/docs/supported_features.md` and `kvips/ahb/docs/amba_spec_coverage.md`.

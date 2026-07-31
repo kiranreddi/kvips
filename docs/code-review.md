@@ -53,3 +53,17 @@ The runnable AXI4 source and tests are the source of truth.
 - `axi4/docs/reference_parity_audit.md`
 - `axi4/docs/axi4_spec_coverage.md`
 - `axi4/examples/uvm_back2back/sim/tests_questa.list`
+
+## AHB assessment
+
+The AHB VIP now has a 13-test UVM back-to-back list covering SINGLE,
+INCR/WRAP bursts, wait states, error responses, BUSY, legality boundaries,
+Full RETRY/SPLIT response encoding, and mid-run reset recovery. The list was
+run through the LSF Questa, VCS, and Xcelium flows with zero UVM errors/fatals
+and zero simulator errors in the validated runs.
+
+The honest boundary is that this is a single-master/single-slave reference
+environment. It carries HNONSEC and models Full response encodings, but does
+not claim multi-master arbitration, HSPLIT routing, security-firewall policy,
+or formal/toggle coverage closure. See `ahb/docs/amba_spec_coverage.md` for the
+protocol-area matrix and remaining work.

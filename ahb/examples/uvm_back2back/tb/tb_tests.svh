@@ -258,4 +258,106 @@ class ahb_random_stress_test extends ahb_b2b_base_test;
   endtask
 endclass
 
+class ahb_busy_test extends ahb_b2b_base_test;
+  `uvm_component_utils(ahb_busy_test)
+  function new(string name, uvm_component parent); super.new(name, parent); endfunction
+  virtual function void post_build_cfg();
+    m_cfg.insert_busy = 1'b1;
+    m_cfg.busy_pct = 50;
+    // BUSY is exercised independently from extended data-phase stalls; the
+    // wait-state test covers that timing dimension and keeps this directed
+    // sequence focused on BUSY acceptance and preservation of burst state.
+    s_cfg.allow_wait_states = 1'b0;
+    s_cfg.min_wait = 0;
+    s_cfg.max_wait = 0;
+  endfunction
+  task run_phase(uvm_phase phase);
+    ahb_sequencer#(ADDR_W, DATA_W, HRESP_W) seqr;
+    ahb_busy_seq#(ADDR_W, DATA_W, HRESP_W) seq;
+    phase.raise_objection(this);
+    seqr = env.get_master_sequencer(0);
+    seq = new("seq");
+    seq.start(seqr);
+    phase.drop_objection(this);
+  endtask
+endclass
+
+class ahb_boundary_test extends ahb_b2b_base_test;
+  `uvm_component_utils(ahb_boundary_test)
+  function new(string name, uvm_component parent); super.new(name, parent); endfunction
+  task run_phase(uvm_phase phase);
+    ahb_sequencer#(ADDR_W, DATA_W, HRESP_W) seqr;
+    ahb_boundary_seq#(ADDR_W, DATA_W, HRESP_W) seq;
+    phase.raise_objection(this);
+    seqr = env.get_master_sequencer(0);
+    seq = new("seq");
+    seq.start(seqr);
+    phase.drop_objection(this);
+  endtask
+endclass
+
+class ahb_full_retry_test extends ahb_b2b_base_test;
+  `uvm_component_utils(ahb_full_retry_test)
+  function new(string name, uvm_component parent); super.new(name, parent); endfunction
+  virtual function void post_build_cfg();
+    m_cfg.mode = AHB_MODE_FULL;
+    m_cfg.force_resp_enable = 1'b1;
+    s_cfg.mode = AHB_MODE_FULL;
+    s_cfg.force_resp_enable = 1'b1;
+    s_cfg.force_resp = AHB_RESP_RETRY;
+  endfunction
+  task run_phase(uvm_phase phase);
+    ahb_sequencer#(ADDR_W, DATA_W, HRESP_W) seqr;
+    ahb_full_response_seq#(ADDR_W, DATA_W, HRESP_W) seq;
+    phase.raise_objection(this);
+    seqr = env.get_master_sequencer(0);
+    seq = new("seq");
+    seq.expected_resp = AHB_RESP_RETRY;
+    seq.start(seqr);
+    phase.drop_objection(this);
+  endtask
+endclass
+
+class ahb_full_split_test extends ahb_b2b_base_test;
+  `uvm_component_utils(ahb_full_split_test)
+  function new(string name, uvm_component parent); super.new(name, parent); endfunction
+  virtual function void post_build_cfg();
+    m_cfg.mode = AHB_MODE_FULL;
+    m_cfg.force_resp_enable = 1'b1;
+    s_cfg.mode = AHB_MODE_FULL;
+    s_cfg.force_resp_enable = 1'b1;
+    s_cfg.force_resp = AHB_RESP_SPLIT;
+  endfunction
+  task run_phase(uvm_phase phase);
+    ahb_sequencer#(ADDR_W, DATA_W, HRESP_W) seqr;
+    ahb_full_response_seq#(ADDR_W, DATA_W, HRESP_W) seq;
+    phase.raise_objection(this);
+    seqr = env.get_master_sequencer(0);
+    seq = new("seq");
+    seq.expected_resp = AHB_RESP_SPLIT;
+    seq.start(seqr);
+    phase.drop_objection(this);
+  endtask
+endclass
+
+class ahb_reset_recovery_test extends ahb_b2b_base_test;
+  `uvm_component_utils(ahb_reset_recovery_test)
+  function new(string name, uvm_component parent); super.new(name, parent); endfunction
+  virtual function void post_build_cfg();
+    s_cfg.allow_wait_states = 1'b1;
+    s_cfg.min_wait = 0;
+    s_cfg.max_wait = 3;
+  endfunction
+  task run_phase(uvm_phase phase);
+    ahb_sequencer#(ADDR_W, DATA_W, HRESP_W) seqr;
+    ahb_back_to_back_seq#(ADDR_W, DATA_W, HRESP_W) seq;
+    phase.raise_objection(this);
+    seqr = env.get_master_sequencer(0);
+    seq = new("seq");
+    seq.num_txns = 100;
+    seq.start(seqr);
+    phase.drop_objection(this);
+  endtask
+endclass
+
 `endif // KVIPS_AHB_EX_TB_TESTS_SVH

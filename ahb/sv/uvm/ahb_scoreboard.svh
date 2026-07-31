@@ -111,10 +111,9 @@ class ahb_scoreboard #(
       exp_write(t.addr, t.size, (t.wdata.size() != 0) ? t.wdata[0] : '0);
     end else begin
       if (is_error_resp(t)) return;
-      // The monitor emits one transaction per completed beat. For non-SINGLE
-      // bursts in DUT regressions, beat-to-address association can be ambiguous
-      // in this lightweight model, so only strict-compare SINGLE reads.
-      if (t.burst != AHB_BURST_SINGLE) return;
+      // The monitor emits one transaction per completed beat and preserves the
+      // actual HADDR for that beat, so burst traffic is checked exactly like a
+      // series of completed single transfers.
       exp_d = exp_read(t.addr, t.size, init_ok);
       if (!init_ok && warn_uninit) begin
         `uvm_warning(RID, $sformatf("Read from unwritten addr=0x%0h (treated as 0)", t.addr))

@@ -33,6 +33,9 @@ interface ahb_if #(
   logic [2:0]        HSIZE;
   logic [2:0]        HBURST;
   logic [3:0]        HPROT;
+  // AHB5 security sideband. It is kept in the superset interface and defaults
+  // to Secure/0 for legacy AHB-Lite and AHB3 integrations.
+  logic              HNONSEC = 1'b0;
   logic              HMASTLOCK = 1'b0;
   logic [HMASTER_W-1:0] HMASTER = '0;
 
@@ -48,23 +51,39 @@ interface ahb_if #(
   logic              HREADYOUT;  // slave-ready (single slave: HREADY=HREADYOUT)
   logic [HRESP_W-1:0] HRESP;
 
+  // Deterministic bus-idle values before the UVM drivers start.  This is
+  // important for simulators that evaluate interface-bound assertions during
+  // the first reset cycles.
+  initial begin
+    HADDR = '0;
+    HTRANS = 2'b00;
+    HWRITE = 1'b0;
+    HSIZE = 3'b010;
+    HBURST = 3'b000;
+    HPROT = '0;
+    HNONSEC = 1'b0;
+    HWDATA = '0;
+    HRDATA = '0;
+    HRESP = '0;
+  end
+
   // Clocking blocks (posedge HCLK)
 `ifndef VERILATOR
   clocking cb_m @(posedge HCLK);
     default input #1step;
-    input HADDR, HTRANS, HWRITE, HSIZE, HBURST, HPROT, HMASTLOCK, HMASTER;
+    input HADDR, HTRANS, HWRITE, HSIZE, HBURST, HPROT, HNONSEC, HMASTLOCK, HMASTER;
     input HSEL, HWDATA, HREADY, HREADYOUT, HRESP, HRDATA;
   endclocking
 
   clocking cb_s @(posedge HCLK);
     default input #1step;
-    input HADDR, HTRANS, HWRITE, HSIZE, HBURST, HPROT, HWDATA, HSEL, HMASTLOCK, HMASTER, HREADY;
+    input HADDR, HTRANS, HWRITE, HSIZE, HBURST, HPROT, HNONSEC, HWDATA, HSEL, HMASTLOCK, HMASTER, HREADY;
     input HREADYOUT, HRESP, HRDATA;
   endclocking
 
   clocking cb_mon @(posedge HCLK);
     default input #1step output #0;
-    input HADDR, HTRANS, HWRITE, HSIZE, HBURST, HPROT, HWDATA, HSEL, HMASTLOCK, HMASTER, HREADY, HREADYOUT, HRESP, HRDATA;
+    input HADDR, HTRANS, HWRITE, HSIZE, HBURST, HPROT, HNONSEC, HWDATA, HSEL, HMASTLOCK, HMASTER, HREADY, HREADYOUT, HRESP, HRDATA;
   endclocking
 `endif
 
@@ -76,8 +95,14 @@ interface ahb_if #(
 
   // Reasonable defaults for optional signals when not used
   generate
+    if (HAS_HSEL) begin : g_hsel_init
+      initial HSEL = 1'b1;
+    end
     if (!HAS_HSEL) begin : g_no_hsel
       always_comb HSEL = 1'b1;
+    end
+    if (HAS_HREADYOUT) begin : g_hreadyout_init
+      initial HREADYOUT = 1'b1;
     end
     if (!HAS_HREADYOUT) begin : g_no_hreadyout
       always_comb HREADYOUT = 1'b1;

@@ -18,6 +18,19 @@ module top;
     HRESETn = 1'b1;
   end
 
+  // Exercise reset recovery while traffic is active.  Keeping this in the
+  // example top makes the reset test portable across all three simulators.
+  initial begin : midrun_reset
+    string test_name;
+    if ($value$plusargs("UVM_TESTNAME=%s", test_name) &&
+        (test_name == "ahb_reset_recovery_test")) begin
+      repeat (50) @(posedge HCLK);
+      HRESETn = 1'b0;
+      repeat (3) @(posedge HCLK);
+      HRESETn = 1'b1;
+    end
+  end
+
   localparam int ADDR_W  = 16;
   localparam int DATA_W  = 32;
   localparam int HRESP_W = 2;
@@ -32,4 +45,5 @@ module top;
     uvm_config_db#(virtual interface ahb_if #(.ADDR_W(ADDR_W), .DATA_W(DATA_W), .HRESP_W(HRESP_W)))::set(null, "*", "vif", ahb_if0);
     run_test();
   end
+
 endmodule

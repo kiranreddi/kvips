@@ -119,6 +119,15 @@ class ahb_master_driver #(
     return a;
   endfunction
 
+  task check_item_legality(ahb_item#(ADDR_W, DATA_W, HRESP_W) t);
+    if (!cfg.strict_legality_enable) return;
+    if (!cfg.legal_transfer(t.addr, t.size, t.burst, t.beats)) begin
+      `uvm_fatal(RID, $sformatf(
+        "Illegal AHB transfer addr=0x%0h size=%0d burst=%0d beats=%0d (alignment/width/1KB rule)",
+        t.addr, t.size, t.burst, t.beats))
+    end
+  endtask
+
   task drive_idle();
     vif.HSEL          <= 1'b1;
     vif.HTRANS        <= AHB_TRANS_IDLE;
@@ -127,6 +136,7 @@ class ahb_master_driver #(
     vif.HSIZE         <= AHB_SIZE_32;
     vif.HBURST        <= AHB_BURST_SINGLE;
     vif.HPROT         <= 4'h0;
+    vif.HNONSEC       <= 1'b0;
     vif.HWDATA        <= '0;
     // Optional signals default inside the interface when disabled.
     if (HAS_HMASTLOCK) vif.HMASTLOCK <= 1'b0;
@@ -185,6 +195,7 @@ class ahb_master_driver #(
       end
 
       ensure_item_payload(cur_item);
+      check_item_legality(cur_item);
       cur_beats = cur_item.beats;
       cur_beat  = 0;
       cur_item.start_t = $time;
@@ -218,6 +229,21 @@ class ahb_master_driver #(
           if (!vif.HRESETn) continue;
         end
 
+        // The responder is a clocked reference model.  In AHB Full mode its
+        // RETRY/SPLIT response is intentionally generated one cycle after the
+        // control pipeline observes the transfer.  Give that response one
+        // settling edge before completing a forced-response transfer.
+        if (cfg.mode == AHB_MODE_FULL && cfg.force_resp_enable && data_valid) begin
+          @(`AHB_M_EVT);
+          #1step;
+          while (vif.HREADY !== 1'b1) begin
+            @(`AHB_M_EVT);
+            #1step;
+          end
+          // The clocking-block inputs used below sample at the next edge.
+          @(`AHB_M_EVT);
+        end
+
         // Compute the next-cycle data-phase beat (based on the control we accept now).
         next_data_valid = 0;
         next_data_write = 0;
@@ -240,26 +266,36 @@ class ahb_master_driver #(
           end
         end
 
-        // Issue next control beat (address/control phase) if any.
+        // Issue next control beat (address/control phase) if any. BUSY is a
+        // legal non-transfer control phase between burst beats; it preserves
+        // the previous address/control and does not advance the beat index.
         if (cur_beat < cur_beats) begin
-          next_a = next_addr(cur_item.addr, cur_beat, cur_item.size, cur_item.burst);
-          vif.HSEL         <= 1'b1;
-          vif.HADDR        <= next_a;
-          vif.HWRITE       <= cur_item.write;
-          vif.HSIZE        <= cur_item.size;
-          vif.HBURST       <= cur_item.burst;
-          vif.HPROT        <= cur_item.prot;
-          if (HAS_HMASTLOCK) vif.HMASTLOCK <= cur_item.lock;
-          vif.HTRANS       <= (cur_beat == 0) ? AHB_TRANS_NONSEQ : AHB_TRANS_SEQ;
-          if (cur_item.write && (cur_beat < cur_item.wdata.size())) begin
-            vif.HWDATA <= cur_item.wdata[cur_beat];
-          end
+          bit insert_busy_now;
+          insert_busy_now = (cur_beat > 0) && cfg.insert_busy &&
+                            ($urandom_range(0, 99) < cfg.busy_pct);
+          if (insert_busy_now) begin
+            vif.HTRANS <= AHB_TRANS_BUSY;
+          end else begin
+            next_a = next_addr(cur_item.addr, cur_beat, cur_item.size, cur_item.burst);
+            vif.HSEL         <= 1'b1;
+            vif.HADDR        <= next_a;
+            vif.HWRITE       <= cur_item.write;
+            vif.HSIZE        <= cur_item.size;
+            vif.HBURST       <= cur_item.burst;
+            vif.HPROT        <= cur_item.prot;
+            vif.HNONSEC      <= cur_item.nonsec;
+            if (HAS_HMASTLOCK) vif.HMASTLOCK <= cur_item.lock;
+            vif.HTRANS       <= (cur_beat == 0) ? AHB_TRANS_NONSEQ : AHB_TRANS_SEQ;
+            if (cur_item.write && (cur_beat < cur_item.wdata.size())) begin
+              vif.HWDATA <= cur_item.wdata[cur_beat];
+            end
 
-          // This beat becomes the data-phase beat in the next cycle.
-          next_data_valid = 1;
-          next_data_write = cur_item.write;
-          next_data_beat  = cur_beat;
-          cur_beat++;
+            // This beat becomes the data-phase beat in the next cycle.
+            next_data_valid = 1;
+            next_data_write = cur_item.write;
+            next_data_beat  = cur_beat;
+            cur_beat++;
+          end
         end else begin
           drive_idle();
         end

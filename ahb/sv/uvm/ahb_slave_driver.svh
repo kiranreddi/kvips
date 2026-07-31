@@ -53,14 +53,16 @@ class ahb_slave_driver #(
     ahb_size_e         size;
     ahb_burst_e        burst;
     logic [3:0]        prot;
+    bit                nonsec;
     bit                lock;
+    ahb_resp_e         resp_kind;
   } ctrl_t;
 
   ctrl_t ctrl_pipe;   // accepted in the previous ready cycle (becomes data phase)
   ctrl_t ctrl_data;   // currently in data phase (when valid)
 
   int unsigned stall_rem; // remaining wait-state cycles for current data beat
-  bit          err_pending; // second cycle of a two-cycle ERROR response
+  bit          resp_pending; // second cycle of a two-cycle non-OKAY response
 
   `uvm_component_param_utils(ahb_slave_driver#(ADDR_W, DATA_W, HRESP_W, HAS_HMASTLOCK))
 
@@ -80,7 +82,9 @@ class ahb_slave_driver #(
     c.size  = AHB_SIZE_8;
     c.burst = AHB_BURST_SINGLE;
     c.prot  = '0;
+    c.nonsec = 1'b0;
     c.lock  = 1'b0;
+    c.resp_kind = AHB_RESP_OKAY;
     return c;
   endfunction
 
@@ -126,6 +130,32 @@ class ahb_slave_driver #(
     return hresp_t'(2'b01);
   endfunction
 
+  function logic [HRESP_W-1:0] resp_signal(ahb_resp_e r);
+    if (HRESP_W == 1) return hresp_t'((r == AHB_RESP_OKAY) ? 1'b0 : 1'b1);
+    case (r)
+      AHB_RESP_RETRY: return hresp_t'(2'b10);
+      AHB_RESP_SPLIT: return hresp_t'(2'b11);
+      AHB_RESP_ERROR: return hresp_t'(2'b01);
+      default:        return hresp_t'(2'b00);
+    endcase
+  endfunction
+
+  function ahb_resp_e choose_response(logic [ADDR_W-1:0] addr);
+    int unsigned r;
+    if (cfg.force_resp_enable) begin
+      if ((cfg.mode == AHB_MODE_LITE) && (cfg.force_resp inside {AHB_RESP_RETRY, AHB_RESP_SPLIT}))
+        return AHB_RESP_ERROR;
+      return cfg.force_resp;
+    end
+    if (cfg.addr_in_error_range(addr)) return AHB_RESP_ERROR;
+    if (cfg.mode == AHB_MODE_FULL && cfg.allow_retry_split) begin
+      r = $urandom_range(0, 99);
+      if (r < cfg.split_pct) return AHB_RESP_SPLIT;
+      if (r < (cfg.split_pct + cfg.retry_pct)) return AHB_RESP_RETRY;
+    end
+    return AHB_RESP_OKAY;
+  endfunction
+
   function ctrl_t sample_ctrl();
     ctrl_t c;
     c.valid = ((`AHB_S_CB.HSEL === 1'b1) && (`AHB_S_CB.HTRANS[1] === 1'b1) && (`AHB_S_CB.HREADY === 1'b1));
@@ -134,7 +164,9 @@ class ahb_slave_driver #(
     c.size  = ahb_size_e'(`AHB_S_CB.HSIZE);
     c.burst = ahb_burst_e'(`AHB_S_CB.HBURST);
     c.prot  = `AHB_S_CB.HPROT;
+    c.nonsec = `AHB_S_CB.HNONSEC;
     c.lock  = `AHB_S_CB.HMASTLOCK;
+    c.resp_kind = choose_response(c.addr);
     return c;
   endfunction
 
@@ -153,7 +185,7 @@ class ahb_slave_driver #(
     ctrl_pipe = clear_ctrl();
     ctrl_data = clear_ctrl();
     stall_rem = 0;
-    err_pending = 0;
+    resp_pending = 0;
 
     vif.HREADYOUT <= 1'b1;
     vif.HRESP     <= resp_okay();
@@ -168,7 +200,7 @@ class ahb_slave_driver #(
       ctrl_pipe = clear_ctrl();
       ctrl_data = clear_ctrl();
       stall_rem = 0;
-      err_pending = 0;
+      resp_pending = 0;
     end
 
     forever begin
@@ -178,18 +210,18 @@ class ahb_slave_driver #(
         ctrl_pipe = clear_ctrl();
         ctrl_data = clear_ctrl();
         stall_rem = 0;
-        err_pending = 0;
+        resp_pending = 0;
         vif.HREADYOUT <= 1'b1;
         vif.HRESP     <= resp_okay();
         vif.HRDATA    <= '0;
         continue;
       end
 
-      if (ctrl_data.valid && err_pending) begin
-        // AHB two-cycle ERROR response (cycle 2), then shift below.
+      if (ctrl_data.valid && resp_pending) begin
+        // AHB two-cycle non-OKAY response (cycle 2), then shift below.
         vif.HREADYOUT <= 1'b1;
-        vif.HRESP     <= resp_error();
-        err_pending = 0;
+        vif.HRESP     <= resp_signal(ctrl_data.resp_kind);
+        resp_pending = 0;
       end else if (ctrl_data.valid && (stall_rem != 0)) begin
         // Stall cycle: keep response/data stable and re-open HREADYOUT for the
         // cycle in which the stalled data phase will complete.
@@ -202,13 +234,12 @@ class ahb_slave_driver #(
         end
         continue;
       end else if (ctrl_data.valid) begin
-        bit err = cfg.addr_in_error_range(ctrl_data.addr);
-        if (err) begin
-          // AHB two-cycle ERROR response (cycle 1).
+        if (ctrl_data.resp_kind != AHB_RESP_OKAY) begin
+          // AHB two-cycle non-OKAY response (cycle 1).
           vif.HREADYOUT <= 1'b0;
-          vif.HRESP     <= resp_error();
+          vif.HRESP     <= resp_signal(ctrl_data.resp_kind);
           vif.HRDATA    <= '0;
-          err_pending = 1'b1;
+          resp_pending = 1'b1;
           continue;
         end else if (ctrl_data.write) begin
           write_bytes(ctrl_data.addr, ctrl_data.size, `AHB_S_CB.HWDATA);
@@ -228,9 +259,8 @@ class ahb_slave_driver #(
       end
 
       if (ctrl_data.valid) begin
-        bit err = cfg.addr_in_error_range(ctrl_data.addr);
-        vif.HRESP <= err ? resp_error() : resp_okay();
-        if (!ctrl_data.write && !err) begin
+        vif.HRESP <= resp_signal(ctrl_data.resp_kind);
+        if (!ctrl_data.write && (ctrl_data.resp_kind == AHB_RESP_OKAY)) begin
           vif.HRDATA <= read_bytes(ctrl_data.addr, ctrl_data.size);
         end else begin
           vif.HRDATA <= '0;
