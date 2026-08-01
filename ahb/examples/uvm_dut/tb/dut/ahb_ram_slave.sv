@@ -40,9 +40,10 @@ module ahb_ram_slave #(
   logic [7:0] wait_cnt;
 `ifdef VERILATOR
   // The raw-interface Verilator master samples after the clocked DUT update.
-  // Keep a one-beat response register so a burst control accepted on that
-  // edge cannot replace the data phase being retired.
+  // Keep a two-stage response pipeline so a burst control accepted on that
+  // edge cannot replace the data phase retired by the raw-interface monitor.
   logic [DATA_W-1:0] rd_data_q;
+  logic [DATA_W-1:0] hrdata_mid_q;
   logic [DATA_W-1:0] hrdata_out_q;
   logic [2:0]        rd_burst_q;
 `else
@@ -142,6 +143,7 @@ module ahb_ram_slave #(
       HRESP     <= '0;
 `ifdef VERILATOR
       rd_data_q <= '0;
+      hrdata_mid_q <= '0;
       hrdata_out_q <= '0;
       rd_burst_q <= 3'b000;
 `endif
@@ -156,7 +158,8 @@ module ahb_ram_slave #(
       HRESP <= '0;
       HREADYOUT <= 1'b1;
 `ifdef VERILATOR
-      hrdata_out_q <= rd_data_q;
+      hrdata_out_q <= hrdata_mid_q;
+      hrdata_mid_q <= rd_data_q;
 `endif
 
       if (wait_cnt != 0) begin
