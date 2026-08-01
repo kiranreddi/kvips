@@ -47,10 +47,10 @@ async def test_ahb_python_write_readback(dut):
 
 @cocotb.test()
 async def test_ahb_uvm_sequences(dut):
-    """Launch real UVM AHB sequence library entries from Python.
+    """Launch the full RAM-DUT-compatible AHB sequence surface from Python.
 
     Sequence base addresses must be 1KB-aligned so legal_addr() stays within
-    a single AHB 1KB burst window.
+    a single AHB 1KB burst window. boundary is the legal 1KB-edge INCR4 at 0x3F0.
     """
     ahb = await _setup(dut)
     await ahb.run_sequence("smoke", num_txns=12, base_addr=0x0000, wr_pct=50)
@@ -60,12 +60,22 @@ async def test_ahb_uvm_sequences(dut):
     await ahb.run_sequence("b2b", num_txns=8, base_addr=0x1000, wr_pct=50)
     await ahb.run_sequence("wrap", num_txns=4, base_addr=0x1400)
     await ahb.run_sequence("busy", base_addr=0x0000)
-    # Note: ahb_boundary_seq deliberately crosses a 1KB boundary and is a
-    # negative legality check; it is not run against the RAM DUT.
+    await ahb.run_sequence("stress", num_txns=20, base_addr=0x1800, wr_pct=55)
+    await ahb.run_sequence("boundary")
+    await ahb.run_sequence("endian")
+    await ahb.run_sequence("full_resp")
 
-    await ahb.write(0x1800, 0x55AA33CC)
-    got, _ = await ahb.read(0x1800)
+    await ahb.write(0x1C00, 0x55AA33CC)
+    got, _ = await ahb.read(0x1C00)
     assert got == 0x55AA33CC
+
+
+@cocotb.test()
+async def test_ahb_unsupported_on_ram_dut(dut):
+    """Security/error opcodes return RSP_INVAL on the RAM DUT."""
+    ahb = await _setup(dut)
+    await ahb.run_sequence("security", allow_inval=True)
+    await ahb.run_sequence("error", allow_inval=True)
 
 
 @cocotb.test()
@@ -77,7 +87,7 @@ async def test_ahb_dpi_monitor_path(dut):
     before = mon.total()
 
     for i in range(8):
-        addr = 0x1C00 + i * 4
+        addr = 0x2000 + i * 4
         data = 0x10000000 + i
         await ahb.write(addr, data)
         got, _ = await ahb.read(addr)

@@ -15,16 +15,19 @@ from .opcodes import (
     KVIPS_AHB_SEQ_STRESS,
     KVIPS_AHB_SEQ_BUSY,
     KVIPS_AHB_SEQ_BOUNDARY,
+    KVIPS_AHB_SEQ_ENDIAN,
+    KVIPS_AHB_SEQ_SECURITY,
+    KVIPS_AHB_SEQ_FULL_RESP,
+    KVIPS_AHB_SEQ_ERROR,
     KVIPS_RSP_OK,
+    KVIPS_RSP_INVAL,
 )
 
-# AHB size encoding (HSIZE)
 AHB_SIZE_8 = 0
 AHB_SIZE_16 = 1
 AHB_SIZE_32 = 2
 AHB_SIZE_64 = 3
 
-# AHB burst encoding
 AHB_SINGLE = 0
 AHB_INCR = 1
 AHB_WRAP4 = 2
@@ -33,6 +36,8 @@ AHB_WRAP8 = 4
 AHB_INCR8 = 5
 AHB_WRAP16 = 6
 AHB_INCR16 = 7
+
+_UNSUPPORTED_ON_RAM_DUT = {"security", "error", "ahb_security_policy_seq", "ahb_error_seq"}
 
 
 class AhbMaster:
@@ -53,7 +58,6 @@ class AhbMaster:
         prot: int = 0,
         nonsec: int = 0,
     ) -> int:
-        """Single transfer write (or first beat data for simple SINGLE). Returns resp."""
         status, resp, *_ = await self.bridge.call(
             KVIPS_AHB_WRITE,
             a0=addr,
@@ -95,6 +99,7 @@ class AhbMaster:
 
     async def run_sequence(self, name: str, **kwargs) -> None:
         name = name.lower().replace("-", "_")
+        allow_inval = bool(kwargs.pop("allow_inval", False))
         mapping = {
             "smoke": KVIPS_AHB_SEQ_SMOKE,
             "ahb_smoke_seq": KVIPS_AHB_SEQ_SMOKE,
@@ -120,6 +125,15 @@ class AhbMaster:
             "ahb_busy_seq": KVIPS_AHB_SEQ_BUSY,
             "boundary": KVIPS_AHB_SEQ_BOUNDARY,
             "ahb_boundary_seq": KVIPS_AHB_SEQ_BOUNDARY,
+            "endian": KVIPS_AHB_SEQ_ENDIAN,
+            "ahb_endian_seq": KVIPS_AHB_SEQ_ENDIAN,
+            "security": KVIPS_AHB_SEQ_SECURITY,
+            "ahb_security_policy_seq": KVIPS_AHB_SEQ_SECURITY,
+            "full_resp": KVIPS_AHB_SEQ_FULL_RESP,
+            "full_response": KVIPS_AHB_SEQ_FULL_RESP,
+            "ahb_full_response_seq": KVIPS_AHB_SEQ_FULL_RESP,
+            "error": KVIPS_AHB_SEQ_ERROR,
+            "ahb_error_seq": KVIPS_AHB_SEQ_ERROR,
         }
         if name not in mapping:
             raise BridgeError(f"Unknown AHB sequence: {name}")
@@ -127,6 +141,8 @@ class AhbMaster:
         base = int(kwargs.get("base_addr", 0))
         wr_pct = int(kwargs.get("wr_pct", 50))
         status, *_ = await self.bridge.call(mapping[name], a0=num, a1=base, a2=wr_pct)
+        if status == KVIPS_RSP_INVAL and (allow_inval or name in _UNSUPPORTED_ON_RAM_DUT):
+            return
         if status != KVIPS_RSP_OK:
             raise BridgeError(f"AHB sequence {name} failed status={status}")
 

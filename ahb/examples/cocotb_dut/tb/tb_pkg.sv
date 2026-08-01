@@ -94,6 +94,8 @@ package tb_pkg;
         ahb_agent_cfg#(ADDR_W, DATA_W, HRESP_W) a;
         m_cfg = ahb_cfg#(ADDR_W, DATA_W, HRESP_W)::type_id::create("m_cfg");
         m_cfg.vif = vif;
+        m_cfg.insert_busy = 1'b1;
+        m_cfg.busy_pct = 40;
         m_cfg.apply_plusargs();
         a = ahb_agent_cfg#(ADDR_W, DATA_W, HRESP_W)::type_id::create("m_agent_cfg");
         a.set_role_master();
@@ -308,8 +310,38 @@ package tb_pkg;
         end
 
         KVIPS_AHB_SEQ_BOUNDARY: begin
-          // Negative legality sequence — return INVAL instead of fatalizing the DUT TB.
-          kvips_dpi_log("AHB SEQ_BOUNDARY skipped (negative legality test)");
+          // Legal 1KB-edge INCR4 at 0x3F0 (does not cross the boundary).
+          ahb_boundary_seq#(ADDR_W, DATA_W, HRESP_W) seq;
+          seq = new("boundary");
+          kvips_dpi_log("AHB SEQ_BOUNDARY start");
+          seq.start(env.get_master_sequencer(0));
+          kvips_dpi_log("AHB SEQ_BOUNDARY done");
+          respond(KVIPS_RSP_OK);
+        end
+
+        KVIPS_AHB_SEQ_ENDIAN: begin
+          ahb_endian_seq#(ADDR_W, DATA_W, HRESP_W) seq;
+          seq = new("endian");
+          seq.endian = AHB_ENDIAN_LITTLE;
+          kvips_dpi_log("AHB SEQ_ENDIAN start");
+          seq.start(env.get_master_sequencer(0));
+          kvips_dpi_log("AHB SEQ_ENDIAN done");
+          respond(KVIPS_RSP_OK);
+        end
+
+        KVIPS_AHB_SEQ_FULL_RESP: begin
+          ahb_full_response_seq#(ADDR_W, DATA_W, HRESP_W) seq;
+          seq = new("full_resp");
+          seq.expected_resp = AHB_RESP_OKAY;
+          kvips_dpi_log("AHB SEQ_FULL_RESP start");
+          seq.start(env.get_master_sequencer(0));
+          kvips_dpi_log("AHB SEQ_FULL_RESP done");
+          respond(KVIPS_RSP_OK);
+        end
+
+        KVIPS_AHB_SEQ_SECURITY,
+        KVIPS_AHB_SEQ_ERROR: begin
+          kvips_dpi_log($sformatf("AHB opcode 0x%0h unsupported on RAM DUT (needs policy/err slave)", op));
           respond(KVIPS_RSP_INVAL);
         end
 

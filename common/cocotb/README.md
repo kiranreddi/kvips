@@ -38,9 +38,23 @@ python3 scripts/run_cocotb_verilator.py --protocol apb   # or axi4 / ahb
 DPI is linked automatically (`KVIPS_COCOTB_DPI`) with `-Wl,--export-dynamic` so
 Python `ctypes` can resolve `kvips_dpi_*` symbols in-process.
 
+## Sequence surface
+
+Python `run_sequence(name, ...)` maps to VIP library sequences (or directed
+stand-ins when the RAM DUT / non-pipelined master cannot host the library body).
+
+| Protocol | OK on RAM DUT | Returns `RSP_INVAL` (needs VIP slave / reset / err policy) |
+|----------|---------------|--------------------------------------------------------------|
+| APB | smoke, stress, strobe | — |
+| AXI4 | wrb, write/read_burst*, stress*, lane, strobe, concurrent*, unaligned, corner*, incr256*, phase_api, wr/rd_expect, same_id*, sideband*, err_wr/rd*, pipe_stress* | exclusive_*, reset_*, timeout |
+| AHB | smoke, single, incr, wrap, b2b, wait, stress, busy, boundary (1KB-edge), endian, full_resp | security, error |
+
+`*` = directed / non-pipe stand-in of the library class (same opcode, safe on this DUT).
+
 ## Notes
 
 - Prefer directed / `$urandom` sequence paths under Verilator; full
   `randomize() with {}` needs an external solver.
 - AHB sequence base addresses should be 1KB-aligned.
-- `ahb_boundary_seq` is a negative legality check and is not run against the RAM DUT.
+- Pass `allow_inval=True` (or use the unsupported-name lists) when probing
+  opcodes that intentionally return `RSP_INVAL` on the RAM DUT.

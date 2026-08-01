@@ -403,6 +403,222 @@ package tb_pkg;
           respond(KVIPS_RSP_OK);
         end
 
+        KVIPS_AXI4_SEQ_UNALIGNED: begin
+          axi4_unaligned_byte_seq#(ADDR_W, DATA_W, ID_W, USER_W) seq;
+          seq = axi4_unaligned_byte_seq#(ADDR_W, DATA_W, ID_W, USER_W)::type_id::create("unaligned");
+          seq.base_addr = ADDR_W'(a0);
+          kvips_dpi_log($sformatf("AXI4 SEQ_UNALIGNED start base=0x%0h", seq.base_addr));
+          seq.start(env.get_master_sequencer(0));
+          kvips_dpi_log("AXI4 SEQ_UNALIGNED done");
+          respond(KVIPS_RSP_OK);
+        end
+
+        KVIPS_AXI4_SEQ_CORNER: begin
+          // Library axi4_corner_case_seq issues a 256-beat size=0 transfer —
+          // too heavy for Verilator CI. Directed stand-in: medium INCR +
+          // edge-of-4KB INCR/FIXED/WRAP inside 64KB RAM.
+          logic [ADDR_W-1:0] base4k;
+          axi4_burst_e bursts[$];
+          base4k = ADDR_W'((a0 != 0 ? a0 : 64'hE000) & ~64'hFFF);
+          kvips_dpi_log($sformatf("AXI4 SEQ_CORNER start base4k=0x%0h", base4k));
+          begin
+            axi4_item#(ADDR_W, DATA_W, ID_W, USER_W) wr, rd;
+            wr = axi4_item#(ADDR_W, DATA_W, ID_W, USER_W)::type_id::create("corner_mid");
+            wr.is_write = 1'b1; wr.id = '0; wr.addr = base4k; wr.len = 8'd31;
+            wr.size = 3'd0; wr.burst = AXI4_BURST_INCR; wr.allocate_payload();
+            for (int unsigned i = 0; i < wr.num_beats(); i++) begin
+              wr.data[i] = DATA_W'(64'hC000_0000 + i); wr.strb[i] = '1;
+            end
+            do_item(wr);
+            rd = axi4_item#(ADDR_W, DATA_W, ID_W, USER_W)::type_id::create("corner_mid_rd");
+            rd.is_write = 1'b0; rd.id = '0; rd.addr = wr.addr; rd.len = wr.len;
+            rd.size = wr.size; rd.burst = wr.burst; rd.allocate_payload();
+            do_item(rd);
+          end
+          bursts.push_back(AXI4_BURST_INCR);
+          bursts.push_back(AXI4_BURST_FIXED);
+          bursts.push_back(AXI4_BURST_WRAP);
+          foreach (bursts[bi]) begin
+            axi4_item#(ADDR_W, DATA_W, ID_W, USER_W) wr, rd;
+            int unsigned size, len, bpb, total, max_off, off;
+            logic [ADDR_W-1:0] addr;
+            size = (bi == 0) ? 0 : ((bi == 1) ? 1 : $clog2(STRB_W));
+            len  = (bursts[bi] == AXI4_BURST_INCR) ? 7 : 3;
+            bpb = 1 << size; total = (len + 1) * bpb;
+            max_off = (total >= 4096) ? 0 : (4096 - total);
+            off = (max_off / bpb) * bpb;
+            addr = base4k + off;
+            if (bursts[bi] == AXI4_BURST_WRAP) addr = ADDR_W'((longint'(addr) / total) * total);
+            wr = axi4_item#(ADDR_W, DATA_W, ID_W, USER_W)::type_id::create($sformatf("corner_edge_%0d", bi));
+            wr.is_write = 1'b1; wr.id = ID_W'(bi); wr.addr = addr; wr.len = len[7:0];
+            wr.size = size[2:0]; wr.burst = bursts[bi]; wr.allocate_payload();
+            for (int unsigned i = 0; i < wr.num_beats(); i++) begin
+              wr.data[i] = DATA_W'(64'hE000_0000 + bi*256 + i); wr.strb[i] = '1;
+            end
+            do_item(wr);
+            rd = axi4_item#(ADDR_W, DATA_W, ID_W, USER_W)::type_id::create($sformatf("corner_edge_rd_%0d", bi));
+            rd.is_write = 1'b0; rd.id = wr.id; rd.addr = wr.addr; rd.len = wr.len;
+            rd.size = wr.size; rd.burst = wr.burst; rd.allocate_payload();
+            do_item(rd);
+          end
+          kvips_dpi_log("AXI4 SEQ_CORNER done");
+          respond(KVIPS_RSP_OK);
+        end
+
+        KVIPS_AXI4_SEQ_INCR256: begin
+          // Library axi4_incr_256b_seq urandoms len up to 255 — too heavy for
+          // Verilator CI. Directed stand-in: full-width INCR16 write+readback.
+          int unsigned n;
+          logic [ADDR_W-1:0] base;
+          n = (int'(a0) == 0) ? 1 : int'(a0);
+          if (n > 2) n = 2;
+          base = ADDR_W'(a1 != 0 ? a1 : 64'h6000);
+          kvips_dpi_log($sformatf("AXI4 SEQ_INCR256 start num=%0d base=0x%0h", n, base));
+          for (int unsigned t = 0; t < n; t++) begin
+            axi4_item#(ADDR_W, DATA_W, ID_W, USER_W) wr, rd;
+            wr = axi4_item#(ADDR_W, DATA_W, ID_W, USER_W)::type_id::create($sformatf("incr_wr_%0d", t));
+            wr.is_write = 1'b1; wr.id = ID_W'(t); wr.addr = base + t * 256;
+            wr.len = 8'd15; wr.size = $clog2(STRB_W); wr.burst = AXI4_BURST_INCR;
+            wr.allocate_payload();
+            for (int unsigned i = 0; i < wr.num_beats(); i++) begin
+              wr.data[i] = DATA_W'(64'h2560_0000 + t*64 + i); wr.strb[i] = '1;
+            end
+            do_item(wr);
+            rd = axi4_item#(ADDR_W, DATA_W, ID_W, USER_W)::type_id::create($sformatf("incr_rd_%0d", t));
+            rd.is_write = 1'b0; rd.id = wr.id; rd.addr = wr.addr; rd.len = wr.len;
+            rd.size = wr.size; rd.burst = wr.burst; rd.allocate_payload();
+            do_item(rd);
+          end
+          kvips_dpi_log("AXI4 SEQ_INCR256 done");
+          respond(KVIPS_RSP_OK);
+        end
+
+        KVIPS_AXI4_SEQ_PHASE_API: begin
+          axi4_phase_api_seq#(ADDR_W, DATA_W, ID_W, USER_W) seq;
+          seq = axi4_phase_api_seq#(ADDR_W, DATA_W, ID_W, USER_W)::type_id::create("phase");
+          seq.base_addr = ADDR_W'(a0 != 0 ? a0 : 64'hD000);
+          kvips_dpi_log($sformatf("AXI4 SEQ_PHASE_API start base=0x%0h", seq.base_addr));
+          seq.start(env.get_master_sequencer(0));
+          kvips_dpi_log("AXI4 SEQ_PHASE_API done");
+          respond(KVIPS_RSP_OK);
+        end
+
+        KVIPS_AXI4_SEQ_WR_EXPECT: begin
+          axi4_write_expect_resp_seq#(ADDR_W, DATA_W, ID_W, USER_W) seq;
+          seq = axi4_write_expect_resp_seq#(ADDR_W, DATA_W, ID_W, USER_W)::type_id::create("wr_exp");
+          seq.addr = ADDR_W'(a0);
+          seq.expected_bresp = axi4_resp_e'(a1);
+          kvips_dpi_log($sformatf("AXI4 SEQ_WR_EXPECT addr=0x%0h exp=%0d", seq.addr, a1));
+          seq.start(env.get_master_sequencer(0));
+          kvips_dpi_log("AXI4 SEQ_WR_EXPECT done");
+          respond(KVIPS_RSP_OK);
+        end
+
+        KVIPS_AXI4_SEQ_RD_EXPECT: begin
+          axi4_read_expect_resp_seq#(ADDR_W, DATA_W, ID_W, USER_W) seq;
+          seq = axi4_read_expect_resp_seq#(ADDR_W, DATA_W, ID_W, USER_W)::type_id::create("rd_exp");
+          seq.addr = ADDR_W'(a0);
+          seq.expected_rresp = axi4_resp_e'(a1);
+          kvips_dpi_log($sformatf("AXI4 SEQ_RD_EXPECT addr=0x%0h exp=%0d", seq.addr, a1));
+          seq.start(env.get_master_sequencer(0));
+          kvips_dpi_log("AXI4 SEQ_RD_EXPECT done");
+          respond(KVIPS_RSP_OK);
+        end
+
+        KVIPS_AXI4_SEQ_SAME_ID: begin
+          // Non-pipe directed same-ID traffic (library needs pipelined master).
+          int unsigned n;
+          logic [ADDR_W-1:0] base;
+          n = (int'(a0) == 0) ? 8 : int'(a0);
+          base = ADDR_W'(a1 != 0 ? a1 : 64'h7000);
+          kvips_dpi_log($sformatf("AXI4 SEQ_SAME_ID start num=%0d base=0x%0h", n, base));
+          for (int unsigned t = 0; t < n; t++) begin
+            axi4_item#(ADDR_W, DATA_W, ID_W, USER_W) wr, rd;
+            wr = axi4_item#(ADDR_W, DATA_W, ID_W, USER_W)::type_id::create($sformatf("sid_wr_%0d", t));
+            wr.is_write = 1'b1; wr.id = '0; wr.addr = base + t * STRB_W;
+            wr.len = 0; wr.size = $clog2(STRB_W); wr.burst = AXI4_BURST_INCR;
+            wr.allocate_payload(); wr.data[0] = DATA_W'(64'h5A00_0000 + t); wr.strb[0] = '1;
+            do_item(wr);
+            rd = axi4_item#(ADDR_W, DATA_W, ID_W, USER_W)::type_id::create($sformatf("sid_rd_%0d", t));
+            rd.is_write = 1'b0; rd.id = '0; rd.addr = wr.addr;
+            rd.len = 0; rd.size = wr.size; rd.burst = AXI4_BURST_INCR;
+            rd.allocate_payload();
+            do_item(rd);
+          end
+          kvips_dpi_log("AXI4 SEQ_SAME_ID done");
+          respond(KVIPS_RSP_OK);
+        end
+
+        KVIPS_AXI4_SEQ_SIDEBAND: begin
+          // Directed remapped sideband traffic (library hardcodes OOR 0x3D000).
+          logic [ADDR_W-1:0] addr;
+          axi4_item#(ADDR_W, DATA_W, ID_W, USER_W) wr, rd;
+          addr = ADDR_W'(a0 != 0 ? a0 : 64'h8000);
+          kvips_dpi_log($sformatf("AXI4 SEQ_SIDEBAND start addr=0x%0h", addr));
+          wr = axi4_item#(ADDR_W, DATA_W, ID_W, USER_W)::type_id::create("sb_wr");
+          wr.is_write = 1'b1; wr.id = 0; wr.addr = addr; wr.len = 0;
+          wr.size = $clog2(STRB_W); wr.burst = AXI4_BURST_INCR;
+          wr.cache = 4; wr.prot = 3; wr.qos = 1; wr.region = 1;
+          wr.allocate_payload(); wr.data[0] = DATA_W'(64'hABCD); wr.strb[0] = '1;
+          do_item(wr);
+          rd = axi4_item#(ADDR_W, DATA_W, ID_W, USER_W)::type_id::create("sb_rd");
+          rd.is_write = 1'b0; rd.id = 0; rd.addr = addr; rd.len = 0;
+          rd.size = wr.size; rd.burst = AXI4_BURST_INCR;
+          rd.cache = wr.cache; rd.prot = wr.prot; rd.qos = wr.qos; rd.region = wr.region;
+          rd.allocate_payload();
+          do_item(rd);
+          kvips_dpi_log("AXI4 SEQ_SIDEBAND done");
+          respond(KVIPS_RSP_OK);
+        end
+
+        KVIPS_AXI4_SEQ_ERR_WR: begin
+          axi4_write_expect_resp_seq#(ADDR_W, DATA_W, ID_W, USER_W) seq;
+          seq = axi4_write_expect_resp_seq#(ADDR_W, DATA_W, ID_W, USER_W)::type_id::create("err_wr");
+          seq.addr = ADDR_W'(a0 != 0 ? a0 : 64'h0010_0000);
+          seq.expected_bresp = AXI4_RESP_DECERR;
+          kvips_dpi_log($sformatf("AXI4 SEQ_ERR_WR addr=0x%0h", seq.addr));
+          seq.start(env.get_master_sequencer(0));
+          kvips_dpi_log("AXI4 SEQ_ERR_WR done");
+          respond(KVIPS_RSP_OK);
+        end
+
+        KVIPS_AXI4_SEQ_ERR_RD: begin
+          axi4_read_expect_resp_seq#(ADDR_W, DATA_W, ID_W, USER_W) seq;
+          seq = axi4_read_expect_resp_seq#(ADDR_W, DATA_W, ID_W, USER_W)::type_id::create("err_rd");
+          seq.addr = ADDR_W'(a0 != 0 ? a0 : 64'h0010_0000);
+          seq.expected_rresp = AXI4_RESP_DECERR;
+          kvips_dpi_log($sformatf("AXI4 SEQ_ERR_RD addr=0x%0h", seq.addr));
+          seq.start(env.get_master_sequencer(0));
+          kvips_dpi_log("AXI4 SEQ_ERR_RD done");
+          respond(KVIPS_RSP_OK);
+        end
+
+        KVIPS_AXI4_SEQ_PIPE_STRESS: begin
+          // Same non-pipe stress body as SEQ_STRESS (pipe library needs get_response).
+          axi4_write_readback_seq#(ADDR_W, DATA_W, ID_W, USER_W) seq;
+          seq = axi4_write_readback_seq#(ADDR_W, DATA_W, ID_W, USER_W)::type_id::create("pipe_stress");
+          seq.num_txns = int'(a0);
+          seq.base_addr = ADDR_W'(a1);
+          seq.max_len = int'(a2);
+          seq.enable_incr = 1'b1; seq.enable_fixed = 1'b0;
+          seq.enable_wrap = 1'b0; seq.enable_narrow = 1'b0;
+          kvips_dpi_log($sformatf("AXI4 SEQ_PIPE_STRESS start num=%0d", seq.num_txns));
+          seq.start(env.get_master_sequencer(0));
+          kvips_dpi_log("AXI4 SEQ_PIPE_STRESS done");
+          respond(KVIPS_RSP_OK);
+        end
+
+        KVIPS_AXI4_SEQ_EXCL_BASIC,
+        KVIPS_AXI4_SEQ_EXCL_FAIL,
+        KVIPS_AXI4_SEQ_EXCL_XID,
+        KVIPS_AXI4_SEQ_EXCL_ILL,
+        KVIPS_AXI4_SEQ_RESET,
+        KVIPS_AXI4_SEQ_NP_RESET,
+        KVIPS_AXI4_SEQ_TIMEOUT: begin
+          kvips_dpi_log($sformatf("AXI4 opcode 0x%0h unsupported on RAM DUT (needs VIP slave/reset/stall)", op));
+          respond(KVIPS_RSP_INVAL);
+        end
+
         default: begin
           `uvm_error("AXI4_COCOTB", $sformatf("Unknown opcode 0x%0h", op))
           respond(KVIPS_RSP_INVAL);

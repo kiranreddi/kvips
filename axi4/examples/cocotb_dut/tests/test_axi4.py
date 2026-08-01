@@ -53,11 +53,10 @@ async def test_axi4_python_write_readback(dut):
 
 @cocotb.test()
 async def test_axi4_uvm_sequences(dut):
-    """Launch real UVM AXI4 sequence library entries from Python."""
+    """Launch the full RAM-DUT-compatible AXI4 sequence surface from Python."""
     axi = await _setup(dut)
 
-    # Keep max_len small for deterministic Verilator runtime; z3 is required
-    # for sequences that call item.randomize() (write_burst / read_burst).
+    # Keep max_len small for deterministic Verilator runtime.
     await axi.run_sequence("write_readback", num_txns=8, base_addr=0x3000, max_len=0)
     await axi.run_sequence("write_burst", num_txns=4, start_addr=0x4000, max_len=0)
     await axi.run_sequence("read_burst", num_txns=4, start_addr=0x4000, max_len=0)
@@ -65,10 +64,37 @@ async def test_axi4_uvm_sequences(dut):
     await axi.run_sequence("lane", base_addr=0x6000)
     await axi.run_sequence("strobe", base_addr=0x7000)
     await axi.run_sequence("concurrent", num_prefill=4, num_mixed=8, base_a=0xA000)
+    await axi.run_sequence("unaligned", base_addr=0xB000)
+    await axi.run_sequence("corner", base_addr=0xE000)
+    await axi.run_sequence("incr256", num_txns=1, base_addr=0xC000)
+    await axi.run_sequence("phase_api", base_addr=0xD000)
+    await axi.run_sequence("wr_expect", addr=0x0010_0000, expected_bresp=2)  # DECERR
+    await axi.run_sequence("rd_expect", addr=0x0010_0000, expected_rresp=2)
+    await axi.run_sequence("same_id", num_txns=6, base_addr=0x7100)
+    await axi.run_sequence("sideband", base_addr=0x8100)
+    await axi.run_sequence("error_write", addr=0x0010_0000)
+    await axi.run_sequence("error_read", addr=0x0010_0000)
+    await axi.run_sequence("pipe_stress", num_pairs=4, base_addr=0x9000, max_len=0)
 
     await axi.write(0x0000_8000, 0x55AA_33CC_77EE_11FF)
     got, _ = await axi.read(0x0000_8000)
     assert got == 0x55AA_33CC_77EE_11FF
+
+
+@cocotb.test()
+async def test_axi4_unsupported_on_ram_dut(dut):
+    """Exclusive/reset/timeout opcodes return RSP_INVAL on the RAM DUT."""
+    axi = await _setup(dut)
+    for name in (
+        "exclusive_basic",
+        "exclusive_fail",
+        "exclusive_cross_id",
+        "exclusive_illegal",
+        "reset_recovery",
+        "nonpipelined_reset",
+        "timeout_recovery",
+    ):
+        await axi.run_sequence(name, allow_inval=True)
 
 
 @cocotb.test()

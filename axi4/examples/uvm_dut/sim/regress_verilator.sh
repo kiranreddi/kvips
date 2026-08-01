@@ -50,9 +50,9 @@ while IFS= read -r line || [[ -n "${line}" ]]; do
   [[ -f "${OUT_DIR}/run.log" ]] && cp -f "${OUT_DIR}/run.log" "${OUT_DIR}/${test_name}.log"
   status="PASS"
   if [[ -f "${OUT_DIR}/compile.log" ]] && log_has_issue "${OUT_DIR}/compile.log"; then
+    echo "FAIL: ${test_name} (compile.log has Warning/Error)" | tee -a "${REGRESS_LOG}"
     status="FAIL"
-  fi
-  if log_has_issue "${OUT_DIR}/${test_name}.log"; then
+  elif log_has_issue "${OUT_DIR}/${test_name}.log"; then
     echo "FAIL: ${test_name}" | tee -a "${REGRESS_LOG}"
     status="FAIL"
   else
