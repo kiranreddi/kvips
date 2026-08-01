@@ -31,7 +31,6 @@ module top;
     .HSEL(ahb_if0.HSEL), .HWDATA(ahb_if0.HWDATA), .HREADY(ahb_if0.HREADY), .HREADYOUT(ahb_if0.HREADYOUT), .HRESP(ahb_if0.HRESP), .HRDATA(ahb_if0.HRDATA)
   );
 
-  assign ahb_if0.HSEL = 1'b1;
 `ifdef VERILATOR
   always_ff @(posedge HCLK or negedge HRESETn) begin
     if (!HRESETn) ahb_if0.HREADY <= 1'b1;
@@ -43,7 +42,7 @@ module top;
 
   initial begin
     `include "kvips_wave_dump.svh"
-    `KVIPS_MAYBE_ENABLE_WAVES("kvips_ahb_real_design")
+    `KVIPS_MAYBE_ENABLE_WAVES("kvips_ahb_dut")
   end
 
 `ifdef VERILATOR

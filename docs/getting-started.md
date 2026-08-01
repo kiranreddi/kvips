@@ -240,7 +240,7 @@ kvips/
 │   ├── sv/
 │   ├── docs/
 │   └── examples/             # Back-to-back and APB4 DUT flows
-├── ahb/                       # AHB-Lite/AHB Full VIP (stable)
+├── ahb/                       # AHB-Lite/AHB Full VIP (DUT validated baseline)
 │   ├── sv/
 │   ├── docs/
 │   └── examples/

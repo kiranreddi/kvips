@@ -16,6 +16,9 @@ VIP roles
 - Passive monitor: reconstructs completed transfers and publishes transactions
 - Scoreboard: monitor-based expected memory model for data integrity, including beat-by-beat burst reads
 - Transaction logger: per-transfer logging + end-of-test summary counters
+- RTL-DUT integration example: KVIPS master against a reset-initialized,
+  byte-lane-aware RAM responder (six-test evidence gate; see
+  [`dut_verification.md`](dut_verification.md))
 
 Traffic
 - SINGLE transfers

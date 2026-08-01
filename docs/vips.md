@@ -138,8 +138,8 @@ For the engineering checklist and directory/template expectations, see `kvips/do
 </tr>
 <tr>
 <td><strong>AHB</strong></td>
-<td><span class="badge badge-success">✅ Stable</span></td>
-<td>v1.0</td>
+<td><span class="badge badge-success">✅ DUT validated</span></td>
+<td>v0.1</td>
 <td>Medium</td>
 </tr>
 <tr>
@@ -264,7 +264,7 @@ For high-bandwidth data transfer and DMA operations
 <ul>
 <li>APB (stable)</li>
 <li>AXI-Lite (coming soon)</li>
-<li>AHB-Lite (stable)</li>
+<li>AHB-Lite (DUT validated baseline)</li>
 </ul>
 <p style="margin-top: 1rem; font-size: 0.875rem; color: var(--text-secondary);">
 For configuration registers and low-bandwidth control

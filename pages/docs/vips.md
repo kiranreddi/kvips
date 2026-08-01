@@ -109,7 +109,7 @@ Explore our collection of professional-grade SystemVerilog UVM verification IPs,
     <div>
       <h3 class="card-title" style="margin: 0;">AHB (AHB-Lite/Full)</h3>
       <div style="margin-top: 0.5rem;">
-        <span class="badge badge-success">Stable v1.0</span>
+        <span class="badge badge-success">DUT validated v0.1</span>
         <span class="badge badge-primary">UVM 1.2</span>
       </div>
     </div>
@@ -127,6 +127,7 @@ Explore our collection of professional-grade SystemVerilog UVM verification IPs,
       <li>Error response injection (OKAY/ERROR)</li>
       <li>Protocol compliance checking with SVA</li>
       <li>Monitor-based scoreboard with coverage</li>
+      <li>Executable AHB RTL-DUT integration (six-test gate)</li>
     </ul>
     
     <h5>Validated On:</h5>
@@ -134,7 +135,7 @@ Explore our collection of professional-grade SystemVerilog UVM verification IPs,
       <span class="badge badge-info">Questa 2025.3_2</span>
       <span class="badge badge-info">VCS 2025.06_1</span>
       <span class="badge badge-info">Xcelium 25.03.007</span>
-      <span class="badge badge-info">Verilator 5.x</span>
+      <span class="badge badge-info">Verilator back-to-back + DUT CI</span>
     </div>
 
     <div style="display: flex; gap: 0.5rem; margin-top: 1.5rem;">
@@ -178,8 +179,8 @@ Explore our collection of professional-grade SystemVerilog UVM verification IPs,
 </tr>
 <tr>
 <td><strong>AHB</strong></td>
-<td><span class="badge badge-success">✅ Stable</span></td>
-<td>v1.0</td>
+<td><span class="badge badge-success">✅ DUT validated</span></td>
+<td>v0.1</td>
 <td>Medium</td>
 </tr>
 <tr>
@@ -304,7 +305,7 @@ For high-bandwidth data transfer and DMA operations
 <ul>
 <li>APB (stable)</li>
 <li>AXI-Lite (coming soon)</li>
-<li>AHB (stable)</li>
+<li>AHB (DUT validated baseline)</li>
 </ul>
 <p style="margin-top: 1rem; font-size: 0.875rem; color: var(--text-secondary);">
 For configuration registers and low-bandwidth control

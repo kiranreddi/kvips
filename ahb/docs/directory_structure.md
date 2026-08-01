@@ -5,6 +5,7 @@ kvips/ahb/
 ├── README.md
 ├── docs/
 │   ├── assertions.md
+│   ├── dut_verification.md
 │   ├── directory_structure.md
 │   ├── integration_guide.md
 │   ├── supported_features.md
@@ -13,16 +14,31 @@ kvips/ahb/
 │   └── user_guide.md
 ├── examples/
 │   ├── Makefile
-│   └── uvm_back2back/
+│   ├── uvm_back2back/
+│   │   ├── README.md
+│   │   ├── sim/
+│   │   │   ├── filelist.f
+│   │   │   ├── run_questa.sh
+│   │   │   ├── run_vcs.sh
+│   │   │   ├── run_xcelium.sh
+│   │   │   ├── tests_questa.list
+│   │   │   └── (optional regress/fsdbreport helpers)
+│   │   └── tb/
+│   │       ├── tb_pkg.sv
+│   │       └── top.sv
+│   └── uvm_dut/
 │       ├── README.md
 │       ├── sim/
 │       │   ├── filelist.f
 │       │   ├── run_questa.sh
 │       │   ├── run_vcs.sh
 │       │   ├── run_xcelium.sh
-│       │   ├── tests_questa.list
-│       │   └── (optional regress/fsdbreport helpers)
+│       │   ├── regress_commercial.sh
+│       │   ├── run_verilator.sh
+│       │   ├── regress_verilator.sh
+│       │   └── tests_questa.list
 │       └── tb/
+│           ├── dut/ahb_ram_slave.sv
 │           ├── tb_pkg.sv
 │           └── top.sv
 └── sv/
@@ -46,4 +62,3 @@ kvips/ahb/
         ├── ahb_transaction.svh
         └── ahb_txn_logger.svh
 ```
-

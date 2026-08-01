@@ -1,6 +1,8 @@
 # Testplan (AHB VIP)
 
-This file maps AHB features to example tests in `kvips/ahb/examples/uvm_back2back`.
+This file maps AHB features to the self-checking examples in
+`kvips/ahb/examples/uvm_back2back` and the signal-level DUT flow in
+`kvips/ahb/examples/uvm_dut`.
 
 ## Tests
 
@@ -24,6 +26,16 @@ This file maps AHB features to example tests in `kvips/ahb/examples/uvm_back2bac
 | `ahb_reset_recovery_test` | Reset robustness | reset asserted during active traffic, pipeline flush/recovery |
 
 ## Coverage targets (v0.1)
+
+## RTL-DUT integration gate
+
+The `uvm_dut` list adds executable evidence against a synthesizable RAM
+responder: `ahb_dut_smoke_test`, `ahb_dut_incr_burst_test`,
+`ahb_dut_wrap_burst_test`, `ahb_dut_wait_state_test`, `ahb_dut_stress_test`,
+and `ahb_dut_full_mode_test`. Commercial regressions require nonzero writes
+and reads, zero responder errors, zero scoreboard mismatches, and observed
+stall cycles for the wait-state test. Verilator runs the same gate in CI; it
+is not counted as commercial simulator equivalence.
 
 Monitor coverpoints:
 - Read vs write

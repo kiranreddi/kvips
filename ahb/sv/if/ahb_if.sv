@@ -20,7 +20,11 @@ interface ahb_if #(
   bit HAS_HMASTLOCK = 1'b0,
   bit HAS_HMASTER   = 1'b0,
   int HMASTER_W     = 4,
-  int HRESP_W       = 2
+  int HRESP_W       = 2,
+  // Output pins are normally driven by the connected slave agent or DUT.
+  // Keep their legacy idle initialization opt-in so structural DUT port
+  // connections remain legal in strict simulators such as VCS.
+  bit DRIVE_OUTPUT_DEFAULTS = 1'b0
 ) (
   input  logic HCLK,
   input  logic HRESETn
@@ -63,8 +67,6 @@ interface ahb_if #(
     HPROT = '0;
     HNONSEC = 1'b0;
     HWDATA = '0;
-    HRDATA = '0;
-    HRESP = '0;
   end
 
   // Clocking blocks (posedge HCLK)
@@ -95,6 +97,12 @@ interface ahb_if #(
 
   // Reasonable defaults for optional signals when not used
   generate
+    if (DRIVE_OUTPUT_DEFAULTS) begin : g_output_defaults
+      initial begin
+        HRDATA = '0;
+        HRESP  = '0;
+      end
+    end
     if (HAS_HSEL) begin : g_hsel_init
       initial HSEL = 1'b1;
     end
@@ -102,7 +110,9 @@ interface ahb_if #(
       always_comb HSEL = 1'b1;
     end
     if (HAS_HREADYOUT) begin : g_hreadyout_init
-      initial HREADYOUT = 1'b1;
+      if (DRIVE_OUTPUT_DEFAULTS) begin : g_default
+        initial HREADYOUT = 1'b1;
+      end
     end
     if (!HAS_HREADYOUT) begin : g_no_hreadyout
       always_comb HREADYOUT = 1'b1;

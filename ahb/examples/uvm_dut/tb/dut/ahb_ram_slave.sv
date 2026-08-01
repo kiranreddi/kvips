@@ -35,8 +35,28 @@ module ahb_ram_slave #(
 
   logic                 rd_pending;
   logic [ADDR_W-1:0]    rd_addr_q;
+  logic [2:0]           rd_size_q;
 
   logic [7:0] wait_cnt;
+  logic [DATA_W-1:0] rd_word_comb;
+  logic [STRB_W-1:0] rd_mask_comb;
+
+  // Read data is a combinational view of the registered pending address. It
+  // remains stable while HREADYOUT is low and avoids a one-beat lag when a
+  // burst advances its control phase on the same edge that the prior data
+  // phase completes.
+  always_comb begin
+    HRDATA = '0;
+    rd_word_comb = '0;
+    rd_mask_comb = '0;
+    if (rd_pending && (word_index(rd_addr_q) < MEM_WORDS)) begin
+      rd_word_comb = mem[word_index(rd_addr_q)];
+      rd_mask_comb = size_mask(rd_size_q, rd_addr_q[ADDR_LSB-1:0]);
+      for (int b = 0; b < STRB_W; b++) begin
+        if (rd_mask_comb[b]) HRDATA[8*b +: 8] = rd_word_comb[8*b +: 8];
+      end
+    end
+  end
 
   function automatic int unsigned word_index(input logic [ADDR_W-1:0] addr);
     word_index = addr[ADDR_LSB +: $clog2(MEM_WORDS)];
@@ -59,10 +79,13 @@ module ahb_ram_slave #(
     if (!HRESETn) begin
       HREADYOUT <= 1'b1;
       HRESP     <= '0;
-      HRDATA    <= '0;
       wr_pending <= 1'b0;
       rd_pending <= 1'b0;
+      rd_size_q <= '0;
       wait_cnt <= '0;
+      for (int i = 0; i < MEM_WORDS; i++) begin
+        mem[i] <= '0;
+      end
     end else begin
       HRESP <= '0;
       HREADYOUT <= 1'b1;
@@ -86,9 +109,6 @@ module ahb_ram_slave #(
       end
 
       if (rd_pending && HREADYOUT) begin
-        int unsigned ridx;
-        ridx = word_index(rd_addr_q);
-        HRDATA <= (ridx < MEM_WORDS) ? mem[ridx] : '0;
         rd_pending <= 1'b0;
       end
 
@@ -102,6 +122,7 @@ module ahb_ram_slave #(
         end else begin
           rd_pending <= 1'b1;
           rd_addr_q  <= HADDR;
+          rd_size_q  <= HSIZE;
         end
       end
     end

@@ -62,12 +62,13 @@ The runnable AXI4 source and tests are the source of truth.
 
 ## AHB assessment
 
-The AHB VIP now has a 16-test UVM back-to-back list covering SINGLE,
-INCR/WRAP bursts, wait states, error responses, BUSY, legality boundaries,
+The AHB VIP has a 16-test UVM back-to-back list covering SINGLE, INCR/WRAP
+bursts, wait states, error responses, BUSY, legality boundaries,
 security-policy deny/allow behavior, big-endian byte lanes, Full RETRY/SPLIT
-response encoding, and mid-run reset recovery. The list was
-run through the LSF Questa, VCS, and Xcelium flows with zero UVM errors/fatals
-and zero simulator errors in the validated runs.
+response encoding, and mid-run reset recovery. The new `ahb/examples/uvm_dut`
+flow adds six executable tests against a synthesizable RAM responder and is
+wired into the AHB Verilator CI artifact. Commercial regression commands and
+their evidence rules are documented in `ahb/docs/dut_verification.md`.
 
 The honest boundary is that this is a single-master/single-slave reference
 environment. It carries HNONSEC, supports an attachable security-policy

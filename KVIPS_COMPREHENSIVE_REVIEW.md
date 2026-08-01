@@ -3,7 +3,7 @@
 <div align="center">
 
 **Version:** 1.2 (August 2026)<br>
-**Status:** DUT-validated baseline for AXI4 and APB; AHB remains separately scoped<br>
+**Status:** DUT-validated baseline for AXI4, APB, and the AHB single-master RAM integration<br>
 **Maintainer:** K's Verification Team<br>
 **License:** MIT
 
@@ -51,7 +51,7 @@ KVIPS (K's Verification IP Suite) is a vendor-neutral verification IP library bu
 |-----|--------|----------|---------------|---------------|-----------------|
 | **AXI4 Full** | ✅ DUT validated v0.1 | RTL-DUT + commercial evidence | Test matrix documented | Complete | Integration bring-up with gap review |
 | **APB (APB3/APB4)** | ✅ DUT validated v0.1 | RTL-DUT + commercial evidence | Test matrix documented | Complete | Integration bring-up with gap review |
-| **AHB (AHB-Lite/Full)** | ✅ Stable v1.0 | Production | 90%+ | Complete | Production projects |
+| **AHB (AHB-Lite/Full)** | ✅ DUT validated v0.1 | Single-master RAM integration | 16 back-to-back + 6 DUT tests | Guide and testplan | Bring-up with fabric boundaries reviewed |
 
 ---
 
@@ -94,7 +94,7 @@ KVIPS Root
 │   ├── docs/
 │   └── examples/
 │
-├── ahb/                       # AHB-Lite/Full VIP (Stable)
+├── ahb/                       # AHB-Lite/Full VIP (DUT validated baseline)
 │   ├── sv/
 │   │   ├── if/
 │   │   ├── pkg/
@@ -369,7 +369,7 @@ endclass
 
 ### AHB VIP
 
-#### Status: ✅ Stable (v1.0)
+#### Status: ✅ DUT validated baseline (v0.1)
 
 #### Overview
 
@@ -386,6 +386,7 @@ The AHB VIP provides verification support for AMBA AHB-Lite and AHB Full protoco
 - ✅ Variable HSIZE (byte to double-word)
 - ✅ OKAY and ERROR responses
 - ✅ Address/control pipelining with HREADY stalls
+- ✅ Six-test signal-level RTL-DUT flow against a synthesizable RAM responder
 
 **Master Agent:**
 - Single and burst transfer support
@@ -457,11 +458,19 @@ class ahb_cfg extends uvm_object;
 endclass
 ```
 
+#### RTL-DUT verification
+
+`ahb/examples/uvm_dut` drives a reset-initialized RAM responder and checks
+completed read/write handshakes, wait-state stalls, and zero scoreboard
+mismatches. The commercial evidence gate and CI behavior are documented in
+[`ahb/docs/dut_verification.md`](ahb/docs/dut_verification.md).
+
 #### Documentation
 
 - **Main Documentation:** [pages/docs/ahb-vip.md](./pages/docs/ahb-vip.md)
 - **Source Location:** `kvips/ahb/`
 - **Examples:** `kvips/ahb/examples/uvm_back2back/`
+- **RTL-DUT example:** `kvips/ahb/examples/uvm_dut/`
 - **Detailed Guides:**
   - `ahb/docs/user_guide.md`
   - `ahb/docs/integration_guide.md`
@@ -473,16 +482,15 @@ endclass
 - ✅ Siemens Questa 2025.3_2
 - ✅ Synopsys VCS 2025.06_1
 - ✅ Cadence Xcelium 25.03.007
-- ✅ Full regression suite (45+ tests)
-- ✅ Extended validation complete
+- ✅ Six-test RTL-DUT gate is wired into AHB Verilator CI
+- ⚠️ Commercial DUT evidence is a repeatable gate; it is not a claim of fabric or production equivalence
 
 #### Planned Features
 
 - 📋 Multi-master arbitration (AHB Full)
-- 📋 SPLIT/RETRY response handling
-- 📋 BUSY insertion support
-- 📋 Stricter wrap boundary checks
-- 📋 Endianness configuration
+- 📋 HSPLIT routing and multi-slave interconnect decode
+- 📋 Negative-DUT protocol violation harnesses
+- 📋 Formal/toggle coverage closure and full transaction-recording integration
 
 ---
 
@@ -941,7 +949,7 @@ endclass
 |----------|--------|--------|----------|
 | AXI4 Full | ✅ DUT validated | v0.1 | High |
 | APB | ✅ DUT validated | v0.1 | High |
-| AHB | ✅ Stable | v1.0 | Medium |
+| AHB | ✅ DUT validated baseline | v0.1 | Medium |
 | AXI-Lite | 📋 Planned | Q2 2026 | Medium |
 | AXI-Stream | 📋 Planned | Q3 2026 | Medium |
 
@@ -966,7 +974,7 @@ endclass
 ### Enhancement Roadmap
 
 **Q1 2026:**
-- ✅ Complete APB/AHB stable validation
+- ✅ APB and AHB baseline validation documented with executable DUT gates
 - ✅ Comprehensive documentation overhaul
 - ✅ GitHub Pages site enhancement
 - 📋 Add more usage examples

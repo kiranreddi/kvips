@@ -13,7 +13,7 @@ permalink: /docs/ahb-vip/
 Professional-grade AMBA AHB verification component supporting both AHB-Lite and AHB Full with master/slave agents, protocol checkers, and built-in scoreboard
 </p>
 <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 1.5rem;">
-<span class="badge badge-success">Stable v1.0</span>
+<span class="badge badge-success">DUT validated v0.1</span>
 <span class="badge badge-info">UVM 1.1d/1.2</span>
 <span class="badge badge-primary">IEEE 1800</span>
 <span class="badge badge-success">Single Image AHB-Lite/AHB Full</span>
@@ -88,8 +88,28 @@ The AHB VIP supports both AHB-Lite and AHB Full in a **single compiled image**. 
 ```
 
 <div class="alert alert-info">
-<strong>📝 Note:</strong> AHB-Lite mode restricts responses to OKAY/ERROR and assumes single-master operation. AHB Full mode enables optional signals; multi-master arbitration and RETRY/SPLIT support are planned for future releases.
+<strong>📝 Note:</strong> AHB-Lite mode restricts responses to OKAY/ERROR and assumes single-master operation. AHB Full mode supports the directed RETRY/SPLIT encodings in the VIP; multi-master arbitration and interconnect routing remain future integration work.
 </div>
+
+## 🧪 RTL-DUT verification
+
+The `examples/uvm_dut/` environment drives a synthesizable, reset-initialized
+AHB RAM responder with the KVIPS master. Its six-test gate covers single
+transfers, INCR and WRAP bursts, fixed wait states, back-to-back stress, and
+AHB Full mode. Each simulator regression requires real read/write handshakes,
+zero responder errors, zero scoreboard mismatches, and wait-state evidence for
+the wait-state test.
+
+```bash
+make -C ahb/examples regress-rtl-questa USE_LSF=1
+make -C ahb/examples regress-rtl-vcs USE_LSF=1
+make -C ahb/examples regress-rtl-xcelium USE_LSF=1
+make -C ahb/examples rtl-questa RTL_TEST=ahb_dut_full_mode_test PLUSARGS='+AHB_MODE=AHB_FULL'
+```
+
+Verilator runs the same DUT list in CI for portable coverage; commercial
+simulator logs are the evidence-bearing validation. See the
+[`AHB DUT verification guide`](https://github.com/kiranreddi/kvips/blob/main/ahb/docs/dut_verification.md).
 
 ---
 
@@ -123,6 +143,9 @@ make verilator TEST=ahb_smoke_test
 # Full Verilator regression
 make regress-verilator
 
+# RTL-DUT regression (commercial simulator)
+make regress-rtl-questa USE_LSF=1
+
 # Run with LSF (if tools require job scheduler)
 make questa USE_LSF=1 TEST=ahb_smoke_test
 ```
@@ -138,6 +161,17 @@ make questa USE_LSF=1 TEST=ahb_smoke_test
 | `ahb_back_to_back_test` | Burst transfers with minimal gaps |
 | `ahb_random_stress_test` | Random bursts, sizes, and stalls |
 | `ahb_error_test` | Error response injection testing |
+
+### RTL-DUT tests
+
+| Test Name | Description |
+|-----------|-------------|
+| `ahb_dut_smoke_test` | RAM DUT single-transfer read/writeback |
+| `ahb_dut_incr_burst_test` | RAM DUT INCR4/8/16 bursts |
+| `ahb_dut_wrap_burst_test` | RAM DUT WRAP4/8/16 bursts |
+| `ahb_dut_wait_state_test` | RAM DUT fixed wait-state handshakes |
+| `ahb_dut_stress_test` | RAM DUT mixed back-to-back traffic |
+| `ahb_dut_full_mode_test` | RAM DUT run with `+AHB_MODE=AHB_FULL` |
 
 ---
 
@@ -172,28 +206,28 @@ kvips/ahb/
 │   │   ├── ahb_types_pkg.sv       # Type definitions, enums
 │   │   └── ahb_uvm_pkg.sv         # UVM package
 │   └── uvm/
-│       ├── ahb_cfg.sv             # Configuration object
-│       ├── ahb_txn.sv             # Transaction item
-│       ├── ahb_sequencer.sv       # Sequencer
-│       ├── ahb_master_driver.sv   # Master driver
-│       ├── ahb_slave_driver.sv    # Slave driver
-│       ├── ahb_monitor.sv         # Passive monitor
-│       ├── ahb_scoreboard.sv      # Data integrity checker
-│       ├── ahb_agent.sv           # Agent wrapper
-│       ├── ahb_env.sv             # Environment
-│       └── sequences/
-│           ├── ahb_base_seq.sv
-│           ├── ahb_single_seq.sv
-│           └── ahb_burst_seq.sv
+│       ├── ahb_cfg.svh             # Configuration object
+│       ├── ahb_transaction.svh     # Transaction item
+│       ├── ahb_sequencer.svh       # Sequencer
+│       ├── ahb_master_driver.svh   # Master driver
+│       ├── ahb_slave_driver.svh    # Slave driver
+│       ├── ahb_monitor.svh         # Passive monitor
+│       ├── ahb_scoreboard.svh      # Data integrity checker
+│       ├── ahb_agent.svh           # Agent wrapper
+│       ├── ahb_env.svh             # Environment
+│       ├── ahb_sequences.svh       # Sequence library
+│       └── ahb_txn_logger.svh      # Transaction logger
 ├── docs/
 │   ├── user_guide.md              # Detailed usage guide
 │   ├── integration_guide.md       # Integration instructions
+│   ├── dut_verification.md        # RTL-DUT topology and evidence gate
 │   ├── supported_features.md      # Feature list & roadmap
 │   ├── assertions.md              # Assertion documentation
 │   ├── testplan.md                # Test coverage plan
 │   └── directory_structure.md     # File organization
 ├── examples/
-│   └── uvm_back2back/             # Self-contained demo testbench
+│   ├── uvm_back2back/             # Self-contained VIP-to-VIP demo
+│   └── uvm_dut/                   # KVIPS master to synthesizable RAM DUT
 └── README.md                       # Quick reference
 ```
 

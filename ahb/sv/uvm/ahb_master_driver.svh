@@ -309,7 +309,11 @@ class ahb_master_driver #(
             vif.HMASTER      <= cur_item.master_id;
             if (HAS_HMASTLOCK) vif.HMASTLOCK <= cur_item.lock;
             vif.HTRANS       <= (cur_beat == 0) ? AHB_TRANS_NONSEQ : AHB_TRANS_SEQ;
-            if (cur_item.write && (cur_beat < cur_item.wdata.size())) begin
+            // The data phase for this control beat is driven on the next
+            // iteration.  Only prime the first beat here; assigning the next
+            // beat alongside a sequential control phase would make a
+            // clocked responder sample WDATA one beat ahead in a burst.
+            if (cur_item.write && (cur_beat == 0) && (cur_beat < cur_item.wdata.size())) begin
               vif.HWDATA <= cur_item.wdata[cur_beat];
             end
 

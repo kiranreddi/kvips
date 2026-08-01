@@ -3,7 +3,7 @@ set -euo pipefail
 
 HERE="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(cd "${HERE}" && git rev-parse --show-toplevel)"
-OUT="${ROOT}/ahb/examples/uvm_real_design/sim/out/verilator"
+OUT="${ROOT}/ahb/examples/uvm_dut/sim/out/verilator"
 mkdir -p "${OUT}"
 
 TESTS_FILE="${HERE}/tests_questa.list"
@@ -33,7 +33,7 @@ log_has_issue() {
 
 SUMMARY_MD="${OUT}/summary.md"
 {
-  echo "# AHB DUT-Design Verilator Summary"
+  echo "# AHB RTL-DUT Verilator Summary"
   echo ""
   echo "| Test | Status | wr | rd | err | mismatch | stall_cycles |"
   echo "|---|---:|---:|---:|---:|---:|---:|"
@@ -44,11 +44,13 @@ for t in "${TESTS[@]}"; do
   echo "==== ${t} ===="
   status="PASS"
   LOG="${OUT}/${t}.log"
+  test_plusargs=("$@")
+  [[ "${t}" == ahb_dut_full_mode_test ]] && test_plusargs+=(+AHB_MODE=AHB_FULL)
   if [[ "${FIRST}" -eq 1 ]]; then
-    VERILATOR_REUSE_BUILD=0 "${HERE}/run_verilator.sh" +UVM_TESTNAME="${t}" "$@" || status="FAIL"
+    VERILATOR_REUSE_BUILD=0 "${HERE}/run_verilator.sh" +UVM_TESTNAME="${t}" "${test_plusargs[@]}" || status="FAIL"
     FIRST=0
   else
-    VERILATOR_REUSE_BUILD=1 "${HERE}/run_verilator.sh" +UVM_TESTNAME="${t}" "$@" || status="FAIL"
+    VERILATOR_REUSE_BUILD=1 "${HERE}/run_verilator.sh" +UVM_TESTNAME="${t}" "${test_plusargs[@]}" || status="FAIL"
   fi
   [[ -f "${OUT}/run.log" ]] && cp -f "${OUT}/run.log" "${LOG}"
   if [[ -f "${OUT}/compile.log" ]] && log_has_issue "${OUT}/compile.log"; then
