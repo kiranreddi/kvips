@@ -43,6 +43,8 @@ module ahb_ram_slave #(
   // Keep a one-beat response register so a burst control accepted on that
   // edge cannot replace the data phase being retired.
   logic [DATA_W-1:0] rd_data_q;
+  logic [DATA_W-1:0] hrdata_out_q;
+  logic [2:0]        rd_burst_q;
 `else
   logic [DATA_W-1:0] rd_word_comb;
   logic [STRB_W-1:0] rd_mask_comb;
@@ -120,6 +122,18 @@ module ahb_ram_slave #(
     end
     return value;
   endfunction
+
+  always_comb begin
+    HRDATA = '0;
+    if (rd_burst_q == 3'b000) begin
+      // Single transfers do not have a following burst control phase that can
+      // replace the response, so retain the direct memory view.
+      if (rd_pending)
+        HRDATA = read_value(rd_addr_q, rd_size_q, 1'b0, '0, '0, '0);
+    end else begin
+      HRDATA = hrdata_out_q;
+    end
+  end
 `endif
 
   always_ff @(posedge HCLK or negedge HRESETn) begin
@@ -127,8 +141,9 @@ module ahb_ram_slave #(
       HREADYOUT <= 1'b1;
       HRESP     <= '0;
 `ifdef VERILATOR
-      HRDATA    <= '0;
       rd_data_q <= '0;
+      hrdata_out_q <= '0;
+      rd_burst_q <= 3'b000;
 `endif
       wr_pending <= 1'b0;
       rd_pending <= 1'b0;
@@ -141,7 +156,7 @@ module ahb_ram_slave #(
       HRESP <= '0;
       HREADYOUT <= 1'b1;
 `ifdef VERILATOR
-      HRDATA <= rd_data_q;
+      hrdata_out_q <= rd_data_q;
 `endif
 
       if (wait_cnt != 0) begin
@@ -182,6 +197,7 @@ module ahb_ram_slave #(
             HADDR, HSIZE,
             wr_pending && HREADYOUT,
             wr_addr_q, wr_size_q, HWDATA);
+          rd_burst_q <= HBURST;
 `endif
         end
       end
