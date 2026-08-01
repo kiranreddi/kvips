@@ -14,6 +14,9 @@
 [![APB DUT CI](https://github.com/kiranreddi/kvips/actions/workflows/apb-dut-verilator.yml/badge.svg?branch=main)](https://github.com/kiranreddi/kvips/actions/workflows/apb-dut-verilator.yml)
 [![AHB BK2BK CI](https://github.com/kiranreddi/kvips/actions/workflows/ahb-bk2bk-verilator.yml/badge.svg?branch=main)](https://github.com/kiranreddi/kvips/actions/workflows/ahb-bk2bk-verilator.yml)
 [![AHB DUT CI](https://github.com/kiranreddi/kvips/actions/workflows/ahb-dut-verilator.yml/badge.svg?branch=main)](https://github.com/kiranreddi/kvips/actions/workflows/ahb-dut-verilator.yml)
+[![APB Cocotb CI](https://github.com/kiranreddi/kvips/actions/workflows/apb-cocotb-verilator.yml/badge.svg?branch=main)](https://github.com/kiranreddi/kvips/actions/workflows/apb-cocotb-verilator.yml)
+[![AXI4 Cocotb CI](https://github.com/kiranreddi/kvips/actions/workflows/axi4-cocotb-verilator.yml/badge.svg?branch=main)](https://github.com/kiranreddi/kvips/actions/workflows/axi4-cocotb-verilator.yml)
+[![AHB Cocotb CI](https://github.com/kiranreddi/kvips/actions/workflows/ahb-cocotb-verilator.yml/badge.svg?branch=main)](https://github.com/kiranreddi/kvips/actions/workflows/ahb-cocotb-verilator.yml)
 [![Verilator Lint](https://github.com/kiranreddi/kvips/actions/workflows/verilator-lint.yml/badge.svg?branch=main)](https://github.com/kiranreddi/kvips/actions/workflows/verilator-lint.yml)
 [![Pages](https://github.com/kiranreddi/kvips/actions/workflows/pages.yml/badge.svg?branch=main)](https://github.com/kiranreddi/kvips/actions/workflows/pages.yml)
 

@@ -81,7 +81,7 @@ fi
 
 BIN="${OUT}/obj_dir/Vtop"
 if [[ "${REUSE_BUILD}" != "1" || ! -x "${BIN}" ]]; then
-  ${VERILATOR_BIN} -sv --language 1800-2017 -Wno-fatal -Wno-PKGNODECL -Wno-UNDRIVEN -Wno-TIMESCALEMOD -Wno-SYNCASYNCNET -Wno-MISINDENT -Wno-WIDTHTRUNC -Wno-WIDTHEXPAND -Wno-CASTCONST -Wno-REALCVT -Wno-CONSTRAINTIGN -Wno-SELRANGE --bbox-unsup --no-unlimited-stack --timing --binary -j "${JOBS}" \
+  ${VERILATOR_BIN} -sv --language 1800-2017 -Wno-fatal -Wno-PKGNODECL -Wno-UNDRIVEN -Wno-TIMESCALEMOD -Wno-SYNCASYNCNET -Wno-MISINDENT -Wno-WIDTHTRUNC -Wno-WIDTHEXPAND -Wno-CASTCONST -Wno-REALCVT -Wno-CONSTRAINTIGN -Wno-SELRANGE -Wno-UNSIGNED --bbox-unsup --no-unlimited-stack --timing --binary -j "${JOBS}" \
     -CFLAGS "${STACK_CFLAGS}" \
     --top-module top \
     +incdir+"${UVM_HOME}" \

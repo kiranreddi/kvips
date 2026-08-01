@@ -105,10 +105,13 @@ module axi4_ram_slave #(
 
   function automatic bit byte_in_range(input logic [ADDR_W-1:0] addr);
     longint unsigned a;
+    longint unsigned base;
     begin
+      // End-exclusive range via subtraction avoids a constant compare when
+      // MEM_BASE==0 (Verilator %Warning-UNSIGNED on "a >= 0").
       a = longint'(addr);
-      byte_in_range = (a >= longint'(MEM_BASE)) &&
-                      ((a - longint'(MEM_BASE)) < longint'(MEM_BYTES));
+      base = longint'(MEM_BASE);
+      byte_in_range = ((a - base) < longint'(MEM_BYTES));
     end
   endfunction
 

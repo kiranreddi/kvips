@@ -381,16 +381,15 @@ package tb_pkg;
     `uvm_component_utils(axi4_dut_delay_test)
     function new(string name, uvm_component parent); super.new(name, parent); endfunction
     virtual function void post_build_cfg();
+      // Non-pipelined master: RREADY stays asserted in drive_read, so do not
+      // enable master_rready_random (it only warns and is a no-op).
       env_cfg.agent_cfgs[0].inter_txn_gap_min = 1;
       env_cfg.agent_cfgs[0].inter_txn_gap_max = 3;
       env_cfg.agent_cfgs[0].master_w_beat_gap_min = 1;
       env_cfg.agent_cfgs[0].master_w_beat_gap_max = 2;
       env_cfg.agent_cfgs[0].master_bready_random = 1'b1;
-      env_cfg.agent_cfgs[0].master_rready_random = 1'b1;
       env_cfg.agent_cfgs[0].master_bready_low_min = 1;
       env_cfg.agent_cfgs[0].master_bready_low_max = 3;
-      env_cfg.agent_cfgs[0].master_rready_low_min = 1;
-      env_cfg.agent_cfgs[0].master_rready_low_max = 3;
     endfunction
     task run_phase(uvm_phase phase);
       axi4_sequencer#(ADDR_W, DATA_W, ID_W, USER_W) seqr;

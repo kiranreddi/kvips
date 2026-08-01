@@ -269,7 +269,7 @@ Possibly, but not officially validated. We test on the versions listed above. Ol
 <details>
 <summary><strong>Can I use KVIPS with cocotb?</strong></summary>
 <p>
-Not yet, but it's on the roadmap! We plan to add cocotb entry points for Python-based verification. Follow the <a href="https://github.com/kiranreddi/kvips">repository</a> for updates.
+Yes. KVIPS provides a cocotb↔UVM bridge so Python tests reuse the existing APB/AXI4/AHB VIP agents and sequences under Verilator, with custom DPI for monitor events and command completion. See <code>common/cocotb/README.md</code> and the <code>*/examples/cocotb_dut</code> examples; CI workflows <code>*-cocotb-verilator.yml</code> run the suites.
 </p>
 </details>
 
