@@ -2,10 +2,10 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")" && git rev-parse --show-toplevel)"
-OUT="${ROOT}/axi4/examples/uvm_real_design/sim/out/verilator"
+OUT="${ROOT}/axi4/examples/uvm_dut/sim/out/verilator"
 mkdir -p "${OUT}"
 
-ORIG_FILELIST="${ROOT}/axi4/examples/uvm_real_design/sim/filelist.f"
+ORIG_FILELIST="${ROOT}/axi4/examples/uvm_dut/sim/filelist.f"
 ABS_FILELIST="${OUT}/filelist.abs.f"
 
 # shellcheck disable=SC1091

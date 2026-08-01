@@ -36,6 +36,8 @@ AXI4-Lite is kept as a distinct, standalone interface/example under
 - `kvips/axi4/sv/uvm/` : agent, drivers, monitor, scoreboard, sequences
 - `kvips/axi4/sv/assertions/` : `axi4_if_sva.svh` (included in `axi4_if`)
 - `kvips/axi4/examples/` : runnable demos (Questa/VCS/Xcelium scripts)
+- `kvips/axi4/examples/uvm_dut/` : RTL-DUT integration target and
+  commercial-simulator regression scripts
 - `kvips/axi4/docs/` : user guide, testplan, assertions, supported features, gap analyses
 
 ## Key capabilities
@@ -74,6 +76,7 @@ Scoreboard:
 - `kvips/axi4/docs/integration_guide.md`
 - `kvips/axi4/docs/supported_features.md`
 - `kvips/axi4/docs/testplan.md`
+- `kvips/axi4/docs/dut_verification.md`
 - `kvips/axi4/docs/reference_parity_audit.md`
 - `kvips/axi4/docs/assertions.md`
 - Gap analyses:

@@ -2,7 +2,7 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")" && git rev-parse --show-toplevel)"
-SIM_DIR="${ROOT}/axi4/examples/uvm_real_design/sim"
+SIM_DIR="${ROOT}/axi4/examples/uvm_dut/sim"
 OUT_DIR="${SIM_DIR}/out/verilator"
 TESTLIST="${SIM_DIR}/tests_questa.list"
 

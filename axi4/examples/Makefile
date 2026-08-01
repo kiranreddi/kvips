@@ -1,7 +1,9 @@
-.PHONY: help list-tests questa questa-waves vcs xcelium verilator regress-questa regress-vcs regress-xcelium regress-verilator verilator-dut regress-verilator-dut verilator-real regress-verilator-real fsdbreport clean
+.PHONY: help list-tests questa questa-waves vcs xcelium verilator regress-questa regress-vcs regress-xcelium regress-verilator verilator-dut regress-verilator-dut rtl-questa rtl-vcs rtl-xcelium regress-rtl-questa regress-rtl-vcs regress-rtl-xcelium fsdbreport clean
 
 SIM_DIR := uvm_back2back/sim
 SIM_DIR_ABS := $(abspath $(SIM_DIR))
+RTL_SIM_DIR := uvm_dut/sim
+RTL_SIM_DIR_ABS := $(abspath $(RTL_SIM_DIR))
 
 TEST ?= axi4_b2b_test
 SEED ?= 1
@@ -40,6 +42,12 @@ help:
 	@echo "  make regress-verilator PLUSARGS='<...>'"
 	@echo "  make verilator-dut TEST=<name> UVM_VERBOSITY=<lvl> PLUSARGS='<...>'"
 	@echo "  make regress-verilator-dut PLUSARGS='<...>'"
+	@echo "  make rtl-questa TEST=<name> [USE_LSF=1]"
+	@echo "  make rtl-vcs TEST=<name> [USE_LSF=1]"
+	@echo "  make rtl-xcelium TEST=<name> [USE_LSF=1]"
+	@echo "  make regress-rtl-questa [USE_LSF=1]"
+	@echo "  make regress-rtl-vcs [USE_LSF=1]"
+	@echo "  make regress-rtl-xcelium [USE_LSF=1]"
 	@echo "  make fsdbreport     FSDB=<path> [BT=<time>] [ET=<time>]"
 	@echo "  make clean"
 	@echo ""
@@ -77,15 +85,29 @@ regress-xcelium:
 regress-verilator:
 	@$(RUN_PREFIX) $(SIM_DIR_ABS)/regress_verilator.sh $(PLUSARGS)
 
-verilator-real:
-	@$(RUN_PREFIX) $(abspath uvm_real_design/sim)/run_verilator.sh $(COMMON_PLUSARGS)
+verilator-dut:
+	@$(RUN_PREFIX) $(abspath uvm_dut/sim)/run_verilator.sh $(COMMON_PLUSARGS)
 
-regress-verilator-real:
-	@$(RUN_PREFIX) $(abspath uvm_real_design/sim)/regress_verilator.sh $(PLUSARGS)
+regress-verilator-dut:
+	@$(RUN_PREFIX) $(abspath uvm_dut/sim)/regress_verilator.sh $(PLUSARGS)
 
-verilator-dut: verilator-real
+rtl-questa:
+	@$(RUN_PREFIX) $(RTL_SIM_DIR_ABS)/run_questa.sh $(COMMON_PLUSARGS)
 
-regress-verilator-dut: regress-verilator-real
+rtl-vcs:
+	@$(RUN_PREFIX) $(RTL_SIM_DIR_ABS)/run_vcs.sh $(COMMON_PLUSARGS)
+
+rtl-xcelium:
+	@$(RUN_PREFIX) $(RTL_SIM_DIR_ABS)/run_xcelium.sh $(COMMON_PLUSARGS)
+
+regress-rtl-questa:
+	@$(RUN_PREFIX) $(RTL_SIM_DIR_ABS)/regress_commercial.sh questa $(PLUSARGS)
+
+regress-rtl-vcs:
+	@$(RUN_PREFIX) $(RTL_SIM_DIR_ABS)/regress_commercial.sh vcs $(PLUSARGS)
+
+regress-rtl-xcelium:
+	@$(RUN_PREFIX) $(RTL_SIM_DIR_ABS)/regress_commercial.sh xcelium $(PLUSARGS)
 
 fsdbreport:
 	@if [ -z "$(FSDB)" ]; then echo "ERROR: FSDB=<path> required"; exit 2; fi

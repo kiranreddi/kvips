@@ -22,6 +22,10 @@ The runnable AXI4 source and tests are the source of truth.
 - Pipelined traffic, exclusive access modeling, response errors, region decode,
   B/R ordering controls, random READY, slave limits, and phase-oriented helper
   items are implemented and tested.
+- An RTL-DUT milestone now connects the KVIPS AXI4 master to a synthesizable,
+  byte-addressed AXI4 RAM device.  Commercial simulator runners and a directed
+  DUT test list cover bursts, narrow strobes, boundaries, DECERR, pipelining,
+  and master-side backpressure.
 
 ### Boundaries and risks
 
@@ -33,6 +37,8 @@ The runnable AXI4 source and tests are the source of truth.
   conservatively; it is not yet a range-aware dependency scheduler.
 - Reactive slave reset flushes queues and reservations. Master reset-abort
   behavior and reset-during-traffic coverage remain work items.
+- The RTL-DUT target is a deliberately small single-device slave; it is not an
+  interconnect, arbitration model, or independent external-master proof.
 - Coverage, performance, trace/replay, negative testing, and integration
   collateral are useful baselines, not full closure methodology.
 

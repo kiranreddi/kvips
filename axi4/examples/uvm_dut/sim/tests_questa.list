@@ -1,0 +1,11 @@
+axi4_dut_smoke_test
+axi4_dut_burst_mix_test
+axi4_dut_narrow_test
+axi4_dut_wrap_test
+axi4_dut_strobe_test
+axi4_dut_unaligned_test
+axi4_dut_boundary_test
+axi4_dut_pipeline_test
+axi4_dut_error_test
+axi4_dut_delay_test
+axi4_dut_ral_test

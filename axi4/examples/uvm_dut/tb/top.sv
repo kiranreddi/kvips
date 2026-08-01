@@ -37,9 +37,28 @@ module top;
     areset_n = 1;
   end
 
+`ifndef VERILATOR
+  // Opt-in signal-level trace for debugging a DUT adapter.  It is disabled
+  // by default so normal regressions stay concise.
+  initial begin
+    if ($test$plusargs("DUT_DEBUG")) begin
+      forever begin
+        @(posedge aclk);
+        if (dut.rd_active || axi.arvalid || axi.rvalid || axi.rready)
+          $display("DUTDBG STATE arv=%0d arr=%0d rd_active=%0d rv=%0d rr=%0d rlast=%0d beat=%0d", axi.arvalid, axi.arready, dut.rd_active, axi.rvalid, axi.rready, axi.rlast, dut.rd_beat);
+        if (axi.awvalid && axi.awready) $display("DUTDBG AW addr=%h len=%0d size=%0d burst=%0d", axi.awaddr, axi.awlen, axi.awsize, axi.awburst);
+        if (axi.wvalid && axi.wready) $display("DUTDBG W data=%h last=%0d", axi.wdata, axi.wlast);
+        if (axi.bvalid && axi.bready) $display("DUTDBG B resp=%0d", axi.bresp);
+        if (axi.arvalid && axi.arready) $display("DUTDBG AR addr=%h len=%0d size=%0d burst=%0d", axi.araddr, axi.arlen, axi.arsize, axi.arburst);
+        if (axi.rvalid && axi.rready) $display("DUTDBG R data=%h last=%0d resp=%0d", axi.rdata, axi.rlast, axi.rresp);
+      end
+    end
+  end
+`endif
+
   initial begin
     `include "kvips_wave_dump.svh"
-    `KVIPS_MAYBE_ENABLE_WAVES("kvips_axi4_real_design")
+    `KVIPS_MAYBE_ENABLE_WAVES("kvips_axi4_dut")
   end
 
 `ifdef VERILATOR
