@@ -16,6 +16,9 @@ This file maps AHB features to example tests in `kvips/ahb/examples/uvm_back2bac
 | `ahb_random_stress_test` | Coverage-driven stress | random mix of size/burst/rw, occasional lock |
 | `ahb_busy_test` | BUSY control phase | BUSY between INCR16 beats, burst-state preservation, HNONSEC transport |
 | `ahb_boundary_test` | Boundary legality | aligned INCR4 ending exactly at a 1KB boundary |
+| `ahb_security_policy_test` | AHB5 security policy | deny non-secure access and allow secure access through `ahb_security_policy` |
+| `ahb_big_endian_test` | Byte-lane mapping | big-endian reference memory and scoreboard readback |
+| `ahb_legality_test` | Negative/unit legality | misalignment, bus-width, 1KB crossing, and legal-transfer checks |
 | `ahb_full_retry_test` | AHB Full response | directed two-cycle RETRY response (`+AHB_MODE=AHB_FULL`) |
 | `ahb_full_split_test` | AHB Full response | directed two-cycle SPLIT response (`+AHB_MODE=AHB_FULL`) |
 | `ahb_reset_recovery_test` | Reset robustness | reset asserted during active traffic, pipeline flush/recovery |
@@ -29,3 +32,6 @@ Monitor coverpoints:
 - Stall bins (0/1/2-3/4-7/8+)
 - Response bins (OKAY/ERROR; RETRY/SPLIT are directed Full-mode bins)
 - Crosses: (rw x size), (burst x stall)
+- Security policy deny/allow outcome
+- Endian byte-lane readback
+- Master metadata transport (`HMASTER`/lock) is available for fabric integrations; arbitration is not claimed

@@ -14,6 +14,23 @@ class ahb_objtn_clear_catcher extends uvm_report_catcher;
   endfunction
 endclass
 
+class ahb_deny_nonsec_policy extends ahb_security_policy#(16);
+  `uvm_object_utils(ahb_deny_nonsec_policy)
+
+  function new(string name = "ahb_deny_nonsec_policy");
+    super.new(name);
+  endfunction
+
+  virtual function bit allow(
+    logic [15:0] addr,
+    bit         nonsec,
+    logic [3:0] prot,
+    bit         write
+  );
+    return !nonsec;
+  endfunction
+endclass
+
 class ahb_b2b_base_test extends uvm_test;
   `uvm_component_utils(ahb_b2b_base_test)
 
@@ -109,6 +126,9 @@ class ahb_b2b_base_test extends uvm_test;
 
     post_build_cfg();
 
+    // Keep the scoreboard's byte-lane model aligned with the responder when
+    // an integration selects big-endian memory behavior.
+    uvm_config_db#(ahb_endian_e)::set(this, "env.sb", "endian", m_cfg.endian);
     uvm_config_db#(ahb_env_cfg#(ADDR_W, DATA_W, HRESP_W))::set(this, "env", "cfg", env_cfg);
     env = ahb_env#(ADDR_W, DATA_W, HRESP_W)::type_id::create("env", this);
   endfunction
@@ -292,6 +312,70 @@ class ahb_boundary_test extends ahb_b2b_base_test;
     seqr = env.get_master_sequencer(0);
     seq = new("seq");
     seq.start(seqr);
+    phase.drop_objection(this);
+  endtask
+endclass
+
+class ahb_security_policy_test extends ahb_b2b_base_test;
+  `uvm_component_utils(ahb_security_policy_test)
+  function new(string name, uvm_component parent); super.new(name, parent); endfunction
+  virtual function void post_build_cfg();
+    ahb_deny_nonsec_policy p;
+    p = ahb_deny_nonsec_policy::type_id::create("deny_nonsec");
+    s_cfg.security_policy = p;
+    s_cfg.security_policy_enable = 1'b1;
+    uvm_config_db#(bit)::set(this, "env.sb", "enable", 1'b0);
+  endfunction
+  task run_phase(uvm_phase phase);
+    ahb_sequencer#(ADDR_W, DATA_W, HRESP_W) seqr;
+    ahb_security_policy_seq#(ADDR_W, DATA_W, HRESP_W) seq;
+    phase.raise_objection(this);
+    if (s_cfg.access_allowed(16'h0100, 1'b1, 4'h0, 1'b1))
+      `uvm_error("AHB_POLICY", "Policy unexpectedly allowed non-secure access")
+    if (!s_cfg.access_allowed(16'h0104, 1'b0, 4'h0, 1'b1))
+      `uvm_error("AHB_POLICY", "Policy unexpectedly denied secure access")
+    seqr = env.get_master_sequencer(0);
+    seq = new("seq");
+    seq.start(seqr);
+    if (env.sb.sum_err != 1)
+      `uvm_error("AHB_POLICY", $sformatf("Expected one denied transfer, observed %0d errors", env.sb.sum_err))
+    phase.drop_objection(this);
+  endtask
+endclass
+
+class ahb_big_endian_test extends ahb_b2b_base_test;
+  `uvm_component_utils(ahb_big_endian_test)
+  function new(string name, uvm_component parent); super.new(name, parent); endfunction
+  virtual function void post_build_cfg();
+    m_cfg.endian = AHB_ENDIAN_BIG;
+    s_cfg.endian = AHB_ENDIAN_BIG;
+  endfunction
+  task run_phase(uvm_phase phase);
+    ahb_sequencer#(ADDR_W, DATA_W, HRESP_W) seqr;
+    ahb_endian_seq#(ADDR_W, DATA_W, HRESP_W) seq;
+    phase.raise_objection(this);
+    seqr = env.get_master_sequencer(0);
+    seq = new("seq");
+    seq.endian = AHB_ENDIAN_BIG;
+    seq.start(seqr);
+    phase.drop_objection(this);
+  endtask
+endclass
+
+class ahb_legality_test extends ahb_b2b_base_test;
+  `uvm_component_utils(ahb_legality_test)
+  function new(string name, uvm_component parent); super.new(name, parent); endfunction
+  task run_phase(uvm_phase phase);
+    phase.raise_objection(this);
+    if (m_cfg.legal_transfer(16'h0001, AHB_SIZE_32, AHB_BURST_SINGLE, 1))
+      `uvm_error("AHB_LEGAL", "Misaligned word transfer was accepted")
+    if (m_cfg.legal_transfer(16'h03fc, AHB_SIZE_32, AHB_BURST_INCR4, 4))
+      `uvm_error("AHB_LEGAL", "Transfer crossing the 1KB boundary was accepted")
+    if (m_cfg.legal_transfer(16'h0000, AHB_SIZE_64, AHB_BURST_SINGLE, 1))
+      `uvm_error("AHB_LEGAL", "Transfer wider than the 32-bit bus was accepted")
+    if (!m_cfg.legal_transfer(16'h0100, AHB_SIZE_32, AHB_BURST_INCR4, 4))
+      `uvm_error("AHB_LEGAL", "Legal aligned INCR4 transfer was rejected")
+    `uvm_info("AHB_LEGAL", "Alignment, bus-width, and 1KB legality checks passed", UVM_LOW)
     phase.drop_objection(this);
   endtask
 endclass

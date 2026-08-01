@@ -348,6 +348,107 @@ class ahb_boundary_seq #(
   endtask
 endclass
 
+class ahb_security_policy_seq #(
+  int ADDR_W  = 32,
+  int DATA_W  = 32,
+  int HRESP_W = 2
+) extends ahb_base_seq#(ADDR_W, DATA_W, HRESP_W);
+  `uvm_object_param_utils(ahb_security_policy_seq#(ADDR_W, DATA_W, HRESP_W))
+  function new(string name="ahb_security_policy_seq"); super.new(name); endfunction
+
+  task body();
+    ahb_item#(ADDR_W, DATA_W, HRESP_W) tr;
+
+    // A non-secure access must be rejected when the attached policy denies it.
+    tr = ahb_item#(ADDR_W, DATA_W, HRESP_W)::type_id::create("denied_nonsec");
+    start_item(tr);
+    tr.write = 1'b1;
+    tr.size  = AHB_SIZE_32;
+    tr.burst = AHB_BURST_SINGLE;
+    tr.len   = 1;
+    tr.addr  = addr_t'(32'h0000_0100);
+    tr.prot  = 4'h0;
+    tr.nonsec = 1'b1;
+    tr.wdata = new[1];
+    tr.wdata[0] = 32'hdead_beef;
+    finish_item(tr);
+
+    // A secure access remains usable under the same policy.
+    tr = ahb_item#(ADDR_W, DATA_W, HRESP_W)::type_id::create("allowed_secure");
+    start_item(tr);
+    tr.write = 1'b1;
+    tr.size  = AHB_SIZE_32;
+    tr.burst = AHB_BURST_SINGLE;
+    tr.len   = 1;
+    tr.addr  = addr_t'(32'h0000_0104);
+    tr.prot  = 4'h0;
+    tr.nonsec = 1'b0;
+    tr.wdata = new[1];
+    tr.wdata[0] = 32'h1234_5678;
+    finish_item(tr);
+  endtask
+endclass
+
+class ahb_endian_seq #(
+  int ADDR_W  = 32,
+  int DATA_W  = 32,
+  int HRESP_W = 2
+) extends ahb_base_seq#(ADDR_W, DATA_W, HRESP_W);
+  ahb_endian_e endian = AHB_ENDIAN_LITTLE;
+  `uvm_object_param_utils(ahb_endian_seq#(ADDR_W, DATA_W, HRESP_W))
+  function new(string name="ahb_endian_seq"); super.new(name); endfunction
+
+  task body();
+    ahb_item#(ADDR_W, DATA_W, HRESP_W) wr;
+    ahb_item#(ADDR_W, DATA_W, HRESP_W) rd;
+    logic [DATA_W-1:0] expected;
+
+    wr = ahb_item#(ADDR_W, DATA_W, HRESP_W)::type_id::create("endian_word_write");
+    start_item(wr);
+    wr.write = 1'b1;
+    wr.size  = AHB_SIZE_32;
+    wr.burst = AHB_BURST_SINGLE;
+    wr.len   = 1;
+    wr.addr  = addr_t'(32'h0000_0000);
+    wr.prot  = '0;
+    wr.wdata = new[1];
+    wr.wdata[0] = 32'h11_22_33_44;
+    finish_item(wr);
+
+    rd = ahb_item#(ADDR_W, DATA_W, HRESP_W)::type_id::create("endian_byte_read");
+    start_item(rd);
+    rd.write = 1'b0;
+    rd.size  = AHB_SIZE_8;
+    rd.burst = AHB_BURST_SINGLE;
+    rd.len   = 1;
+    rd.addr  = addr_t'(32'h0000_0000);
+    rd.prot  = '0;
+    finish_item(rd);
+
+    // Keep one extra transfer in flight so the monitor and responder can
+    // retire the preceding read before the sequence performs its check.
+    begin
+      ahb_item#(ADDR_W, DATA_W, HRESP_W) drain;
+      drain = ahb_item#(ADDR_W, DATA_W, HRESP_W)::type_id::create("endian_drain");
+      start_item(drain);
+      drain.write = 1'b0;
+      drain.size  = AHB_SIZE_8;
+      drain.burst = AHB_BURST_SINGLE;
+      drain.len   = 1;
+      drain.addr  = addr_t'(32'h0000_0020);
+      drain.prot  = '0;
+      finish_item(drain);
+    end
+
+    expected = (endian == AHB_ENDIAN_BIG) ? 32'h11_00_00_00 : 32'h00_00_00_44;
+    if ((rd.rdata.size() == 0) || (rd.rdata[0] !== expected)) begin
+      `uvm_error("AHB_ENDIAN", $sformatf("Expected %0s byte lane 0x%0h, got 0x%0h",
+        (endian == AHB_ENDIAN_BIG) ? "big-endian" : "little-endian", expected,
+        (rd.rdata.size() == 0) ? 'x : rd.rdata[0]))
+    end
+  endtask
+endclass
+
 class ahb_full_response_seq #(
   int ADDR_W  = 32,
   int DATA_W  = 32,

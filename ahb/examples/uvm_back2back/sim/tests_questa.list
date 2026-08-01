@@ -8,6 +8,9 @@ ahb_error_response_test
 ahb_random_stress_test
 ahb_busy_test
 ahb_boundary_test
+ahb_security_policy_test
+ahb_big_endian_test
+ahb_legality_test
 ahb_full_retry_test
 ahb_full_split_test
 ahb_reset_recovery_test

@@ -11,6 +11,14 @@ package ahb_types_pkg;
     AHB_MODE_FULL = 1
   } ahb_mode_e;
 
+  // Byte-lane convention used by the reference memory model.  AHB itself
+  // transports byte lanes; the endianness choice belongs to the connected
+  // system, so keep it explicit instead of silently assuming little-endian.
+  typedef enum bit {
+    AHB_ENDIAN_LITTLE = 1'b0,
+    AHB_ENDIAN_BIG    = 1'b1
+  } ahb_endian_e;
+
   typedef enum logic [1:0] {
     AHB_TRANS_IDLE   = 2'b00,
     AHB_TRANS_BUSY   = 2'b01,
@@ -51,4 +59,3 @@ package ahb_types_pkg;
 endpackage
 
 `endif // KVIPS_AHB_TYPES_PKG_SV
-

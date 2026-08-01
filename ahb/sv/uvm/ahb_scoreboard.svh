@@ -14,6 +14,7 @@ class ahb_scoreboard #(
 
   bit enable = 1'b1;
   bit warn_uninit = 1'b0;
+  ahb_endian_e endian = AHB_ENDIAN_LITTLE;
 
   // Byte-addressed expected model.
   byte unsigned exp_mem[longint unsigned];
@@ -38,6 +39,14 @@ class ahb_scoreboard #(
     return (1 << size);
   endfunction
 
+  function int unsigned data_lane(logic [ADDR_W-1:0] addr, int unsigned byte_offset);
+    int unsigned lane;
+    lane = int'(addr) % data_bus_bytes();
+    if (endian == AHB_ENDIAN_BIG)
+      return (data_bus_bytes() - 1) - (lane + byte_offset);
+    return lane + byte_offset;
+  endfunction
+
   function bit is_error_resp(ahb_item#(ADDR_W, DATA_W, HRESP_W) t);
     if (t.resp.size() == 0) return 0;
     if (HRESP_W == 1) return t.resp[0][0];
@@ -50,6 +59,14 @@ class ahb_scoreboard #(
     if ($test$plusargs("KVIPS_AHB_SB_WARN_UNINIT")) warn_uninit = 1'b1;
     void'(uvm_config_db#(bit)::get(this, "", "enable", enable));
     void'(uvm_config_db#(bit)::get(this, "", "warn_uninit", warn_uninit));
+    void'(uvm_config_db#(ahb_endian_e)::get(this, "", "endian", endian));
+    begin
+      string s;
+      if ($value$plusargs("KVIPS_AHB_ENDIAN=%s", s)) begin
+        if ((s == "BIG") || (s == "big") || (s == "BE") || (s == "be")) endian = AHB_ENDIAN_BIG;
+        if ((s == "LITTLE") || (s == "little") || (s == "LE") || (s == "le")) endian = AHB_ENDIAN_LITTLE;
+      end
+    end
     sum_wr = 0;
     sum_rd = 0;
     sum_err = 0;
@@ -74,8 +91,9 @@ class ahb_scoreboard #(
     int unsigned sb = size_bytes(size);
     int unsigned lane = int'(addr) % data_bus_bytes();
     for (int unsigned i = 0; i < sb; i++) begin
-      int unsigned byte_lane = lane + i;
-      if (byte_lane < data_bus_bytes()) begin
+      int unsigned byte_lane;
+      if ((lane + i) < data_bus_bytes()) begin
+        byte_lane = data_lane(addr, i);
         exp_mem[longint'(addr) + longint'(i)] = wdata[(8*byte_lane) +: 8];
         exp_valid[longint'(addr) + longint'(i)] = 1'b1;
       end
@@ -89,8 +107,9 @@ class ahb_scoreboard #(
     init_ok = 1'b1;
     r = '0;
     for (int unsigned i = 0; i < sb; i++) begin
-      int unsigned byte_lane = lane + i;
-      if (byte_lane < data_bus_bytes()) begin
+      int unsigned byte_lane;
+      if ((lane + i) < data_bus_bytes()) begin
+        byte_lane = data_lane(addr, i);
         if (!exp_valid.exists(longint'(addr) + longint'(i)) || !exp_valid[longint'(addr) + longint'(i)]) init_ok = 1'b0;
         r[(8*byte_lane) +: 8] = exp_mem.exists(longint'(addr) + longint'(i)) ? exp_mem[longint'(addr) + longint'(i)] : 8'h00;
       end

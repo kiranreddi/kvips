@@ -4,11 +4,13 @@
 
 Key knobs:
 - `mode`: `AHB_MODE_LITE` or `AHB_MODE_FULL` (also settable via `+AHB_MODE=...`)
+- `endian`: `AHB_ENDIAN_LITTLE` or `AHB_ENDIAN_BIG` (also settable via `+KVIPS_AHB_ENDIAN=LITTLE|BIG`)
 - Wait states (slave): `allow_wait_states`, `min_wait`, `max_wait`
 - Error injection (slave): `err_enable`, `err_addr_lo`, `err_addr_hi`, `err_pct`
 - Burst policy (master): `allow_bursts`, `allow_wrap`, `max_incr_len`
 - BUSY insertion (master): `insert_busy`, `busy_pct`
 - Full response policy (slave): `force_resp_enable`, `force_resp`, `allow_retry_split`, `retry_pct`, `split_pct`
+- Security policy (slave): `security_policy_enable`, `security_policy` callback; the callback receives address, HNONSEC, HPROT, and direction
 - Legality policy: `strict_legality_enable` (alignment, supported width, wrap rules, 1KB boundary)
 - Debug:
   - `trace_enable` (monitor prints concise transaction logs)
@@ -21,6 +23,7 @@ Recommended bring-up:
 2. Enable stalls: `ahb_wait_state_test`
 3. Enable burst stress: `ahb_back_to_back_test` / `ahb_random_stress_test`
 4. Exercise corner cases: `ahb_busy_test`, `ahb_boundary_test`,
+   `ahb_security_policy_test`, `ahb_big_endian_test`, `ahb_legality_test`,
    `ahb_full_retry_test`, `ahb_full_split_test`, and `ahb_reset_recovery_test`
 
 Useful knobs:

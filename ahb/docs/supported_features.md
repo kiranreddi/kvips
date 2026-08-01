@@ -7,6 +7,7 @@ Protocol / electrical
 - AHB-Lite vs AHB-Full **mode selection** via `+AHB_MODE=AHB_LITE|AHB_FULL` (single-image build)
 - Basic responses: **OKAY** and **ERROR** in Lite; directed **RETRY**/**SPLIT** encodings in Full
 - AHB5 `HNONSEC` sideband is transported through the interface, driver, monitor, and transaction item
+- Optional `ahb_security_policy` callback can reject accesses based on address, HNONSEC, HPROT, and direction
 - Address/control pipelining with stall handling (`HREADY` low holds stable)
 
 VIP roles
@@ -25,6 +26,9 @@ Traffic
 - Error injection by address range or probability (slave)
 - BUSY insertion between burst beats (configurable percentage)
 - Master-side legality checks for transfer alignment, bus width, fixed burst length, wrap alignment, and 1KB boundaries
+- Optional strict interface SVA for transfer alignment and bus-width legality
+- Configurable little-/big-endian byte-lane mapping in the reference memory and scoreboard
+- HMASTER metadata transport on master/monitor transactions (single-master scheduling remains the default)
 
 Checks / debug
 - Interface-bound SVA:
@@ -42,10 +46,9 @@ AHB Full multi-master semantics
 - Interconnect-level `HSPLITx` routing and SPLIT ownership
 
 Protocol details / corner cases
-- Full wrap legality assertions beyond the driver-side legality guard
-- Endianness configurability beyond little-endian default (memory model assumes little-endian lane mapping)
+- Full wrap/burst-length legality assertions beyond the driver-side legality guard
 - Multiple slave regions with interconnect-like decode (`HSEL`/address map) beyond single-slave default
-- Security permission checking associated with `HNONSEC` (the VIP transports the sideband but does not enforce a firewall policy)
+- Negative-DUT harnesses that intentionally violate protocol rules and validate checker failures
 
 Advanced debug
 - Full transaction recording streams (UVM TR) integrated across all components (hooks exist in cfg; not yet wired everywhere)

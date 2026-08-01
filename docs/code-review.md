@@ -56,14 +56,16 @@ The runnable AXI4 source and tests are the source of truth.
 
 ## AHB assessment
 
-The AHB VIP now has a 13-test UVM back-to-back list covering SINGLE,
+The AHB VIP now has a 16-test UVM back-to-back list covering SINGLE,
 INCR/WRAP bursts, wait states, error responses, BUSY, legality boundaries,
-Full RETRY/SPLIT response encoding, and mid-run reset recovery. The list was
+security-policy deny/allow behavior, big-endian byte lanes, Full RETRY/SPLIT
+response encoding, and mid-run reset recovery. The list was
 run through the LSF Questa, VCS, and Xcelium flows with zero UVM errors/fatals
 and zero simulator errors in the validated runs.
 
 The honest boundary is that this is a single-master/single-slave reference
-environment. It carries HNONSEC and models Full response encodings, but does
-not claim multi-master arbitration, HSPLIT routing, security-firewall policy,
-or formal/toggle coverage closure. See `ahb/docs/amba_spec_coverage.md` for the
-protocol-area matrix and remaining work.
+environment. It carries HNONSEC, supports an attachable security-policy
+callback, and models Full response encodings, but does not claim multi-master
+arbitration, HSPLIT routing, multi-slave interconnect decode, or formal/toggle
+coverage closure. See `ahb/docs/amba_spec_coverage.md` for the protocol-area
+matrix and remaining work.

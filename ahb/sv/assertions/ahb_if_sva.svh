@@ -83,6 +83,29 @@
   endproperty
   a_no_busy_by_default: assert property (p_no_busy_by_default);
 
+  // Optional strict legality check for the address/control phase.  The
+  // master driver performs the same check before issuing a sequence item;
+  // keeping a monitor-side assertion catches illegal traffic from an external
+  // DUT or a deliberately negative test as well.
+  function automatic bit kvips_ahb_transfer_legal(
+    input logic [ADDR_W-1:0] addr,
+    input logic [2:0]        size
+  );
+    int unsigned bytes;
+    bytes = 1 << int'(size);
+    return (bytes <= (DATA_W / 8)) && ((int'(addr) % bytes) == 0);
+  endfunction
+
+  property p_transfer_alignment_width;
+    @(`AHB_CLK) disable iff (!HRESETn || !kvips_ahb_assert_en || !kvips_ahb_strict_en)
+`ifdef VERILATOR
+      (kvips_ahb_xfer_valid && HSEL && HREADY) |-> kvips_ahb_transfer_legal(HADDR, HSIZE);
+`else
+      (kvips_ahb_xfer_valid && cb_mon.HSEL && cb_mon.HREADY) |-> kvips_ahb_transfer_legal(cb_mon.HADDR, cb_mon.HSIZE);
+`endif
+  endproperty
+  a_transfer_alignment_width: assert property (p_transfer_alignment_width);
+
   // AHB-Lite response legality: for 2-bit HRESP, reject RETRY/SPLIT in LITE mode.
   generate
     if (HRESP_W == 2) begin : g_hresp2

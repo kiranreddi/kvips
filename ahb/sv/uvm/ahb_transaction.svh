@@ -17,6 +17,10 @@ class ahb_item #(
   rand logic [3:0]        prot;
   rand bit                nonsec;
   rand bit                lock;
+  // HMASTER is carried as metadata even in the single-master example.  This
+  // lets a fabric/interconnect integration preserve master ownership without
+  // changing the transaction API.
+  logic [3:0]             master_id = '0;
 
   // For HBURST=INCR, len is randomized (bounded by cfg.max_incr_len).
   rand int unsigned       len;
@@ -71,8 +75,12 @@ class ahb_item #(
   }
 
   function string convert2string();
-    return $sformatf("AHB item: %s addr=0x%0h size=%0d burst=%0d beats=%0d",
-                     write ? "WRITE" : "READ", addr, size, burst, beats);
+    return $sformatf("AHB item: %s addr=0x%0h size=%0d burst=%0d beats=%0d nonsec=%0d master=%0d resp0=0x%0h wdata0=0x%0h rdata0=0x%0h",
+                     write ? "WRITE" : "READ", addr, size, burst, beats,
+                     nonsec, master_id,
+                     (resp.size() == 0) ? 'x : resp[0],
+                     (wdata.size() == 0) ? 'x : wdata[0],
+                     (rdata.size() == 0) ? 'x : rdata[0]);
   endfunction
 
 `ifdef VERILATOR
@@ -87,6 +95,7 @@ class ahb_item #(
     `uvm_field_int(prot, UVM_DEFAULT)
     `uvm_field_int(nonsec, UVM_DEFAULT)
     `uvm_field_int(lock, UVM_DEFAULT)
+    `uvm_field_int(master_id, UVM_DEFAULT)
     `uvm_field_int(len, UVM_DEFAULT)
     `uvm_field_array_int(wdata, UVM_DEFAULT)
     `uvm_field_array_int(rdata, UVM_DEFAULT | UVM_NOCOMPARE)

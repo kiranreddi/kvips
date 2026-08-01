@@ -92,12 +92,21 @@ class ahb_slave_driver #(
     return (1 << size);
   endfunction
 
+  function int unsigned data_lane(logic [ADDR_W-1:0] addr, int unsigned byte_offset);
+    int unsigned lane;
+    lane = int'(addr) % data_bus_bytes();
+    if (cfg.endian == AHB_ENDIAN_BIG)
+      return (data_bus_bytes() - 1) - (lane + byte_offset);
+    return lane + byte_offset;
+  endfunction
+
   function void write_bytes(logic [ADDR_W-1:0] addr, ahb_size_e size, logic [DATA_W-1:0] wdata);
     int unsigned sb = size_bytes(size);
     int unsigned lane = int'(addr) % data_bus_bytes();
     for (int unsigned i = 0; i < sb; i++) begin
-      int unsigned byte_lane = lane + i;
-      if (byte_lane < data_bus_bytes()) begin
+      int unsigned byte_lane;
+      if ((lane + i) < data_bus_bytes()) begin
+        byte_lane = data_lane(addr, i);
         mem[longint'(addr) + longint'(i)] = wdata[(8*byte_lane) +: 8];
       end
     end
@@ -109,8 +118,9 @@ class ahb_slave_driver #(
     int unsigned lane = int'(addr) % data_bus_bytes();
     r = '0;
     for (int unsigned i = 0; i < sb; i++) begin
-      int unsigned byte_lane = lane + i;
-      if (byte_lane < data_bus_bytes()) begin
+      int unsigned byte_lane;
+      if ((lane + i) < data_bus_bytes()) begin
+        byte_lane = data_lane(addr, i);
         if (mem.exists(longint'(addr) + longint'(i)))
           r[(8*byte_lane) +: 8] = mem[longint'(addr) + longint'(i)];
         else
@@ -140,8 +150,14 @@ class ahb_slave_driver #(
     endcase
   endfunction
 
-  function ahb_resp_e choose_response(logic [ADDR_W-1:0] addr);
+  function ahb_resp_e choose_response(
+    logic [ADDR_W-1:0] addr,
+    bit                nonsec,
+    logic [3:0]        prot,
+    bit                write
+  );
     int unsigned r;
+    if (!cfg.access_allowed(addr, nonsec, prot, write)) return AHB_RESP_ERROR;
     if (cfg.force_resp_enable) begin
       if ((cfg.mode == AHB_MODE_LITE) && (cfg.force_resp inside {AHB_RESP_RETRY, AHB_RESP_SPLIT}))
         return AHB_RESP_ERROR;
@@ -166,7 +182,7 @@ class ahb_slave_driver #(
     c.prot  = `AHB_S_CB.HPROT;
     c.nonsec = `AHB_S_CB.HNONSEC;
     c.lock  = `AHB_S_CB.HMASTLOCK;
-    c.resp_kind = choose_response(c.addr);
+    c.resp_kind = choose_response(c.addr, c.nonsec, c.prot, c.write);
     return c;
   endfunction
 

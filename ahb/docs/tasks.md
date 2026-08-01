@@ -45,3 +45,8 @@ This file is a permanent, in-repo task checklist for the AHB VIP. Do not delete 
 - [ ] Verilator lint clean (where applicable) / no obvious SV syntax issues
 - [x] Example compiles on Questa, VCS, and Xcelium LSF flows
 - [x] All directed tests pass in the validated simulator flows
+- [x] Security-policy callback and endian reference-memory examples
+- [x] Strict alignment/bus-width assertion and legality unit test
+- [ ] Multi-master arbitration / interconnect `HSPLITx` example
+- [ ] Multi-slave `HSEL` address-map example
+- [ ] Full UVM transaction recording/replay integration

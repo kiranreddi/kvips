@@ -4,6 +4,29 @@
 `ifndef KVIPS_AHB_CFG_SVH
 `define KVIPS_AHB_CFG_SVH
 
+//------------------------------------------------------------------------------
+// Optional security policy callback
+//------------------------------------------------------------------------------
+// The VIP transports HNONSEC/HPROT on every transfer.  Integrations can attach
+// a policy object when they also want the responder to reject accesses that are
+// not permitted by the connected security/firewall model.
+class ahb_security_policy #(int ADDR_W = 32) extends uvm_object;
+  `uvm_object_param_utils(ahb_security_policy#(ADDR_W))
+
+  function new(string name = "ahb_security_policy");
+    super.new(name);
+  endfunction
+
+  virtual function bit allow(
+    logic [ADDR_W-1:0] addr,
+    bit                nonsec,
+    logic [3:0]        prot,
+    bit                write
+  );
+    return 1'b1;
+  endfunction
+endclass
+
 class ahb_cfg #(
   int ADDR_W  = 32,
   int DATA_W  = 32,
@@ -30,6 +53,12 @@ class ahb_cfg #(
 
   // Protocol selection
   ahb_mode_e mode = AHB_MODE_LITE;
+  ahb_endian_e endian = AHB_ENDIAN_LITTLE;
+
+  // Optional security policy enforcement.  Disabled by default to preserve
+  // the transport-only behavior used by legacy AHB-Lite integrations.
+  bit                            security_policy_enable = 1'b0;
+  ahb_security_policy#(ADDR_W)   security_policy;
 
   // Address decode / memory model behavior (single-slave default)
   bit                 single_slave_mode = 1'b1;
@@ -93,6 +122,7 @@ class ahb_cfg #(
 
   function new(string name = "ahb_cfg");
     super.new(name);
+    security_policy = ahb_security_policy#(ADDR_W)::type_id::create("security_policy");
     allow_size_8  = 1'b1;
     allow_size_16 = (DATA_W >= 16);
     allow_size_32 = (DATA_W >= 32);
@@ -105,6 +135,10 @@ class ahb_cfg #(
     if ($value$plusargs("AHB_MODE=%s", s)) begin
       if ((s == "AHB_LITE") || (s == "ahb_lite") || (s == "LITE") || (s == "lite")) mode = AHB_MODE_LITE;
       if ((s == "AHB_FULL") || (s == "ahb_full") || (s == "FULL") || (s == "full")) mode = AHB_MODE_FULL;
+    end
+    if ($value$plusargs("KVIPS_AHB_ENDIAN=%s", s)) begin
+      if ((s == "BIG") || (s == "big") || (s == "BE") || (s == "be")) endian = AHB_ENDIAN_BIG;
+      if ((s == "LITTLE") || (s == "little") || (s == "LE") || (s == "le")) endian = AHB_ENDIAN_LITTLE;
     end
     if ($value$plusargs("KVIPS_AHB_COV=%d", v)) coverage_enable = (v != 0);
     if ($value$plusargs("KVIPS_COV=%d", v)) coverage_enable = (v != 0);
@@ -151,6 +185,16 @@ class ahb_cfg #(
     return (mode == AHB_MODE_FULL);
   endfunction
 
+  function bit access_allowed(
+    logic [ADDR_W-1:0] addr,
+    bit                nonsec,
+    logic [3:0]        prot,
+    bit                write
+  );
+    if (!security_policy_enable || (security_policy == null)) return 1'b1;
+    return security_policy.allow(addr, nonsec, prot, write);
+  endfunction
+
   function bit addr_in_error_range(logic [ADDR_W-1:0] addr);
     if (!err_enable) return 1'b0;
     if ((addr >= err_addr_lo) && (addr <= err_addr_hi)) return 1'b1;
@@ -172,6 +216,9 @@ class ahb_cfg #(
 `endif
   `uvm_object_param_utils_begin(ahb_cfg#(ADDR_W, DATA_W, HRESP_W, HAS_HMASTLOCK))
     `uvm_field_enum(ahb_mode_e, mode, UVM_DEFAULT)
+    `uvm_field_enum(ahb_endian_e, endian, UVM_DEFAULT)
+    `uvm_field_int(security_policy_enable, UVM_DEFAULT)
+    `uvm_field_object(security_policy, UVM_DEFAULT)
     `uvm_field_int(single_slave_mode, UVM_DEFAULT)
     `uvm_field_int(base_addr, UVM_DEFAULT)
     `uvm_field_int(addr_mask, UVM_DEFAULT)

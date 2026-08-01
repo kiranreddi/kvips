@@ -51,6 +51,7 @@ class ahb_monitor #(
     logic [3:0]        prot;
     bit                nonsec;
     bit                lock;
+    logic [3:0]        master_id;
   } ctrl_t;
 
   ctrl_t ctrl_pipe;
@@ -134,6 +135,7 @@ class ahb_monitor #(
     c.prot  = `AHB_MON_CB.HPROT;
     c.nonsec = `AHB_MON_CB.HNONSEC;
     c.lock  = `AHB_MON_CB.HMASTLOCK;
+    c.master_id = `AHB_MON_CB.HMASTER;
     return c;
   endfunction
 
@@ -147,6 +149,7 @@ class ahb_monitor #(
     c.prot  = '0;
     c.nonsec = 1'b0;
     c.lock  = 1'b0;
+    c.master_id = '0;
     return c;
   endfunction
 
@@ -206,6 +209,7 @@ class ahb_monitor #(
         t.prot  = ctrl_data.prot;
         t.nonsec = ctrl_data.nonsec;
         t.lock  = ctrl_data.lock;
+        t.master_id = ctrl_data.master_id;
         t.len   = 1;
         t.post_randomize();
         t.wait_cycles[0] = stall_cnt;

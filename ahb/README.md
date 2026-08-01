@@ -42,5 +42,5 @@ See `kvips/ahb/docs/` for:
 - Testplan mapping
 
 ### Status / pending
-- Implemented: single-bus AHB-Lite/Full master+slave VIP with legal burst generation, BUSY insertion, wait states, error injection, directed RETRY/SPLIT response encoding, HNONSEC transport, monitor coverage, beat-accurate scoreboard checking, reset recovery, and back-to-back examples.
-- Pending: multi-master arbitration/HMASTER scheduling, HSPLIT routing and interconnect decode, security policy semantics for HNONSEC, and full transaction-recording integration. See `kvips/ahb/docs/supported_features.md` and `kvips/ahb/docs/amba_spec_coverage.md`.
+- Implemented: single-bus AHB-Lite/Full master+slave VIP with legal burst generation, BUSY insertion, wait states, error injection, directed RETRY/SPLIT response encoding, HNONSEC transport and policy callbacks, configurable endian mapping, strict legality checks, monitor coverage, beat-accurate scoreboard checking, reset recovery, and back-to-back examples.
+- Pending: multi-master arbitration/HMASTER scheduling, HSPLIT routing and multi-slave interconnect decode, negative-DUT SVA harnesses, and full transaction-recording integration. See `kvips/ahb/docs/supported_features.md` and `kvips/ahb/docs/amba_spec_coverage.md`.

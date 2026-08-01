@@ -137,6 +137,7 @@ class ahb_master_driver #(
     vif.HBURST        <= AHB_BURST_SINGLE;
     vif.HPROT         <= 4'h0;
     vif.HNONSEC       <= 1'b0;
+    vif.HMASTER       <= '0;
     vif.HWDATA        <= '0;
     // Optional signals default inside the interface when disabled.
     if (HAS_HMASTLOCK) vif.HMASTLOCK <= 1'b0;
@@ -158,6 +159,9 @@ class ahb_master_driver #(
     bit          next_data_write;
     int unsigned next_data_beat;
     logic [ADDR_W-1:0] next_a;
+    bit          last_data_valid;
+    bit          last_data_write;
+    int unsigned last_data_beat;
 
     super.run_phase(phase);
 
@@ -199,12 +203,20 @@ class ahb_master_driver #(
       cur_beats = cur_item.beats;
       cur_beat  = 0;
       cur_item.start_t = $time;
+      last_data_valid = 1'b0;
+      last_data_write = 1'b0;
+      last_data_beat  = 0;
 
       // Prime bus: we only change signals when HREADY==1
       apply_optional_idles();
 
       while (cur_beat < cur_beats || data_valid) begin
         @(`AHB_M_EVT);
+        // The reference slave updates HREADY/HRESP/HRDATA with nonblocking
+        // assignments at the same edge.  Sample after that NBA update so the
+        // item captures the completed response/data phase rather than the
+        // previous cycle's default value.
+        #1step;
 
         if (!vif.HRESETn) begin
           drive_idle();
@@ -256,6 +268,9 @@ class ahb_master_driver #(
 
         // Complete previous beat (data phase) if one is pending.
         if (data_valid) begin
+          last_data_valid = 1'b1;
+          last_data_write = data_write;
+          last_data_beat  = data_beat;
           if (data_beat < cur_item.resp.size()) begin
             cur_item.resp[data_beat] = `AHB_M_CB.HRESP;
           end
@@ -284,6 +299,7 @@ class ahb_master_driver #(
             vif.HBURST       <= cur_item.burst;
             vif.HPROT        <= cur_item.prot;
             vif.HNONSEC      <= cur_item.nonsec;
+            vif.HMASTER      <= cur_item.master_id;
             if (HAS_HMASTLOCK) vif.HMASTLOCK <= cur_item.lock;
             vif.HTRANS       <= (cur_beat == 0) ? AHB_TRANS_NONSEQ : AHB_TRANS_SEQ;
             if (cur_item.write && (cur_beat < cur_item.wdata.size())) begin
@@ -297,13 +313,39 @@ class ahb_master_driver #(
             cur_beat++;
           end
         end else begin
-          drive_idle();
+          // Keep write data stable through the responder's data phase.  The
+          // control phase can return to IDLE immediately, but clearing
+          // HWDATA here would make a one-beat write appear as zero to a
+          // clocked slave that samples it one pipeline stage later.
+          if (!(data_valid && data_write)) drive_idle();
         end
 
         data_valid = next_data_valid;
         data_write = next_data_write;
         data_beat  = next_data_beat;
       end
+
+      // The reference slave reconstructs the address/data pipeline with a
+      // separate control and data-phase register.  Allow two settling edges
+      // after the final control phase so the last response/data beat is
+      // retired before item_done() releases the next sequence item.  Keep the
+      // final write data stable until the first of those edges.
+      if (last_data_valid && last_data_write) begin
+        vif.HSEL   <= 1'b1;
+        vif.HTRANS <= AHB_TRANS_IDLE;
+      end else begin
+        drive_idle();
+      end
+      repeat (2) begin
+        @(`AHB_M_EVT);
+        #1step;
+      end
+      if (last_data_valid && (last_data_beat < cur_item.resp.size())) begin
+        cur_item.resp[last_data_beat] = `AHB_M_CB.HRESP;
+        if (!last_data_write && (last_data_beat < cur_item.rdata.size()))
+          cur_item.rdata[last_data_beat] = `AHB_M_CB.HRDATA;
+      end
+      drive_idle();
 
       cur_item.end_t = $time;
       seq_item_port.item_done();
