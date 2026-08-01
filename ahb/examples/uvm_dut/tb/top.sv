@@ -31,14 +31,11 @@ module top;
     .HSEL(ahb_if0.HSEL), .HWDATA(ahb_if0.HWDATA), .HREADY(ahb_if0.HREADY), .HREADYOUT(ahb_if0.HREADYOUT), .HRESP(ahb_if0.HRESP), .HRDATA(ahb_if0.HRDATA)
   );
 
-`ifdef VERILATOR
-  always_ff @(posedge HCLK or negedge HRESETn) begin
-    if (!HRESETn) ahb_if0.HREADY <= 1'b1;
-    else          ahb_if0.HREADY <= ahb_if0.HREADYOUT;
-  end
-`else
+  // A single-slave AHB fabric propagates the responder's ready signal
+  // directly.  Keeping this as a continuous connection is important for the
+  // cycle-accurate Verilator model: a clocked copy would add an extra ready
+  // cycle and let the master accept controls while the DUT is stalled.
   assign ahb_if0.HREADY = ahb_if0.HREADYOUT;
-`endif
 
   initial begin
     `include "kvips_wave_dump.svh"
