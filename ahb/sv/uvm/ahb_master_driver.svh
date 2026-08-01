@@ -346,10 +346,16 @@ class ahb_master_driver #(
         @(`AHB_M_EVT);
         `AHB_M_SETTLE;
       end
+      // The completed data phase was sampled in the main loop above.  A later
+      // drain edge can carry the responder's idle defaults (notably HRDATA=0).
+      // Raw-interface scheduling needs the in-loop read sample; clocking-block
+      // simulators need the final settled sample from the drain edge.
       if (last_data_valid && (last_data_beat < cur_item.resp.size())) begin
         cur_item.resp[last_data_beat] = `AHB_M_CB.HRESP;
+`ifndef VERILATOR
         if (!last_data_write && (last_data_beat < cur_item.rdata.size()))
           cur_item.rdata[last_data_beat] = `AHB_M_CB.HRDATA;
+`endif
       end
       drive_idle();
 
