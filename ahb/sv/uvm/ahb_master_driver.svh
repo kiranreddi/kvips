@@ -168,6 +168,7 @@ class ahb_master_driver #(
     bit          last_data_valid;
     bit          last_data_write;
     int unsigned last_data_beat;
+    int unsigned drain_edges;
 
     super.run_phase(phase);
 
@@ -342,7 +343,14 @@ class ahb_master_driver #(
       end else begin
         drive_idle();
       end
-      repeat (2) begin
+`ifdef VERILATOR
+      // The raw-interface responder presents the completed read on the first
+      // post-transfer edge and returns HRDATA to idle on the next edge.
+      drain_edges = (last_data_valid && !last_data_write) ? 1 : 2;
+`else
+      drain_edges = 2;
+`endif
+      repeat (drain_edges) begin
         @(`AHB_M_EVT);
         `AHB_M_SETTLE;
       end
@@ -352,10 +360,8 @@ class ahb_master_driver #(
       // simulators need the final settled sample from the drain edge.
       if (last_data_valid && (last_data_beat < cur_item.resp.size())) begin
         cur_item.resp[last_data_beat] = `AHB_M_CB.HRESP;
-`ifndef VERILATOR
         if (!last_data_write && (last_data_beat < cur_item.rdata.size()))
           cur_item.rdata[last_data_beat] = `AHB_M_CB.HRDATA;
-`endif
       end
       drive_idle();
 
