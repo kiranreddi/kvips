@@ -78,7 +78,9 @@ module top;
   initial begin
     uvm_config_db#(virtual interface ahb_if #(.ADDR_W(ADDR_W), .DATA_W(DATA_W), .HRESP_W(HRESP_W)))::set(null, "*", "vif", ahb_if0);
 `ifdef VERILATOR
+`ifdef UVM_USE_PROCESS_CONTAINER
     uvm_root::get().set_finish_on_completion(1'b0);
+`endif
 `endif
     run_test();
   end

@@ -154,6 +154,9 @@ class ahb_monitor #(
   endfunction
 
   task run_phase(uvm_phase phase);
+`ifdef VERILATOR
+    logic [DATA_W-1:0] raw_wdata_sample;
+`endif
     super.run_phase(phase);
 
     if (!uvm_config_db#(ahb_cfg#(ADDR_W, DATA_W, HRESP_W, HAS_HMASTLOCK))::get(this, "", "cfg", cfg)) begin
@@ -184,6 +187,16 @@ class ahb_monitor #(
 
     forever begin
       @(`AHB_MON_EVT);
+`ifdef VERILATOR
+      // HWDATA is driven in the active/update slot after the edge. Capture
+      // the data-phase value before that update; HRDATA is sampled after the
+      // DUT NBA below.
+      raw_wdata_sample = vif.HWDATA;
+      // Raw-interface DUT outputs settle in the NBA/update slot. Sample
+      // after that slot so a responder stall is not mistaken for a second
+      // acceptance of the held address/control phase.
+      #2ns;
+`endif
 
       if (!vif.HRESETn) begin
         ctrl_pipe = clear_ctrl();
@@ -215,7 +228,14 @@ class ahb_monitor #(
         t.wait_cycles[0] = stall_cnt;
         t.resp[0]        = `AHB_MON_CB.HRESP;
         if (ctrl_data.write) begin
+`ifdef VERILATOR
+          if (ctrl_data.burst == AHB_BURST_SINGLE)
+            t.wdata[0] = raw_wdata_sample;
+          else
+            t.wdata[0] = `AHB_MON_CB.HWDATA;
+`else
           t.wdata[0] = `AHB_MON_CB.HWDATA;
+`endif
         end else begin
           t.rdata[0] = `AHB_MON_CB.HRDATA;
         end

@@ -169,6 +169,9 @@ class ahb_master_driver #(
     bit          last_data_write;
     int unsigned last_data_beat;
     int unsigned drain_edges;
+`ifdef VERILATOR
+    bit          raw_edge_ready;
+`endif
 
     super.run_phase(phase);
 
@@ -219,6 +222,14 @@ class ahb_master_driver #(
 
       while (cur_beat < cur_beats || data_valid) begin
         @(`AHB_M_EVT);
+`ifdef VERILATOR
+        // Capture the handshake value in the active region, before the
+        // clocked DUT updates HREADYOUT.  A raw-interface master must decide
+        // whether this edge accepted the held control phase from the value
+        // that was present at the edge, not from the responder's post-NBA
+        // value for the following cycle.
+        raw_edge_ready = (vif.HREADY === 1'b1);
+`endif
         // The reference slave updates HREADY/HRESP/HRDATA with nonblocking
         // assignments at the same edge.  Sample after that NBA update so the
         // item captures the completed response/data phase rather than the
@@ -232,6 +243,14 @@ class ahb_master_driver #(
         end
 
         // Stall: hold signals stable (clocking block does this if we don't drive)
+`ifdef VERILATOR
+        if (!raw_edge_ready) begin
+          // The current address/control phase remains on the bus.  The next
+          // outer iteration samples the next edge and advances only when the
+          // DUT has observed HREADY high at that edge.
+          continue;
+        end
+`else
         begin
           int unsigned stall_cycles;
           stall_cycles = 0;
@@ -247,6 +266,7 @@ class ahb_master_driver #(
           end
           if (!vif.HRESETn) continue;
         end
+`endif
 
         // The responder is a clocked reference model.  In AHB Full mode its
         // RETRY/SPLIT response is intentionally generated one cycle after the

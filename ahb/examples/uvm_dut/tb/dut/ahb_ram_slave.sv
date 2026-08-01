@@ -32,62 +32,25 @@ module ahb_ram_slave #(
   logic                 wr_pending;
   logic [ADDR_W-1:0]    wr_addr_q;
   logic [2:0]           wr_size_q;
+`ifdef VERILATOR
+  logic [DATA_W-1:0]    wr_data_q;
+  logic [2:0]           wr_burst_q;
+`endif
 
   logic                 rd_pending;
   logic [ADDR_W-1:0]    rd_addr_q;
   logic [2:0]           rd_size_q;
 
   logic [7:0] wait_cnt;
-`ifdef VERILATOR
-  // The raw-interface Verilator master samples after the clocked DUT update.
-  // Keep a two-stage response pipeline so a burst control accepted on that
-  // edge cannot replace the data phase retired by the raw-interface monitor.
-  logic [DATA_W-1:0] rd_data_q;
-  logic [DATA_W-1:0] hrdata_mid_q;
-  logic [DATA_W-1:0] hrdata_out_q;
-  logic [2:0]        rd_burst_q;
-`else
+`ifndef VERILATOR
   logic [DATA_W-1:0] rd_word_comb;
   logic [STRB_W-1:0] rd_mask_comb;
-`endif
-
-`ifndef VERILATOR
-  // Read data is a combinational view of the registered pending address. It
-  // remains stable while HREADYOUT is low and avoids a one-beat lag when a
-  // burst advances its control phase on the same edge that the prior data
-  // phase completes.
-  always_comb begin
-    HRDATA = '0;
-    rd_word_comb = '0;
-    rd_mask_comb = '0;
-    if (rd_pending && (word_index(rd_addr_q) < MEM_WORDS)) begin
-      rd_word_comb = mem[word_index(rd_addr_q)];
-      rd_mask_comb = size_mask(rd_size_q, rd_addr_q[ADDR_LSB-1:0]);
-      for (int b = 0; b < STRB_W; b++) begin
-        if (rd_mask_comb[b]) HRDATA[8*b +: 8] = rd_word_comb[8*b +: 8];
-      end
-    end
-  end
 `endif
 
   function automatic int unsigned word_index(input logic [ADDR_W-1:0] addr);
     word_index = addr[ADDR_LSB +: $clog2(MEM_WORDS)];
   endfunction
 
-  function automatic [STRB_W-1:0] size_mask(input logic [2:0] size, input logic [ADDR_LSB-1:0] offs);
-    automatic logic [STRB_W-1:0] m;
-    begin
-      m = '0;
-      case (size)
-        3'b000: m[offs +: 1] = 1'b1;
-        3'b001: m[offs +: 2] = 2'b11;
-        default: m = '1;
-      endcase
-      size_mask = m;
-    end
-  endfunction
-
-`ifdef VERILATOR
   function automatic logic [DATA_W-1:0] read_value(
     input logic [ADDR_W-1:0] addr,
     input logic [2:0]        size,
@@ -124,15 +87,33 @@ module ahb_ram_slave #(
     return value;
   endfunction
 
+  function automatic [STRB_W-1:0] size_mask(input logic [2:0] size, input logic [ADDR_LSB-1:0] offs);
+    automatic logic [STRB_W-1:0] m;
+    begin
+      m = '0;
+      case (size)
+        3'b000: m[offs +: 1] = 1'b1;
+        3'b001: m[offs +: 2] = 2'b11;
+        default: m = '1;
+      endcase
+      size_mask = m;
+    end
+  endfunction
+
+`ifndef VERILATOR
+  // Clocking-block simulators sample a combinational read response while the
+  // registered pending address remains in the data phase.  Keep this path
+  // separate from the raw-interface registered response used by Verilator.
   always_comb begin
     HRDATA = '0;
-    if (rd_burst_q == 3'b000) begin
-      // Single transfers do not have a following burst control phase that can
-      // replace the response, so retain the direct memory view.
-      if (rd_pending)
-        HRDATA = read_value(rd_addr_q, rd_size_q, 1'b0, '0, '0, '0);
-    end else begin
-      HRDATA = hrdata_out_q;
+    rd_word_comb = '0;
+    rd_mask_comb = '0;
+    if (rd_pending && (word_index(rd_addr_q) < MEM_WORDS)) begin
+      rd_word_comb = mem[word_index(rd_addr_q)];
+      rd_mask_comb = size_mask(rd_size_q, rd_addr_q[ADDR_LSB-1:0]);
+      for (int b = 0; b < STRB_W; b++) begin
+        if (rd_mask_comb[b]) HRDATA[8*b +: 8] = rd_word_comb[8*b +: 8];
+      end
     end
   end
 `endif
@@ -142,12 +123,13 @@ module ahb_ram_slave #(
       HREADYOUT <= 1'b1;
       HRESP     <= '0;
 `ifdef VERILATOR
-      rd_data_q <= '0;
-      hrdata_mid_q <= '0;
-      hrdata_out_q <= '0;
-      rd_burst_q <= 3'b000;
+      HRDATA    <= '0;
 `endif
       wr_pending <= 1'b0;
+`ifdef VERILATOR
+      wr_data_q <= '0;
+      wr_burst_q <= 3'b000;
+`endif
       rd_pending <= 1'b0;
       rd_size_q <= '0;
       wait_cnt <= '0;
@@ -157,10 +139,6 @@ module ahb_ram_slave #(
     end else begin
       HRESP <= '0;
       HREADYOUT <= 1'b1;
-`ifdef VERILATOR
-      hrdata_out_q <= hrdata_mid_q;
-      hrdata_mid_q <= rd_data_q;
-`endif
 
       if (wait_cnt != 0) begin
         wait_cnt <= wait_cnt - 1'b1;
@@ -174,7 +152,19 @@ module ahb_ram_slave #(
         m = size_mask(wr_size_q, wr_addr_q[ADDR_LSB-1:0]);
         if (idx < MEM_WORDS) begin
           for (int b = 0; b < STRB_W; b++) begin
-            if (m[b]) mem[idx][8*b +: 8] <= HWDATA[8*b +: 8];
+            if (m[b]) begin
+`ifdef VERILATOR
+              // The raw master presents a single-transfer write datum with
+              // the control phase. Capture it before the next item's datum
+              // can replace HWDATA; burst data remains phase-aligned below.
+              if (wr_burst_q == 3'b000)
+                mem[idx][8*b +: 8] <= wr_data_q[8*b +: 8];
+              else
+                mem[idx][8*b +: 8] <= HWDATA[8*b +: 8];
+`else
+              mem[idx][8*b +: 8] <= HWDATA[8*b +: 8];
+`endif
+            end
           end
         end
         wr_pending <= 1'b0;
@@ -184,6 +174,10 @@ module ahb_ram_slave #(
         rd_pending <= 1'b0;
       end
 
+      // A transfer is accepted on the rising edge when the incoming global
+      // HREADY is high. WAIT_STATES affects the ready value produced for the
+      // following cycle; it must not suppress a legally presented control
+      // phase while the previous ready value was high.
       if (HSEL && HREADY && HTRANS[1]) begin
         if (WAIT_STATES != 0)
           wait_cnt <= WAIT_STATES;
@@ -191,16 +185,19 @@ module ahb_ram_slave #(
           wr_pending <= 1'b1;
           wr_addr_q  <= HADDR;
           wr_size_q  <= HSIZE;
+`ifdef VERILATOR
+          wr_data_q  <= HWDATA;
+          wr_burst_q <= HBURST;
+`endif
         end else begin
           rd_pending <= 1'b1;
           rd_addr_q  <= HADDR;
           rd_size_q  <= HSIZE;
 `ifdef VERILATOR
-          rd_data_q <= read_value(
+          HRDATA <= read_value(
             HADDR, HSIZE,
             wr_pending && HREADYOUT,
             wr_addr_q, wr_size_q, HWDATA);
-          rd_burst_q <= HBURST;
 `endif
         end
       end

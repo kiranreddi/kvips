@@ -45,6 +45,12 @@ for the three commercial regressions:
 make -C ahb/examples regress-verilator-dut
 ```
 
+The raw-interface Verilator path samples HREADY and single-transfer HWDATA at
+the active clock edge, before the DUT's nonblocking update; burst HRDATA is
+sampled after that update. This preserves the AHB rule that a stalled
+address/control phase remains on the bus, while the clocking-block commercial
+paths use their normal sampled timing.
+
 Results are written to
 `ahb/examples/uvm_dut/sim/out/verilator/summary.md` (or the corresponding
 commercial simulator output directory). Each summary is derived from the

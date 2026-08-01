@@ -42,6 +42,12 @@ Commercial logs and regression summaries are stored under
 `ahb/examples/uvm_dut/sim/out/{questa,vcs,xcelium}/`; the CI artifact is under
 `ahb/examples/uvm_dut/sim/out/verilator/summary.md`.
 
+The CI-only raw-interface path preserves cycle semantics explicitly: the
+driver samples the pre-update HREADY value before advancing a held control
+phase, the monitor captures single-transfer HWDATA before the driver update,
+and burst read data is sampled after the DUT response update. Commercial
+simulators retain the standard clocking-block path.
+
 ## Scope and remaining boundaries
 
 This milestone intentionally validates one AHB master, one selected RAM
