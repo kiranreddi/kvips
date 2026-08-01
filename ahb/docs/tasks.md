@@ -42,6 +42,7 @@ This file is a permanent, in-repo task checklist for the AHB VIP. Do not delete 
 
 ## Quality gates (best-effort in this environment)
 
+- [x] Verilator CI regression compiles and passes the 16-test matrix
 - [ ] Verilator lint clean (where applicable) / no obvious SV syntax issues
 - [x] Example compiles on Questa, VCS, and Xcelium LSF flows
 - [x] All directed tests pass in the validated simulator flows

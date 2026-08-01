@@ -30,6 +30,11 @@ Useful knobs:
 - `+UVM_VERBOSITY=UVM_HIGH` for more UVM messaging
 - `+VIP_TRACE` to enable transaction printing in the monitor/config
 
+The Verilator path uses the raw interface (clocking blocks are unavailable in
+that flow). Its master driver retires a final read on the first settled edge;
+Questa/VCS/Xcelium use the clocking-block sampling path and the standard
+two-edge drain. This keeps the same protocol-visible result across simulators.
+
 ## Scoreboard expectations
 
 The scoreboard is a monitor-based reference model:
