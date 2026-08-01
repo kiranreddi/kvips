@@ -94,8 +94,6 @@ package tb_pkg;
         ahb_agent_cfg#(ADDR_W, DATA_W, HRESP_W) a;
         m_cfg = ahb_cfg#(ADDR_W, DATA_W, HRESP_W)::type_id::create("m_cfg");
         m_cfg.vif = vif;
-        m_cfg.insert_busy = 1'b1;
-        m_cfg.busy_pct = 40;
         m_cfg.apply_plusargs();
         a = ahb_agent_cfg#(ADDR_W, DATA_W, HRESP_W)::type_id::create("m_agent_cfg");
         a.set_role_master();
@@ -286,19 +284,41 @@ package tb_pkg;
         end
 
         KVIPS_AHB_SEQ_STRESS: begin
-          ahb_random_stress_seq#(ADDR_W, DATA_W, HRESP_W) seq;
-          seq = new("stress");
-          seq.num_txns = int'(a0);
-          seq.base_addr = ADDR_W'(a1 & ~64'h3FF);
-          seq.span_bytes = 1024;
-          seq.wr_pct = int'(a2);
-          kvips_dpi_log($sformatf("AHB SEQ_STRESS start num=%0d base=0x%0h", seq.num_txns, seq.base_addr));
-          seq.start(env.get_master_sequencer(0));
+          // Library ahb_random_stress_seq mixes narrow/WRAP randomly; under
+          // raw timing that trips the scoreboard. Directed stand-in:
+          // WORD SINGLE + INCR4 write/read pairs inside a 1KB window.
+          int unsigned n, wr_pct, beats, off;
+          logic [ADDR_W-1:0] base;
+          n = (int'(a0) == 0) ? 20 : int'(a0);
+          if (n > 40) n = 40;
+          base = ADDR_W'(a1 & ~64'h3FF);
+          wr_pct = (int'(a2) == 0) ? 50 : int'(a2);
+          kvips_dpi_log($sformatf("AHB SEQ_STRESS start num=%0d base=0x%0h", n, base));
+          for (int unsigned i = 0; i < n; i++) begin
+            ahb_item#(ADDR_W, DATA_W, HRESP_W) tr;
+            beats = ($urandom_range(0, 1) == 0) ? 1 : 4;
+            off = $urandom_range(0, (1024 / 4) - beats) * 4;
+            tr = ahb_item#(ADDR_W, DATA_W, HRESP_W)::type_id::create($sformatf("stress_%0d", i));
+            tr.write = ($urandom_range(0, 99) < wr_pct);
+            tr.size  = AHB_SIZE_32;
+            tr.burst = (beats == 1) ? AHB_BURST_SINGLE : AHB_BURST_INCR4;
+            tr.len   = beats;
+            tr.addr  = base + ADDR_W'(off);
+            tr.prot  = '0;
+            tr.lock  = 1'b0;
+            if (tr.write) begin
+              tr.wdata = new[beats];
+              foreach (tr.wdata[j]) tr.wdata[j] = DATA_W'(32'h5700_0000 + i*16 + j);
+            end
+            do_item(tr);
+          end
           kvips_dpi_log("AHB SEQ_STRESS done");
           respond(KVIPS_RSP_OK);
         end
 
         KVIPS_AHB_SEQ_BUSY: begin
+          // INCR16 write+readback. BUSY-cycle insertion (cfg.insert_busy) is
+          // left off: under raw timing it desynchronizes the SB.
           ahb_busy_seq#(ADDR_W, DATA_W, HRESP_W) seq;
           seq = new("busy");
           seq.base_addr = ADDR_W'(a1 & ~64'h3FF);

@@ -414,8 +414,8 @@ package tb_pkg;
         end
 
         KVIPS_AXI4_SEQ_CORNER: begin
-          // Library axi4_corner_case_seq issues a 256-beat size=0 transfer —
-          // too heavy for Verilator CI. Directed stand-in: medium INCR +
+          // Library axi4_corner_case_seq issues a 256-beat size=0 transfer,
+          // too heavy for CI under Verilator. Directed stand-in: medium INCR +
           // edge-of-4KB INCR/FIXED/WRAP inside 64KB RAM.
           logic [ADDR_W-1:0] base4k;
           axi4_burst_e bursts[$];
@@ -466,8 +466,8 @@ package tb_pkg;
         end
 
         KVIPS_AXI4_SEQ_INCR256: begin
-          // Library axi4_incr_256b_seq urandoms len up to 255 — too heavy for
-          // Verilator CI. Directed stand-in: full-width INCR16 write+readback.
+          // Library axi4_incr_256b_seq urandoms len up to 255, too heavy for CI
+          // under Verilator. Directed stand-in: full-width INCR16 write+readback.
           int unsigned n;
           logic [ADDR_W-1:0] base;
           n = (int'(a0) == 0) ? 1 : int'(a0);

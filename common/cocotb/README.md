@@ -47,7 +47,7 @@ stand-ins when the RAM DUT / non-pipelined master cannot host the library body).
 |----------|---------------|--------------------------------------------------------------|
 | APB | smoke, stress, strobe | — |
 | AXI4 | wrb, write/read_burst*, stress*, lane, strobe, concurrent*, unaligned, corner*, incr256*, phase_api, wr/rd_expect, same_id*, sideband*, err_wr/rd*, pipe_stress* | exclusive_*, reset_*, timeout |
-| AHB | smoke, single, incr, wrap, b2b, wait, stress, busy, boundary (1KB-edge), endian, full_resp | security, error |
+| AHB | smoke, single, incr, wrap, b2b, wait, stress*, busy, boundary (1KB-edge), endian, full_resp | security, error |
 
 `*` = directed / non-pipe stand-in of the library class (same opcode, safe on this DUT).
 

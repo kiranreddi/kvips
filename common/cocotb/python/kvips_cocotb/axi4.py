@@ -212,14 +212,14 @@ class Axi4Master:
             op, a0, a1, a2 = (
                 KVIPS_AXI4_SEQ_WR_EXPECT,
                 int(kwargs.get("addr", 0x0010_0000)),
-                int(kwargs.get("expected_bresp", 2)),  # DECERR
+                int(kwargs.get("expected_bresp", 3)),  # AXI4_RESP_DECERR = 2'b11
                 0,
             )
         elif name in ("rd_expect", "read_expect", "axi4_read_expect_resp_seq"):
             op, a0, a1, a2 = (
                 KVIPS_AXI4_SEQ_RD_EXPECT,
                 int(kwargs.get("addr", 0x0010_0000)),
-                int(kwargs.get("expected_rresp", 2)),
+                int(kwargs.get("expected_rresp", 3)),  # AXI4_RESP_DECERR
                 0,
             )
         elif name in ("same_id", "same_id_pipeline", "axi4_same_id_pipeline_seq"):

@@ -68,8 +68,8 @@ async def test_axi4_uvm_sequences(dut):
     await axi.run_sequence("corner", base_addr=0xE000)
     await axi.run_sequence("incr256", num_txns=1, base_addr=0xC000)
     await axi.run_sequence("phase_api", base_addr=0xD000)
-    await axi.run_sequence("wr_expect", addr=0x0010_0000, expected_bresp=2)  # DECERR
-    await axi.run_sequence("rd_expect", addr=0x0010_0000, expected_rresp=2)
+    await axi.run_sequence("wr_expect", addr=0x0010_0000, expected_bresp=3)  # DECERR
+    await axi.run_sequence("rd_expect", addr=0x0010_0000, expected_rresp=3)
     await axi.run_sequence("same_id", num_txns=6, base_addr=0x7100)
     await axi.run_sequence("sideband", base_addr=0x8100)
     await axi.run_sequence("error_write", addr=0x0010_0000)
