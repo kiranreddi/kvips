@@ -37,9 +37,15 @@ class ahb_master_driver #(
 `ifdef VERILATOR
 `define AHB_M_CB  vif
 `define AHB_M_EVT posedge vif.HCLK
+// Verilator schedules raw-interface NBAs at the end of the active time slot;
+// advance a small amount of simulation time so HREADY/HRESP/HRDATA are visible
+// before the driver samples them.  Clocking-block simulators use the standard
+// clocking precision step instead.
+`define AHB_M_SETTLE #1ns
 `else
 `define AHB_M_CB  vif.cb_m
 `define AHB_M_EVT vif.cb_m
+`define AHB_M_SETTLE #1step
 `endif
 
   // State for pipelining
@@ -216,7 +222,7 @@ class ahb_master_driver #(
         // assignments at the same edge.  Sample after that NBA update so the
         // item captures the completed response/data phase rather than the
         // previous cycle's default value.
-        #1step;
+        `AHB_M_SETTLE;
 
         if (!vif.HRESETn) begin
           drive_idle();
@@ -247,10 +253,10 @@ class ahb_master_driver #(
         // settling edge before completing a forced-response transfer.
         if (cfg.mode == AHB_MODE_FULL && cfg.force_resp_enable && data_valid) begin
           @(`AHB_M_EVT);
-          #1step;
+          `AHB_M_SETTLE;
           while (vif.HREADY !== 1'b1) begin
             @(`AHB_M_EVT);
-            #1step;
+            `AHB_M_SETTLE;
           end
           // The clocking-block inputs used below sample at the next edge.
           @(`AHB_M_EVT);
@@ -338,7 +344,7 @@ class ahb_master_driver #(
       end
       repeat (2) begin
         @(`AHB_M_EVT);
-        #1step;
+        `AHB_M_SETTLE;
       end
       if (last_data_valid && (last_data_beat < cur_item.resp.size())) begin
         cur_item.resp[last_data_beat] = `AHB_M_CB.HRESP;
@@ -356,5 +362,6 @@ endclass
 
 `undef AHB_M_CB
 `undef AHB_M_EVT
+`undef AHB_M_SETTLE
 
 `endif // KVIPS_AHB_MASTER_DRIVER_SVH
