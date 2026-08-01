@@ -38,9 +38,17 @@ module ahb_ram_slave #(
   logic [2:0]           rd_size_q;
 
   logic [7:0] wait_cnt;
+`ifdef VERILATOR
+  // The raw-interface Verilator master samples after the clocked DUT update.
+  // Keep a one-beat response register so a burst control accepted on that
+  // edge cannot replace the data phase being retired.
+  logic [DATA_W-1:0] rd_data_q;
+`else
   logic [DATA_W-1:0] rd_word_comb;
   logic [STRB_W-1:0] rd_mask_comb;
+`endif
 
+`ifndef VERILATOR
   // Read data is a combinational view of the registered pending address. It
   // remains stable while HREADYOUT is low and avoids a one-beat lag when a
   // burst advances its control phase on the same edge that the prior data
@@ -57,6 +65,7 @@ module ahb_ram_slave #(
       end
     end
   end
+`endif
 
   function automatic int unsigned word_index(input logic [ADDR_W-1:0] addr);
     word_index = addr[ADDR_LSB +: $clog2(MEM_WORDS)];
@@ -75,10 +84,52 @@ module ahb_ram_slave #(
     end
   endfunction
 
+`ifdef VERILATOR
+  function automatic logic [DATA_W-1:0] read_value(
+    input logic [ADDR_W-1:0] addr,
+    input logic [2:0]        size,
+    input bit                forward_valid,
+    input logic [ADDR_W-1:0] forward_addr,
+    input logic [2:0]        forward_size,
+    input logic [DATA_W-1:0] forward_data
+  );
+    logic [DATA_W-1:0] value;
+    logic [STRB_W-1:0] mask;
+    logic [STRB_W-1:0] forward_mask;
+    int unsigned idx;
+    int unsigned forward_idx;
+
+    value = '0;
+    idx = word_index(addr);
+    if (idx < MEM_WORDS) begin
+      mask = size_mask(size, addr[ADDR_LSB-1:0]);
+      for (int b = 0; b < STRB_W; b++) begin
+        if (mask[b]) value[8*b +: 8] = mem[idx][8*b +: 8];
+      end
+    end
+
+    // A write data phase can retire on the same edge as a newly accepted
+    // read control. Forward those bytes so read-after-write remains ordered
+    // even though the memory array itself updates with a nonblocking write.
+    forward_idx = word_index(forward_addr);
+    if (forward_valid && (idx == forward_idx)) begin
+      forward_mask = size_mask(forward_size, forward_addr[ADDR_LSB-1:0]);
+      for (int b = 0; b < STRB_W; b++) begin
+        if (forward_mask[b]) value[8*b +: 8] = forward_data[8*b +: 8];
+      end
+    end
+    return value;
+  endfunction
+`endif
+
   always_ff @(posedge HCLK or negedge HRESETn) begin
     if (!HRESETn) begin
       HREADYOUT <= 1'b1;
       HRESP     <= '0;
+`ifdef VERILATOR
+      HRDATA    <= '0;
+      rd_data_q <= '0;
+`endif
       wr_pending <= 1'b0;
       rd_pending <= 1'b0;
       rd_size_q <= '0;
@@ -89,6 +140,9 @@ module ahb_ram_slave #(
     end else begin
       HRESP <= '0;
       HREADYOUT <= 1'b1;
+`ifdef VERILATOR
+      HRDATA <= rd_data_q;
+`endif
 
       if (wait_cnt != 0) begin
         wait_cnt <= wait_cnt - 1'b1;
@@ -123,6 +177,12 @@ module ahb_ram_slave #(
           rd_pending <= 1'b1;
           rd_addr_q  <= HADDR;
           rd_size_q  <= HSIZE;
+`ifdef VERILATOR
+          rd_data_q <= read_value(
+            HADDR, HSIZE,
+            wr_pending && HREADYOUT,
+            wr_addr_q, wr_size_q, HWDATA);
+`endif
         end
       end
     end
