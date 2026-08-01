@@ -75,3 +75,13 @@ callback, and models Full response encodings, but does not claim multi-master
 arbitration, HSPLIT routing, multi-slave interconnect decode, or formal/toggle
 coverage closure. See `ahb/docs/amba_spec_coverage.md` for the protocol-area
 matrix and remaining work.
+
+## APB assessment
+
+The APB4 DUT milestone connects the KVIPS master to a byte-addressed RTL RAM
+responder. Its eight-test list covers masked writes, protection attributes,
+wait-state stability, mapped boundaries, and both unmapped `PSLVERR` cases.
+Questa, VCS, and Xcelium runners use an evidence gate requiring nonzero
+monitor handshakes, zero scoreboard mismatches, and no UVM or simulator
+errors. The target remains a single-device integration example; multi-slave
+decode and independent-master interoperability are not claimed.

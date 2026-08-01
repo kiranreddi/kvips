@@ -66,6 +66,8 @@ Implemented under `kvips/apb/` as a single-image APB3/APB4 VIP with runtime mode
 
 **Example**
 - `kvips/apb/examples/uvm_back2back/`
+- `kvips/apb/examples/uvm_dut/` — APB4 master driving a byte-addressed RTL
+  RAM responder with commercial-simulator evidence regressions.
 
 **Assertions**
 - Setup/access sequencing, stability during wait-states, known-value checks, APB4-only rules (runtime gated).
@@ -78,6 +80,7 @@ Implemented under `kvips/apb/` as a single-image APB3/APB4 VIP with runtime mode
 **Next improvements (incremental)**
 - Add additional examples (master-only, slave-only, passive monitor)
 - Expand directed sequences/tests (more corner cases)
+- Add an independently sourced APB master and multi-slave `PSEL` integration
 
 ## AHB (AHB-Lite / AHB) VIP plan
 

@@ -30,3 +30,10 @@ This testplan maps example tests to protocol features. Example tests live under 
 - APB4 mode: `+APB_PROTOCOL=APB4` (default)
 - APB3 mode: `+APB_PROTOCOL=APB3` (APB4-only tests auto-skip)
 
+## RTL-DUT integration
+
+The separate `examples/uvm_dut/` flow drives a byte-addressed APB4 RAM slave
+and is validated with the commercial-simulator evidence gate.  Its tests cover
+masked writes, protection attributes, wait states, the mapped boundary, and
+unmapped `PSLVERR`; see `dut_verification.md` for the exact commands and
+remaining integration boundaries.

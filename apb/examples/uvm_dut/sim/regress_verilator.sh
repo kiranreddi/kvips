@@ -3,7 +3,7 @@ set -euo pipefail
 
 HERE="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(cd "${HERE}" && git rev-parse --show-toplevel)"
-OUT="${ROOT}/apb/examples/uvm_real_design/sim/out/verilator"
+OUT="${ROOT}/apb/examples/uvm_dut/sim/out/verilator"
 mkdir -p "${OUT}"
 
 TESTS_FILE="${HERE}/tests_questa.list"

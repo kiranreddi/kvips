@@ -40,7 +40,7 @@ KVIPS is an open-source SystemVerilog UVM verification IP suite for AMBA protoco
 | Protocol | Status | Version | Description | Documentation |
 |----------|--------|---------|-------------|---------------|
 | **AXI4 Full** | Example-tested | v0.1 | AXI4 master/slave agents, assertions, scoreboard examples; Verilator regressions in CI | [📖 AXI4 VIP Guide](https://kiranreddi.github.io/kvips/docs/axi4-vip/) |
-| **APB** | Example-tested | v0.1 | APB3/APB4 master/slave agents (runtime APB3/APB4 switch); Verilator regressions in CI | [📖 APB VIP Guide](https://kiranreddi.github.io/kvips/docs/apb-vip/) |
+| **APB** | Example-tested | v0.1 | APB3/APB4 agents plus an APB4 RTL-DUT integration example; Verilator regressions in CI | [📖 APB VIP Guide](https://kiranreddi.github.io/kvips/docs/apb-vip/) |
 | **AHB** | Example-tested | v0.1 | AHB-Lite oriented agents with wait states, bursts, assertions; AHB Full is partial | [📖 AHB VIP Guide](https://kiranreddi.github.io/kvips/docs/ahb-vip/) |
 | **PCIe** | 📋 Planned | - | PCIe Gen3/Gen4/Gen5 with TLP generation | - |
 | **USB 3.x** | 📋 Planned | - | USB 3.0/3.1/3.2 protocol layers | - |
@@ -184,7 +184,7 @@ kvips/
 ├── apb/                       # APB3/APB4 VIP (stable)
 │   ├── sv/
 │   ├── docs/
-│   └── examples/
+│   └── examples/               # back-to-back and APB4 RTL-DUT flows
 ├── ahb/                       # AHB-Lite/AHB Full VIP (stable)
 │   ├── sv/
 │   ├── docs/

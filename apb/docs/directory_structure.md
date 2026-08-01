@@ -10,9 +10,11 @@ apb/
 │   ├── supported_features.md
 │   ├── assertions.md
 │   ├── testplan.md
-│   └── user_guide.md
+│   ├── user_guide.md
+│   └── dut_verification.md
 ├── examples/
-│   └── uvm_back2back/
+│   ├── uvm_back2back/
+│   └── uvm_dut/
 │       ├── tb/
 │       └── sim/
 └── sv/
@@ -25,4 +27,3 @@ apb/
 ## Notes
 - `sv/if/apb_if.sv` always contains APB4 signals (`PPROT`, `PSTRB`) to support a single compiled image.
 - Protocol mode is selected at runtime using `+APB_PROTOCOL=APB3|APB4`.
-

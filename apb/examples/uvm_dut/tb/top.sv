@@ -14,7 +14,10 @@ module tb_top;
 
   apb_if #(ADDR_W, DATA_W, NSEL) apb (.*);
 
-  apb_ram_slave #(.ADDR_W(ADDR_W), .DATA_W(DATA_W), .NSEL(NSEL), .WAIT_STATES(1)) dut (
+  apb_ram_slave #(
+    .ADDR_W(ADDR_W), .DATA_W(DATA_W), .NSEL(NSEL),
+    .MEM_BASE(0), .MEM_BYTES(4096), .WAIT_STATES(2)
+  ) dut (
     .PCLK(PCLK), .PRESETn(PRESETn),
     .PADDR(apb.PADDR), .PSEL(apb.PSEL), .PENABLE(apb.PENABLE), .PWRITE(apb.PWRITE),
     .PWDATA(apb.PWDATA), .PRDATA(apb.PRDATA), .PREADY(apb.PREADY), .PSLVERR(apb.PSLVERR),
@@ -34,7 +37,7 @@ module tb_top;
 
   initial begin
     `include "kvips_wave_dump.svh"
-    `KVIPS_MAYBE_ENABLE_WAVES("kvips_apb_real_design")
+    `KVIPS_MAYBE_ENABLE_WAVES("kvips_apb_dut")
   end
 
 `ifdef VERILATOR

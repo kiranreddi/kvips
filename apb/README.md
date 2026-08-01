@@ -21,6 +21,8 @@ In APB3 mode, the master forces APB3 semantics (`PSTRB='1`, `PPROT=0`) and APB4-
 - `kvips/apb/sv/pkg/` – `apb_types_pkg.sv`, `apb_uvm_pkg.sv`
 - `kvips/apb/sv/uvm/` – UVM cfg/txn/sequencer/driver/monitor/scoreboard/sequences/env
 - `kvips/apb/examples/uvm_back2back/` – self-contained demo env + tests
+- `kvips/apb/examples/uvm_dut/` – APB4 master driving a signal-level RTL RAM
+  DUT with commercial-simulator regression scripts
 
 ### Quick start (examples)
 From `kvips/apb/examples/`:
@@ -28,6 +30,23 @@ From `kvips/apb/examples/`:
 - Run Questa: `make questa TEST=apb_b2b_smoke_test PLUSARGS='+APB_PROTOCOL=APB4'`
 - Run VCS: `make vcs TEST=apb_b2b_smoke_test PLUSARGS='+APB_PROTOCOL=APB4'`
 - Run Xcelium: `make xcelium TEST=apb_b2b_smoke_test PLUSARGS='+APB_PROTOCOL=APB4'`
+
+### APB4 RTL-DUT verification
+
+The DUT flow is separate from the back-to-back demo and exercises a real
+byte-addressed APB4 RAM responder, including `PSTRB`, `PPROT`, wait states,
+boundary behavior, and unmapped `PSLVERR` responses.  The three commercial
+regressions are evidence-gated on monitor handshakes, scoreboard mismatches,
+and simulator/UVM errors:
+
+```bash
+make -C kvips/apb/examples regress-rtl-questa USE_LSF=1
+make -C kvips/apb/examples regress-rtl-vcs USE_LSF=1
+make -C kvips/apb/examples regress-rtl-xcelium USE_LSF=1
+```
+
+Use `RTL_TEST=apb_dut_smoke_test` with `rtl-questa`, `rtl-vcs`, or `rtl-xcelium`
+for a single DUT test.  Verilator remains a CI-only path for this target.
 
 If you need LSF to access tools, use `USE_LSF=1` and set `LSF_BSUB` for your site. On this environment:
 - `source /tools/lsf/conf/profile.lsf`
@@ -39,4 +58,4 @@ See `kvips/apb/docs/` for:
 - Supported features
 - Assertions and runtime switches
 - Testplan mapping (APB3/APB4)
-
+- APB4 RTL-DUT verification milestone (`docs/dut_verification.md`)

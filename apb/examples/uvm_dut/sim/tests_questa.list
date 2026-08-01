@@ -1,0 +1,8 @@
+apb_dut_smoke_test
+apb_dut_back_to_back_test
+apb_dut_apb4_strobe_test
+apb_dut_pprot_test
+apb_dut_wait_state_test
+apb_dut_boundary_test
+apb_dut_error_test
+apb_dut_stress_test

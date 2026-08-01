@@ -1,9 +1,12 @@
-.PHONY: help list-tests questa questa-waves vcs xcelium verilator regress-questa regress-vcs regress-xcelium regress-verilator verilator-dut regress-verilator-dut verilator-real regress-verilator-real fsdbreport clean
+.PHONY: help list-tests questa questa-waves vcs xcelium verilator regress-questa regress-vcs regress-xcelium regress-verilator verilator-dut regress-verilator-dut rtl-questa rtl-vcs rtl-xcelium regress-rtl-questa regress-rtl-vcs regress-rtl-xcelium fsdbreport clean
 
 SIM_DIR := uvm_back2back/sim
 SIM_DIR_ABS := $(abspath $(SIM_DIR))
+RTL_SIM_DIR := uvm_dut/sim
+RTL_SIM_DIR_ABS := $(abspath $(RTL_SIM_DIR))
 
 TEST ?= apb_b2b_smoke_test
+RTL_TEST ?= apb_dut_smoke_test
 SEED ?= 1
 UVM_VERBOSITY ?= UVM_LOW
 PLUSARGS ?=
@@ -23,6 +26,7 @@ RUN_PREFIX :=
 endif
 
 COMMON_PLUSARGS := +UVM_TESTNAME=$(TEST) +UVM_VERBOSITY=$(UVM_VERBOSITY) +ntb_random_seed=$(SEED) $(PLUSARGS)
+RTL_COMMON_PLUSARGS := +UVM_TESTNAME=$(RTL_TEST) +UVM_VERBOSITY=$(UVM_VERBOSITY) +ntb_random_seed=$(SEED) +APB_PROTOCOL=APB4 $(PLUSARGS)
 
 help:
 	@echo "KVIPS APB examples (UVM back2back)"
@@ -38,8 +42,14 @@ help:
 	@echo "  make regress-vcs    PLUSARGS='<...>'"
 	@echo "  make regress-xcelium PLUSARGS='<...>'"
 	@echo "  make regress-verilator PLUSARGS='<...>'"
-	@echo "  make verilator-dut TEST=<name> SEED=<n> ..."
-	@echo "  make regress-verilator-dut PLUSARGS='<...>'"
+	@echo "  make verilator-dut TEST=<name> SEED=<n> ... (CI path)"
+	@echo "  make regress-verilator-dut PLUSARGS='<...>' (CI path)"
+	@echo "  make rtl-questa TEST=<name> [USE_LSF=1]"
+	@echo "  make rtl-vcs TEST=<name> [USE_LSF=1]"
+	@echo "  make rtl-xcelium TEST=<name> [USE_LSF=1]"
+	@echo "  make regress-rtl-questa [USE_LSF=1]"
+	@echo "  make regress-rtl-vcs [USE_LSF=1]"
+	@echo "  make regress-rtl-xcelium [USE_LSF=1]"
 	@echo "  make fsdbreport     FSDB=<path> [BT=<time>] [ET=<time>]"
 	@echo "  make clean"
 
@@ -73,15 +83,29 @@ regress-xcelium:
 regress-verilator:
 	@$(SIM_DIR_ABS)/regress_verilator.sh $(PLUSARGS)
 
-verilator-real:
-	@$(abspath uvm_real_design/sim)/run_verilator.sh $(COMMON_PLUSARGS)
+verilator-dut:
+	@$(abspath uvm_dut/sim)/run_verilator.sh $(COMMON_PLUSARGS)
 
-regress-verilator-real:
-	@$(abspath uvm_real_design/sim)/regress_verilator.sh $(PLUSARGS)
+regress-verilator-dut:
+	@$(abspath uvm_dut/sim)/regress_verilator.sh $(PLUSARGS)
 
-verilator-dut: verilator-real
+rtl-questa:
+	@$(RUN_PREFIX) $(RTL_SIM_DIR_ABS)/run_questa.sh $(RTL_COMMON_PLUSARGS)
 
-regress-verilator-dut: regress-verilator-real
+rtl-vcs:
+	@$(RUN_PREFIX) $(RTL_SIM_DIR_ABS)/run_vcs.sh $(RTL_COMMON_PLUSARGS)
+
+rtl-xcelium:
+	@$(RUN_PREFIX) $(RTL_SIM_DIR_ABS)/run_xcelium.sh $(RTL_COMMON_PLUSARGS)
+
+regress-rtl-questa:
+	@$(RUN_PREFIX) $(RTL_SIM_DIR_ABS)/regress_commercial.sh questa $(PLUSARGS)
+
+regress-rtl-vcs:
+	@$(RUN_PREFIX) $(RTL_SIM_DIR_ABS)/regress_commercial.sh vcs $(PLUSARGS)
+
+regress-rtl-xcelium:
+	@$(RUN_PREFIX) $(RTL_SIM_DIR_ABS)/regress_commercial.sh xcelium $(PLUSARGS)
 
 fsdbreport:
 	@if [ -z "$(FSDB)" ]; then echo "ERROR: FSDB=<path> required"; exit 2; fi
