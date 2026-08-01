@@ -37,7 +37,7 @@ class ahb_master_driver #(
 `ifdef VERILATOR
 `define AHB_M_CB  vif
 `define AHB_M_EVT posedge vif.HCLK
-// Verilator schedules raw-interface NBAs at the end of the active time slot;
+// The cycle model schedules raw-interface NBAs at the end of the active time slot;
 // advance a small amount of simulation time so HREADY/HRESP/HRDATA are visible
 // before the driver samples them.  Clocking-block simulators use the standard
 // clocking precision step instead.
