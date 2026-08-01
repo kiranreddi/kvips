@@ -8,12 +8,12 @@
 [![GitHub Pages](https://img.shields.io/badge/docs-github_pages-blue)](https://kiranreddi.github.io/kvips/)
 [![SystemVerilog](https://img.shields.io/badge/SystemVerilog-IEEE_1800-orange)](https://standards.ieee.org/)
 [![UVM](https://img.shields.io/badge/UVM-1.1d%20%7C%201.2-green)](https://www.accellera.org/)
-[![APB Verilator Regressions](https://github.com/kiranreddi/kvips/actions/workflows/apb-verilator-regressions.yml/badge.svg?branch=main)](https://github.com/kiranreddi/kvips/actions/workflows/apb-verilator-regressions.yml)
-[![AHB Verilator Regressions](https://github.com/kiranreddi/kvips/actions/workflows/ahb-verilator-regressions.yml/badge.svg?branch=main)](https://github.com/kiranreddi/kvips/actions/workflows/ahb-verilator-regressions.yml)
-[![AXI4 Verilator Regressions](https://github.com/kiranreddi/kvips/actions/workflows/axi4-verilator-regressions.yml/badge.svg?branch=main)](https://github.com/kiranreddi/kvips/actions/workflows/axi4-verilator-regressions.yml)
-[![AXI4 DUT Verilator CI](https://github.com/kiranreddi/kvips/actions/workflows/axi4-verilator-regressions.yml/badge.svg?branch=main)](https://github.com/kiranreddi/kvips/actions/workflows/axi4-verilator-regressions.yml)
-[![APB4 DUT Verilator CI](https://github.com/kiranreddi/kvips/actions/workflows/apb-verilator-regressions.yml/badge.svg?branch=main)](https://github.com/kiranreddi/kvips/actions/workflows/apb-verilator-regressions.yml)
-[![AHB DUT Verilator CI](https://github.com/kiranreddi/kvips/actions/workflows/ahb-verilator-regressions.yml/badge.svg?branch=main)](https://github.com/kiranreddi/kvips/actions/workflows/ahb-verilator-regressions.yml)
+[![AXI4 BK2BK CI](https://github.com/kiranreddi/kvips/actions/workflows/axi4-bk2bk-verilator.yml/badge.svg?branch=main)](https://github.com/kiranreddi/kvips/actions/workflows/axi4-bk2bk-verilator.yml)
+[![AXI4 DUT CI](https://github.com/kiranreddi/kvips/actions/workflows/axi4-dut-verilator.yml/badge.svg?branch=main)](https://github.com/kiranreddi/kvips/actions/workflows/axi4-dut-verilator.yml)
+[![APB BK2BK CI](https://github.com/kiranreddi/kvips/actions/workflows/apb-bk2bk-verilator.yml/badge.svg?branch=main)](https://github.com/kiranreddi/kvips/actions/workflows/apb-bk2bk-verilator.yml)
+[![APB DUT CI](https://github.com/kiranreddi/kvips/actions/workflows/apb-dut-verilator.yml/badge.svg?branch=main)](https://github.com/kiranreddi/kvips/actions/workflows/apb-dut-verilator.yml)
+[![AHB BK2BK CI](https://github.com/kiranreddi/kvips/actions/workflows/ahb-bk2bk-verilator.yml/badge.svg?branch=main)](https://github.com/kiranreddi/kvips/actions/workflows/ahb-bk2bk-verilator.yml)
+[![AHB DUT CI](https://github.com/kiranreddi/kvips/actions/workflows/ahb-dut-verilator.yml/badge.svg?branch=main)](https://github.com/kiranreddi/kvips/actions/workflows/ahb-dut-verilator.yml)
 [![Verilator Lint](https://github.com/kiranreddi/kvips/actions/workflows/verilator-lint.yml/badge.svg?branch=main)](https://github.com/kiranreddi/kvips/actions/workflows/verilator-lint.yml)
 [![Pages](https://github.com/kiranreddi/kvips/actions/workflows/pages.yml/badge.svg?branch=main)](https://github.com/kiranreddi/kvips/actions/workflows/pages.yml)
 
@@ -32,7 +32,7 @@ KVIPS is an open-source SystemVerilog UVM verification IP suite for AMBA protoco
 - **Protocol checkers** — SVA assertions and scoreboard-backed example environments
 - **Configurable agents** — Parameterized interfaces, sequences, and runtime plusargs
 - **Diagnostics** — Transaction logging, coverage hooks, and example regressions
-- **Verilator CI** — AXI4, APB, and AHB back-to-back suites plus AXI4/APB4/AHB DUT lists run in GitHub Actions
+- **Verilator CI** — Separate BK2BK and DUT workflows for AXI4, APB, and AHB
 - **Commercial simulator validation** — AXI4, APB4, and AHB RTL-DUT flows include evidence-gated Questa, VCS, and Xcelium regressions
 - **Documentation** — Guides and integration examples under [GitHub Pages](https://kiranreddi.github.io/kvips/)
 
@@ -336,8 +336,9 @@ seq.start(env.axi_master.sequencer);
 All automation runs on **GitHub Actions**:
 
 - **Verilator Lint** — Blocking portable lint for AXI4, APB, and AHB interface subsets (`make lint`)
-- **Verilator Regressions** — AXI4, APB, and AHB back-to-back suites plus AXI4/APB4/AHB DUT lists, on push/PR
-- **GitHub Pages** — Jekyll build and auto-deploy on `main`
+- **BK2BK CI** — `AXI4/APB/AHB BK2BK CI` workflows (`uvm_back2back` Verilator lists)
+- **DUT CI** — `AXI4/APB/AHB DUT CI` workflows (`uvm_dut` Verilator lists)
+- **GitHub Pages** — Jekyll build and Actions deploy on site-path changes to `main` (Pages source must be **GitHub Actions**)
 - **Local** — `make test-smoke`, `make test-verilator`, `make docs-build`, `make clean-all`
 
 ---

@@ -27,12 +27,16 @@ find . -type f \( -name "*.html" -o -name "*.md" -o -name "*.yml" \) \
    git push origin main
    ```
 
-2. Enable GitHub Pages:
+2. Enable GitHub Pages (required — do not use "Deploy from a branch"):
    - Go to: https://github.com/kiranreddi/kvips/settings/pages
    - Under "Source", select: **GitHub Actions**
    - Save
+   - If Source stays on "Deploy from a branch", GitHub also runs the legacy
+     `pages-build-deployment` job. That races `.github/workflows/pages.yml`
+     and can leave Actions stuck on `purging_cdn` until timeout.
 
-3. Wait 2-3 minutes for deployment
+3. Wait 2-3 minutes for deployment (or run **Deploy GitHub Pages** via
+   Actions → workflow_dispatch)
 
 4. Visit: `https://kiranreddi.github.io/kvips/`
 
