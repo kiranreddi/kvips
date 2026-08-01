@@ -41,8 +41,9 @@ traffic.  The wait-state sequence explicitly checks that the DUT held
 `PREADY` low for the configured delay, and the error sequence checks both
 unmapped writes and reads.
 
-Verilator is retained as a CI-only path on this workstation.  It is not used
-as evidence for the three commercial-simulator DUT regressions:
+Verilator is retained as a CI-only path on this workstation.  GitHub Actions
+runs the DUT list, but it is not used as evidence for the three
+commercial-simulator DUT regressions:
 
 ```bash
 make -C apb/examples regress-verilator-dut

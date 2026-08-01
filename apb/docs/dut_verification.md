@@ -50,7 +50,8 @@ make -C apb/examples regress-rtl-xcelium USE_LSF=1 \
   LSF_BSUB='bsub -Ip -P boxsteru4 -q interactive'
 ```
 
-Per-test logs and `regress.log` are written under
+GitHub Actions runs the Verilator DUT list separately.  Per-test logs and
+`regress.log` are written under
 `apb/examples/uvm_dut/sim/out/<sim>/`.  Verilator remains a CI-only lint and
 regression path; it is not part of the local commercial-simulator evidence.
 

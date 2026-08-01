@@ -46,7 +46,8 @@ make -C kvips/apb/examples regress-rtl-xcelium USE_LSF=1
 ```
 
 Use `RTL_TEST=apb_dut_smoke_test` with `rtl-questa`, `rtl-vcs`, or `rtl-xcelium`
-for a single DUT test.  Verilator remains a CI-only path for this target.
+for a single DUT test.  The APB GitHub Actions workflow also runs the DUT
+Verilator list; Verilator remains CI-only on the development workstation.
 
 If you need LSF to access tools, use `USE_LSF=1` and set `LSF_BSUB` for your site. On this environment:
 - `source /tools/lsf/conf/profile.lsf`
