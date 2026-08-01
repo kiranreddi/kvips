@@ -1,0 +1,32 @@
+name: Setup cocotb
+description: Create a Python venv and install cocotb for KVIPS Verilator cocotb jobs
+
+inputs:
+  python-version:
+    description: Python version
+    required: false
+    default: "3.12"
+  venv-path:
+    description: Virtualenv path relative to workspace
+    required: false
+    default: ".venv-cocotb"
+
+runs:
+  using: composite
+  steps:
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ inputs.python-version }}
+
+    - name: Create venv and install cocotb
+      shell: bash
+      run: |
+        set -euo pipefail
+        python -m venv "${GITHUB_WORKSPACE}/${{ inputs.venv-path }}"
+        # shellcheck disable=SC1091
+        source "${GITHUB_WORKSPACE}/${{ inputs.venv-path }}/bin/activate"
+        python -m pip install --upgrade pip
+        python -m pip install "cocotb==1.9.2"
+        python -c "import cocotb; print('cocotb', cocotb.__version__)"
+        echo "${GITHUB_WORKSPACE}/${{ inputs.venv-path }}/bin" >> "$GITHUB_PATH"

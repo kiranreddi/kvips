@@ -1,0 +1,55 @@
+name: AHB Cocotb CI
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'ahb/**'
+      - 'common/cocotb/**'
+      - 'common/sv/**'
+      - 'scripts/run_cocotb_verilator.py'
+      - 'scripts/ensure-verilator-uvm.sh'
+      - 'third_party/uvm/**'
+      - '.github/workflows/ahb-cocotb-verilator.yml'
+      - '.github/verilator-version'
+      - '.github/actions/setup-verilator/**'
+      - '.github/actions/setup-cocotb/**'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'ahb/**'
+      - 'common/cocotb/**'
+      - 'common/sv/**'
+      - 'scripts/run_cocotb_verilator.py'
+      - 'scripts/ensure-verilator-uvm.sh'
+      - 'third_party/uvm/**'
+      - '.github/workflows/ahb-cocotb-verilator.yml'
+
+jobs:
+  ahb-cocotb:
+    name: AHB Cocotb (Verilator + DPI)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Verilator
+        uses: ./.github/actions/setup-verilator
+
+      - name: Setup cocotb
+        uses: ./.github/actions/setup-cocotb
+
+      - name: Run AHB cocotb suite
+        run: |
+          set -euo pipefail
+          source .venv-cocotb/bin/activate
+          python3 scripts/run_cocotb_verilator.py --protocol ahb
+          ! grep -q '<failure' ahb/examples/cocotb_dut/sim/out/cocotb_verilator/results.xml
+
+      - name: Archive Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ahb-cocotb-verilator-results
+          path: ahb/examples/cocotb_dut/sim/out/cocotb_verilator/results.xml

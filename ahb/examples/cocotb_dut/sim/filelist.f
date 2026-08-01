@@ -1,0 +1,13 @@
++incdir+common/sv
++incdir+common/cocotb/sv
++incdir+ahb/sv/uvm
++incdir+ahb/sv/assertions
++incdir+ahb/sv/if
+common/cocotb/sv/kvips_cocotb_bridge_if.sv
+common/cocotb/sv/kvips_cocotb_dpi_pkg.sv
+ahb/sv/if/ahb_if.sv
+ahb/sv/pkg/ahb_types_pkg.sv
+ahb/sv/pkg/ahb_uvm_pkg.sv
+ahb/examples/cocotb_dut/tb/dut/ahb_ram_slave.sv
+ahb/examples/cocotb_dut/tb/tb_pkg.sv
+ahb/examples/cocotb_dut/tb/top.sv
