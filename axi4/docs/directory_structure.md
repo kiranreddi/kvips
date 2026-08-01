@@ -6,8 +6,8 @@
 - `sv/pkg/`: Package(s) with types and shared utilities
 - `sv/uvm/`: UVM classes (agents, env, sequences, tests)
 - `sv/assertions/`: SVA protocol assertions/checkers + bind helpers
-- `rtl/`: Optional synthesizable example DUTs (reference RAM, etc.)
-- `examples/`: Runnable examples (UVM, and later cocotb)
+- `examples/uvm_back2back/`: VIP-to-VIP UVM regression and simulator scripts
+- `examples/uvm_dut/`: Signal-level RTL-DUT integration, tests, and simulators
 
 Each file contains a short header describing its intent and how it is used.
 

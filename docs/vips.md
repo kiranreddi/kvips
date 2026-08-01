@@ -25,7 +25,7 @@ Explore our collection of professional-grade SystemVerilog UVM verification IPs,
     <div>
       <h3 class="card-title" style="margin: 0;">AXI4 Full</h3>
       <div style="margin-top: 0.5rem;">
-        <span class="badge badge-success">Stable v1.0</span>
+        <span class="badge badge-success">DUT validated v0.1</span>
         <span class="badge badge-primary">UVM 1.2</span>
       </div>
     </div>
@@ -43,6 +43,7 @@ Explore our collection of professional-grade SystemVerilog UVM verification IPs,
       <li>Error injection (SLVERR, DECERR)</li>
       <li>Comprehensive SVA protocol checkers</li>
       <li>Performance statistics</li>
+      <li>Executable RTL-DUT integration (11-test gate)</li>
     </ul>
     
     <h5>Validated On:</h5>
@@ -50,11 +51,11 @@ Explore our collection of professional-grade SystemVerilog UVM verification IPs,
       <span class="badge badge-info">Questa 2025.3_2</span>
       <span class="badge badge-info">VCS 2025.06_1</span>
       <span class="badge badge-info">Xcelium 25.03.007</span>
-      <span class="badge badge-info">Verilator 5.x</span>
+      <span class="badge badge-info">Verilator back-to-back CI</span>
     </div>
     
     <div style="display: flex; gap: 0.5rem; margin-top: 1.5rem;">
-      <a href="{{ site.baseurl }}/docs/axi4-vip/" class="btn btn-primary" style="font-size: 0.875rem; padding: 0.5rem 1rem;">Documentation</a>
+      <a href="{{ site.baseurl }}/vips/axi4/" class="btn btn-primary" style="font-size: 0.875rem; padding: 0.5rem 1rem;">Documentation</a>
       <a href="{{ site.baseurl }}/docs/getting-started/" class="btn btn-secondary" style="font-size: 0.875rem; padding: 0.5rem 1rem;">Quick Start</a>
     </div>
   </div>
@@ -67,7 +68,7 @@ Explore our collection of professional-grade SystemVerilog UVM verification IPs,
     <div>
       <h3 class="card-title" style="margin: 0;">APB</h3>
       <div style="margin-top: 0.5rem;">
-        <span class="badge badge-success">Stable v1.0</span>
+        <span class="badge badge-success">DUT validated v0.1</span>
         <span class="badge badge-primary">UVM 1.2</span>
       </div>
     </div>
@@ -83,6 +84,7 @@ Explore our collection of professional-grade SystemVerilog UVM verification IPs,
       <li>Error response injection</li>
       <li>Protocol compliance checking</li>
       <li>Monitor coverage + optional transaction recording</li>
+      <li>Executable APB4 RTL-DUT integration (8-test gate)</li>
     </ul>
     
     <h5>Validated On:</h5>
@@ -90,7 +92,7 @@ Explore our collection of professional-grade SystemVerilog UVM verification IPs,
       <span class="badge badge-info">Questa 2025.3_2</span>
       <span class="badge badge-info">VCS 2025.06_1</span>
       <span class="badge badge-info">Xcelium 25.03.007</span>
-      <span class="badge badge-info">Verilator 5.x</span>
+      <span class="badge badge-info">Verilator back-to-back + DUT CI</span>
     </div>
 
     <div style="display: flex; gap: 0.5rem; margin-top: 1.5rem;">
@@ -124,14 +126,14 @@ For the engineering checklist and directory/template expectations, see `kvips/do
 <tbody>
 <tr>
 <td><strong>AXI4 Full</strong></td>
-<td><span class="badge badge-success">✅ Complete</span></td>
-<td>v1.0</td>
+<td><span class="badge badge-success">✅ DUT validated</span></td>
+<td>v0.1</td>
 <td>High</td>
 </tr>
 <tr>
 <td><strong>APB</strong></td>
-<td><span class="badge badge-success">✅ Stable</span></td>
-<td>v1.0</td>
+<td><span class="badge badge-success">✅ DUT validated</span></td>
+<td>v0.1</td>
 <td>High</td>
 </tr>
 <tr>
@@ -419,9 +421,10 @@ Contribution Guide
 <div class="card">
 <h4>🔧 Examples</h4>
 <ul style="margin: 0;">
-<li><a href="https://github.com/kiranreddi/kvips/tree/main/axi4/examples">AXI4 Examples</a></li>
-<li><a href="{{ site.baseurl }}/docs/examples/">Example Gallery</a></li>
-<li><a href="{{ site.baseurl }}/docs/tutorials/">Tutorials</a></li>
+<li><a href="https://github.com/kiranreddi/kvips/tree/main/axi4/examples">AXI4 examples</a></li>
+<li><a href="https://github.com/kiranreddi/kvips/tree/main/apb/examples">APB examples</a></li>
+<li><a href="https://github.com/kiranreddi/kvips/tree/main/axi4/docs/dut_verification.md">AXI4 DUT milestone</a></li>
+<li><a href="https://github.com/kiranreddi/kvips/blob/main/apb/docs/dut_verification.md">APB4 DUT milestone</a></li>
 </ul>
 </div>
 

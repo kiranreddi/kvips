@@ -27,6 +27,24 @@ Regression list:
 - Requirement coverage and open gaps: `kvips/axi4/docs/axi4_spec_coverage.md`
 - Coverage targets and simulator-neutral replay input: `kvips/axi4/docs/coverage_targets.md`
 
+## RTL-DUT validation
+
+`kvips/axi4/examples/uvm_dut/` connects the AXI4 master to a byte-addressed
+signal-level RAM DUT. Its 11 tests cover burst shapes, byte lanes, unaligned
+accesses, 4KB boundaries, pipelining, DECERR, backpressure, and UVM RAL
+access. The commercial regression gate checks real monitor handshakes, zero
+protocol/UVM/simulator errors, and zero scoreboard mismatches:
+
+```bash
+make -C kvips/axi4/examples regress-rtl-questa USE_LSF=1
+make -C kvips/axi4/examples regress-rtl-vcs USE_LSF=1
+make -C kvips/axi4/examples regress-rtl-xcelium USE_LSF=1
+```
+
+See `kvips/axi4/docs/dut_verification.md` for the exact test matrix and
+remaining single-device integration boundaries. Verilator is a CI-only path
+for this DUT flow on the development workstation.
+
 AXI4-Lite is kept as a distinct, standalone interface/example under
 `kvips/axi4_lite/`; it is not represented by constraining the AXI4 Full agent.
 

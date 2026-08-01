@@ -13,7 +13,7 @@ permalink: /docs/apb-vip/
 Professional-grade AMBA APB3/APB4 verification component for low-bandwidth peripheral and register access verification
 </p>
 <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 1.5rem;">
-<span class="badge badge-success">Stable v1.0</span>
+<span class="badge badge-success">DUT validated v0.1</span>
 <span class="badge badge-info">UVM 1.1d/1.2</span>
 <span class="badge badge-primary">IEEE 1800</span>
 <span class="badge badge-success">Single Image APB3/APB4</span>
@@ -151,6 +151,31 @@ make questa USE_LSF=1 TEST=apb_b2b_smoke_test PLUSARGS='+APB_PROTOCOL=APB4'
 
 ---
 
+## 🧪 APB4 RTL-DUT verification
+
+The separate [`apb/examples/uvm_dut/`](https://github.com/kiranreddi/kvips/tree/main/apb/examples/uvm_dut/)
+flow connects the KVIPS APB4 master to a byte-addressed signal-level RAM DUT.
+It is an executable integration target, not the APB master/slave loopback
+demo. The eight DUT tests cover deterministic readback, continuous transfers,
+`PSTRB`, `PPROT`, wait states, the mapped boundary, unmapped `PSLVERR`, and
+randomized APB4 traffic.
+
+Run the evidence-gated commercial regressions from the repository root:
+
+```bash
+make -C apb/examples regress-rtl-questa USE_LSF=1
+make -C apb/examples regress-rtl-vcs USE_LSF=1
+make -C apb/examples regress-rtl-xcelium USE_LSF=1
+```
+
+The gate requires observed monitor handshakes, expected error behavior, zero
+protocol/UVM/simulator errors, and zero scoreboard mismatches. GitHub Actions
+runs the DUT list with Verilator; Verilator remains a CI-only path on the
+development workstation. The complete test matrix and remaining single-slave
+boundaries are in the [APB4 DUT verification milestone](https://github.com/kiranreddi/kvips/blob/main/apb/docs/dut_verification.md).
+
+---
+
 ## 📐 Architecture
 
 ### Component Hierarchy
@@ -201,9 +226,11 @@ kvips/apb/
 │   ├── supported_features.md      # Feature list & roadmap
 │   ├── assertions.md              # Assertion documentation
 │   ├── testplan.md                # Test coverage plan
-│   └── directory_structure.md     # File organization
+│   ├── directory_structure.md     # File organization
+│   └── dut_verification.md        # APB4 RTL-DUT milestone
 ├── examples/
-│   └── uvm_back2back/             # Self-contained demo testbench
+│   ├── uvm_back2back/             # Self-contained VIP-to-VIP demo
+│   └── uvm_dut/                   # APB4 master to RTL-DUT integration
 └── README.md                       # Quick reference
 ```
 
@@ -446,14 +473,16 @@ endclass
 
 ## 📚 Detailed Documentation
 
-For comprehensive information, refer to the following documents in `kvips/apb/docs/`:
+For comprehensive information, refer to the following source documents in
+[`apb/docs/`](https://github.com/kiranreddi/kvips/tree/main/apb/docs/):
 
-- **[User Guide](../../apb/docs/user_guide.md)** - Detailed configuration and usage
-- **[Integration Guide](../../apb/docs/integration_guide.md)** - Step-by-step integration
-- **[Supported Features](../../apb/docs/supported_features.md)** - Complete feature list
-- **[Assertions](../../apb/docs/assertions.md)** - SVA checker documentation
-- **[Testplan](../../apb/docs/testplan.md)** - Test coverage mapping
-- **[Directory Structure](../../apb/docs/directory_structure.md)** - File organization
+- **[User Guide](https://github.com/kiranreddi/kvips/blob/main/apb/docs/user_guide.md)** - Detailed configuration and usage
+- **[Integration Guide](https://github.com/kiranreddi/kvips/blob/main/apb/docs/integration_guide.md)** - Step-by-step integration
+- **[Supported Features](https://github.com/kiranreddi/kvips/blob/main/apb/docs/supported_features.md)** - Complete feature list
+- **[Assertions](https://github.com/kiranreddi/kvips/blob/main/apb/docs/assertions.md)** - SVA checker documentation
+- **[Testplan](https://github.com/kiranreddi/kvips/blob/main/apb/docs/testplan.md)** - Test coverage mapping
+- **[Directory Structure](https://github.com/kiranreddi/kvips/blob/main/apb/docs/directory_structure.md)** - File organization
+- **[APB4 DUT verification](https://github.com/kiranreddi/kvips/blob/main/apb/docs/dut_verification.md)** - Executable DUT test matrix and evidence rules
 
 ---
 
@@ -525,7 +554,8 @@ endclass
 
 ## 🎓 Example Tests
 
-Located in `kvips/apb/examples/uvm_back2back/`:
+The back-to-back tests are located in `kvips/apb/examples/uvm_back2back/`.
+The APB4 RTL-DUT tests are located in `kvips/apb/examples/uvm_dut/`:
 
 ```
 examples/
@@ -544,6 +574,11 @@ examples/
     ├── run_questa.sh
     ├── run_vcs.sh
     └── run_xcelium.sh
+
+uvm_dut/
+├── tb/dut/apb_ram_slave.sv       # Signal-level APB4 RAM DUT
+├── tb/tests/                     # Eight DUT-focused UVM tests
+└── sim/                          # Commercial and Verilator runners
 ```
 
 ---
@@ -590,4 +625,3 @@ Get started with KVIPS APB VIP and accelerate your register verification!
 <a href="{{ '/docs/getting-started' | relative_url }}" class="btn btn-primary">Get Started</a>
 <a href="https://github.com/kiranreddi/kvips" class="btn btn-secondary">View on GitHub</a>
 </div>
-

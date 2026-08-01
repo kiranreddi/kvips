@@ -15,7 +15,7 @@ Quick answers to common questions about KVIPS.
 <details>
 <summary><strong>What is KVIPS?</strong></summary>
 <p>
-KVIPS (K's Verification IP Suite) is a vendor-neutral, open-source library of SystemVerilog UVM verification components for protocol verification. It provides production-ready VIPs that work across multiple simulators.
+KVIPS (K's Verification IP Suite) is a vendor-neutral, open-source library of SystemVerilog UVM verification components for protocol verification. AXI4 and APB currently include executable RTL-DUT examples and commercial-simulator evidence gates; review each protocol's gap document before production adoption.
 </p>
 </details>
 
@@ -65,7 +65,7 @@ Yes, KVIPS assumes basic familiarity with UVM methodology. If you're new to UVM,
 <details>
 <summary><strong>How do I integrate KVIPS into my existing testbench?</strong></summary>
 <p>
-See our <a href="{{ site.baseurl }}/docs/getting-started/">Getting Started Guide</a> and <a href="{{ site.baseurl }}/docs/axi4/integration/">Integration Guide</a> for step-by-step instructions. The basic steps are:
+See our <a href="{{ site.baseurl }}/docs/getting-started/">Getting Started Guide</a> and the <a href="https://github.com/kiranreddi/kvips/blob/main/axi4/docs/integration_guide.md">AXI4 Integration Guide</a> for step-by-step instructions. The basic steps are:
 <ol>
 <li>Add KVIPS to your compilation</li>
 <li>Instantiate the interface in your top module</li>

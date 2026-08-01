@@ -26,6 +26,7 @@ Create new VIPs using the same top-level structure as `axi4/`:
 │   ├── assertions.md
 │   ├── testplan.md
 │   ├── user_guide.md
+│   ├── dut_verification.md
 │   ├── avery_gap_analysis.md
 │   └── questa_gap_analysis.md
 ├── examples/

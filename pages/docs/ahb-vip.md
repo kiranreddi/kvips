@@ -368,14 +368,15 @@ endclass
 
 ## 📚 Detailed Documentation
 
-For comprehensive information, refer to the following documents in `kvips/ahb/docs/`:
+For comprehensive information, refer to the following source documents in
+[`ahb/docs/`](https://github.com/kiranreddi/kvips/tree/main/ahb/docs/):
 
-- **[User Guide](../../ahb/docs/user_guide.md)** - Detailed configuration and usage
-- **[Integration Guide](../../ahb/docs/integration_guide.md)** - Step-by-step integration
-- **[Supported Features](../../ahb/docs/supported_features.md)** - Complete feature list
-- **[Assertions](../../ahb/docs/assertions.md)** - SVA checker documentation
-- **[Testplan](../../ahb/docs/testplan.md)** - Test coverage mapping
-- **[Directory Structure](../../ahb/docs/directory_structure.md)** - File organization
+- **[User Guide](https://github.com/kiranreddi/kvips/blob/main/ahb/docs/user_guide.md)** - Detailed configuration and usage
+- **[Integration Guide](https://github.com/kiranreddi/kvips/blob/main/ahb/docs/integration_guide.md)** - Step-by-step integration
+- **[Supported Features](https://github.com/kiranreddi/kvips/blob/main/ahb/docs/supported_features.md)** - Complete feature list
+- **[Assertions](https://github.com/kiranreddi/kvips/blob/main/ahb/docs/assertions.md)** - SVA checker documentation
+- **[Testplan](https://github.com/kiranreddi/kvips/blob/main/ahb/docs/testplan.md)** - Test coverage mapping
+- **[Directory Structure](https://github.com/kiranreddi/kvips/blob/main/ahb/docs/directory_structure.md)** - File organization
 
 ---
 

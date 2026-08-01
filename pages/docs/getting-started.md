@@ -8,7 +8,7 @@ permalink: /docs/getting-started/
   <div class="hero-content hero-content--wide">
     <p class="hero-eyebrow">Getting Started</p>
     <h1 class="hero-title">Launch KVIPS in minutes</h1>
-    <p class="hero-subtitle">Premium SystemVerilog UVM VIPs with clean APIs, production regressions, and Verilator-ready scripts.</p>
+    <p class="hero-subtitle">Vendor-neutral SystemVerilog UVM VIPs with clean APIs, evidence-gated regressions, and Verilator-ready scripts.</p>
     <div class="hero-buttons">
       <a href="{{ '/vips/' | relative_url }}" class="btn btn-outline">VIP Catalog</a>
       <a href="https://github.com/kiranreddi/kvips" class="btn btn-secondary" target="_blank" rel="noopener">GitHub</a>
@@ -175,6 +175,25 @@ make -C kvips/apb/examples verilator TEST=apb_b2b_smoke_test PLUSARGS='+APB_PROT
 make -C kvips/apb/examples regress-verilator
 ```
 
+### DUT integration smoke tests
+
+The AXI4 and APB4 DUT examples exercise the VIP against signal-level RTL,
+rather than another VIP responder. Run one smoke test with a commercial
+simulator, or use the evidence-gated regressions described in the milestone
+documents:
+
+```bash
+make -C kvips/axi4/examples rtl-questa TEST=axi4_dut_smoke_test
+make -C kvips/apb/examples rtl-questa RTL_TEST=apb_dut_smoke_test
+
+make -C kvips/axi4/examples regress-rtl-questa USE_LSF=1
+make -C kvips/apb/examples regress-rtl-questa USE_LSF=1
+```
+
+See [`axi4/docs/dut_verification.md`](https://github.com/kiranreddi/kvips/blob/main/axi4/docs/dut_verification.md)
+and [`apb/docs/dut_verification.md`](https://github.com/kiranreddi/kvips/blob/main/apb/docs/dut_verification.md)
+for the complete test lists and pass/fail evidence rules.
+
 ---
 
 ## 📦 Repository Structure
@@ -199,13 +218,14 @@ kvips/
 │   │   ├── supported_features.md
 │   │   └── assertions.md
 │   └── examples/              # Working examples
-│       └── uvm_back2back/
-│           ├── tb/           # Testbench code
-│           └── sim/          # Simulation scripts
+│       ├── uvm_back2back/    # VIP-to-VIP demo
+│       │   ├── tb/           # Testbench code
+│       │   └── sim/          # Simulation scripts
+│       └── uvm_dut/          # AXI4 master to RTL-DUT integration
 ├── apb/                       # APB3/APB4 VIP (stable)
 │   ├── sv/
 │   ├── docs/
-│   └── examples/
+│   └── examples/             # Back-to-back and APB4 DUT flows
 └── README.md                  # Repository overview
 ```
 
@@ -412,8 +432,8 @@ Now that you have KVIPS running, explore these resources:
 <h3>📖 VIP Documentation</h3>
 <ul>
 <li><a href="{{ site.baseurl }}/vips/axi4/">AXI4 User Guide</a></li>
-<li><a href="{{ site.baseurl }}/docs/axi4/api/">API Reference</a></li>
-<li><a href="{{ site.baseurl }}/docs/axi4/integration/">Integration Guide</a></li>
+<li><a href="https://github.com/kiranreddi/kvips/blob/main/axi4/sv/pkg/axi4_uvm_pkg.sv">AXI4 UVM package/API surface</a></li>
+<li><a href="https://github.com/kiranreddi/kvips/blob/main/axi4/docs/integration_guide.md">AXI4 Integration Guide</a></li>
 </ul>
 </div>
 
@@ -421,8 +441,8 @@ Now that you have KVIPS running, explore these resources:
 <h3>🔧 Advanced Topics</h3>
 <ul>
 <li><a href="{{ site.baseurl }}/docs/best-practices/">Best Practices</a></li>
-<li><a href="{{ site.baseurl }}/docs/debugging/">Debugging Tips</a></li>
-<li><a href="{{ site.baseurl }}/docs/performance/">Performance Tuning</a></li>
+<li><a href="https://github.com/kiranreddi/kvips/blob/main/axi4/docs/dut_verification.md">AXI4 DUT milestone</a></li>
+<li><a href="https://github.com/kiranreddi/kvips/blob/main/apb/docs/dut_verification.md">APB4 DUT milestone</a></li>
 </ul>
 </div>
 </div>

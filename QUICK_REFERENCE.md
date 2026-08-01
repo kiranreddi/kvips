@@ -57,7 +57,7 @@ find . -type f \( -name "*.html" -o -name "*.md" -o -name "*.yml" \) \
 ### Documentation (6 comprehensive guides)
 - `docs/getting-started.md` - Getting started guide
 - `docs/code-review.md` - Comprehensive code review (1100+ lines)
-- `docs/axi4-vip.md` - AXI4 VIP documentation
+- [AXI4 VIP guide](https://kiranreddi.github.io/kvips/vips/axi4/) - implementation and DUT milestone
 - `docs/best-practices.md` - Best practices guide
 - `docs/vips.md` - VIP catalog
 - `docs/faq.md` - FAQ with collapsible answers

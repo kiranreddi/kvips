@@ -7,7 +7,8 @@ For the normative requirement-by-requirement audit, see
 
 ## Conventions
 - VIP: `kvips/axi4/sv/pkg/axi4_uvm_pkg.sv`
-- Example regression: `kvips/axi4/examples/uvm_back2back/`
+- Back-to-back regression: `kvips/axi4/examples/uvm_back2back/`
+- RTL-DUT regression: `kvips/axi4/examples/uvm_dut/` (see `dut_verification.md`)
 - All tests are self-checking via `axi4_scoreboard` (byte-accurate expected vs observed reads).
 
 ## Implemented (covered)

@@ -1,6 +1,8 @@
 # Testplan (APB3/APB4)
 
-This testplan maps example tests to protocol features. Example tests live under `kvips/apb/examples/uvm_back2back/`.
+This testplan maps the back-to-back and RTL-DUT tests to APB protocol features.
+Back-to-back tests live under `kvips/apb/examples/uvm_back2back/`; the
+signal-level APB4 DUT tests live under `kvips/apb/examples/uvm_dut/`.
 
 ## Bring-up / sanity
 - `apb_b2b_reset_sanity_test`

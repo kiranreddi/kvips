@@ -97,8 +97,8 @@ description: Industry-grade SystemVerilog UVM Verification IP Library. Protocol 
                     <div>
                         <h3 class="vip-title">AXI4 Full</h3>
                         <div class="badge-group">
-                            <span class="badge badge-success">Stable</span>
-                            <span class="badge badge-gray">v1.0</span>
+                            <span class="badge badge-success">DUT validated</span>
+                            <span class="badge badge-gray">v0.1</span>
                         </div>
                     </div>
                 </div>
@@ -112,9 +112,10 @@ description: Industry-grade SystemVerilog UVM Verification IP Library. Protocol 
                         <li>Configurable delays, backpressure, error injection</li>
                         <li>Comprehensive SVA protocol checkers</li>
                         <li>Built-in scoreboard for data verification</li>
+                        <li>11-test executable RTL-DUT integration flow</li>
                     </ul>
                     <div class="vip-actions">
-                        <a href="{{ '/docs/axi4-vip' | relative_url }}" class="btn btn-primary btn-sm">Documentation</a>
+                        <a href="{{ '/vips/axi4/' | relative_url }}" class="btn btn-primary btn-sm">Documentation</a>
                         <a href="{{ '/docs/getting-started' | relative_url }}" class="btn btn-secondary btn-sm">Quick Start</a>
                     </div>
                 </div>
@@ -127,8 +128,8 @@ description: Industry-grade SystemVerilog UVM Verification IP Library. Protocol 
                     <div>
                         <h3 class="vip-title">APB (APB3/APB4)</h3>
                         <div class="badge-group">
-                            <span class="badge badge-success">Stable</span>
-                            <span class="badge badge-gray">v1.0</span>
+                            <span class="badge badge-success">DUT validated</span>
+                            <span class="badge badge-gray">v0.1</span>
                         </div>
                     </div>
                 </div>
@@ -142,6 +143,7 @@ description: Industry-grade SystemVerilog UVM Verification IP Library. Protocol 
                         <li>Error injection (PSLVERR)</li>
                         <li>Byte-lane selective writes (APB4)</li>
                         <li>Protocol assertions & scoreboard</li>
+                        <li>8-test executable APB4 RTL-DUT integration flow</li>
                     </ul>
                     <div class="vip-actions">
                         <a href="{{ '/docs/apb-vip' | relative_url }}" class="btn btn-primary btn-sm">Documentation</a>

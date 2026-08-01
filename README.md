@@ -29,8 +29,8 @@ KVIPS is an open-source SystemVerilog UVM verification IP suite for AMBA protoco
 - **Protocol checkers** — SVA assertions and scoreboard-backed example environments
 - **Configurable agents** — Parameterized interfaces, sequences, and runtime plusargs
 - **Diagnostics** — Transaction logging, coverage hooks, and example regressions
-- **Verilator CI** — Back2back and DUT example suites run in GitHub Actions (see badges)
-- **Commercial simulator scripts** — Questa, VCS, and Xcelium example flows are provided; validate in your environment
+- **Verilator CI** — AXI4, APB, and AHB back-to-back suites run in GitHub Actions; the APB4 DUT list is also covered in CI
+- **Commercial simulator validation** — AXI4 and APB RTL-DUT flows include evidence-gated Questa, VCS, and Xcelium regressions
 - **Documentation** — Guides and integration examples under [GitHub Pages](https://kiranreddi.github.io/kvips/)
 
 ---
@@ -39,13 +39,13 @@ KVIPS is an open-source SystemVerilog UVM verification IP suite for AMBA protoco
 
 | Protocol | Status | Version | Description | Documentation |
 |----------|--------|---------|-------------|---------------|
-| **AXI4 Full** | Example-tested | v0.1 | AXI4 master/slave agents, assertions, scoreboard examples; Verilator regressions in CI | [📖 AXI4 VIP Guide](https://kiranreddi.github.io/kvips/docs/axi4-vip/) |
-| **APB** | Example-tested | v0.1 | APB3/APB4 agents plus an APB4 RTL-DUT integration example; Verilator regressions in CI | [📖 APB VIP Guide](https://kiranreddi.github.io/kvips/docs/apb-vip/) |
+| **AXI4 Full** | DUT-validated | v0.1 | AXI4 master/slave agents, assertions, scoreboard, and an executable RTL-DUT flow; commercial evidence gate plus back-to-back Verilator CI | [📖 AXI4 VIP Guide](https://kiranreddi.github.io/kvips/vips/axi4/) |
+| **APB** | DUT-validated | v0.1 | APB3/APB4 agents and an executable APB4 RTL-DUT flow; commercial evidence gate plus back-to-back/DUT Verilator CI | [📖 APB VIP Guide](https://kiranreddi.github.io/kvips/docs/apb-vip/) |
 | **AHB** | Example-tested | v0.1 | AHB-Lite oriented agents with wait states, bursts, assertions; AHB Full is partial | [📖 AHB VIP Guide](https://kiranreddi.github.io/kvips/docs/ahb-vip/) |
 | **PCIe** | 📋 Planned | - | PCIe Gen3/Gen4/Gen5 with TLP generation | - |
 | **USB 3.x** | 📋 Planned | - | USB 3.0/3.1/3.2 protocol layers | - |
 
-> 🗺️ Full roadmap available in [VIP Catalog](https://kiranreddi.github.io/kvips/docs/vips/)
+> 🗺️ Full roadmap available in [VIP Catalog](https://kiranreddi.github.io/kvips/vips/)
 
 ---
 
@@ -80,7 +80,7 @@ KVIPS is an open-source SystemVerilog UVM verification IP suite for AMBA protoco
 ### 🛠️ **Tooling**
 - Verilator 5.048 (CI regressions + portable lint)
 - GitHub Actions (lint, regressions, Pages)
-- Example scripts for Questa, VCS, and Xcelium (local validation required)
+- Commercial Questa, VCS, and Xcelium scripts with evidence-gated AXI4/APB DUT regressions
 
 </td>
 <td>
@@ -113,8 +113,7 @@ KVIPS is an open-source SystemVerilog UVM verification IP suite for AMBA protoco
 git clone https://github.com/kiranreddi/kvips.git
 cd kvips
 
-# Navigate to the VIP of interest
-cd axi4
+# Run commands from the repository root; each protocol has its own examples directory
 ```
 
 ### Run Your First Test (Questa)
@@ -157,12 +156,33 @@ cd axi4/examples/uvm_back2back/sim
 # Single test
 ./run_verilator.sh +UVM_TESTNAME=axi4_b2b_test
 
-# Full regression
-cd ../../..
-make -C kvips/axi4/examples regress-verilator
+# Full regression (from the repository root)
+make -C axi4/examples regress-verilator
 ```
 
 > 📝 Note: SVA assertions are skipped under Verilator.
+
+### Run the RTL-DUT examples
+
+The DUT examples connect a KVIPS master to a signal-level synthesizable RAM,
+then require monitor handshakes, checker health, and scoreboard agreement.
+They are separate from the back-to-back demos:
+
+```bash
+# AXI4 Full DUT (11 tests in the default list)
+make -C axi4/examples regress-rtl-questa USE_LSF=1
+make -C axi4/examples regress-rtl-vcs USE_LSF=1
+make -C axi4/examples regress-rtl-xcelium USE_LSF=1
+
+# APB4 DUT (8 tests in the default list)
+make -C apb/examples regress-rtl-questa USE_LSF=1
+make -C apb/examples regress-rtl-vcs USE_LSF=1
+make -C apb/examples regress-rtl-xcelium USE_LSF=1
+```
+
+See the [AXI4 DUT milestone](https://github.com/kiranreddi/kvips/blob/main/axi4/docs/dut_verification.md)
+and [APB4 DUT milestone](https://github.com/kiranreddi/kvips/blob/main/apb/docs/dut_verification.md)
+for test lists, evidence rules, and the CI-only Verilator distinction.
 
 ---
 
@@ -177,9 +197,8 @@ kvips/
 │   │   ├── if/               # Interface definitions
 │   │   └── assertions/       # SVA protocol checks
 │   ├── examples/             # Testbenches and tests
-│   │   ├── tb/              # Testbench top
-│   │   ├── tests/           # Test scenarios
-│   │   └── Makefile         # Build scripts
+│   │   ├── uvm_back2back/    # VIP-to-VIP executable demo
+│   │   └── uvm_dut/          # AXI4 master to RTL-DUT integration
 │   └── docs/                 # VIP-specific documentation
 ├── apb/                       # APB3/APB4 VIP (stable)
 │   ├── sv/
@@ -191,7 +210,7 @@ kvips/
 │   └── examples/
 ├── docs/                      # GitHub Pages documentation
 │   ├── getting-started.md
-│   ├── axi4-vip.md
+│   ├── axi4-vip.md           # Source guide (Pages copy is under pages/docs/)
 │   ├── best-practices.md
 │   ├── code-review.md
 │   └── faq.md
@@ -288,7 +307,7 @@ seq.start(env.axi_master.sequencer);
 | **Architecture** | ⭐⭐⭐⭐⭐ 5/5 | Modular, parameterized design |
 | **Code Style** | ⭐⭐⭐⭐⭐ 5/5 | Consistent, documented |
 | **UVM Compliance** | ⭐⭐⭐⭐⭐ 5/5 | Factory, config DB, TLM |
-| **Protocol Compliance** | ⭐⭐⭐⭐⭐ 5/5 | Full AXI4 spec adherence |
+| **Protocol Compliance** | ⭐⭐⭐⭐☆ 4/5 | Implemented AXI4/APB scope with assertions; see protocol gap documents |
 | **Coverage** | ⭐⭐⭐⭐☆ 4/5 | Transaction + assertions |
 | **Documentation** | ⭐⭐⭐⭐⭐ 5/5 | Comprehensive guides |
 
@@ -299,16 +318,16 @@ seq.start(env.axi_master.sequencer);
 | Simulator | Version (examples) | CI status | Notes |
 |-----------|-------------------|-----------|-------|
 | Verilator | 5.048 | Regressions + lint in GitHub Actions | Primary open-source validation path |
-| Siemens Questa | 2025.3_2 | Scripts provided | Run `make -C <proto>/examples questa` locally |
-| Synopsys VCS | 2025.06_1 | Scripts provided | Run `make -C <proto>/examples vcs` locally |
-| Cadence Xcelium | 25.03.007 | Scripts provided | Run `make -C <proto>/examples xcelium` locally |
+| Siemens Questa | 2025.3_2 | AXI4/APB DUT evidence gate | Run `make -C <proto>/examples questa` or `regress-rtl-questa` |
+| Synopsys VCS | 2025.06_1 | AXI4/APB DUT evidence gate | Run `make -C <proto>/examples vcs` or `regress-rtl-vcs` |
+| Cadence Xcelium | 25.03.007 | AXI4/APB DUT evidence gate | Run `make -C <proto>/examples xcelium` or `regress-rtl-xcelium` |
 
 ### CI/CD Pipeline
 
 All automation runs on **GitHub Actions**:
 
 - **Verilator Lint** — Blocking portable lint for AXI4, APB, and AHB interface subsets (`make lint`)
-- **Verilator Regressions** — AXI4, APB, and AHB example suites on push/PR
+- **Verilator Regressions** — AXI4, APB, and AHB back-to-back suites, plus the APB4 DUT list, on push/PR
 - **GitHub Pages** — Jekyll build and auto-deploy on `main`
 - **Local** — `make test-smoke`, `make test-verilator`, `make docs-build`, `make clean-all`
 
@@ -350,7 +369,7 @@ This ensures all SystemVerilog code is linted before committing, catching syntax
 |----------|-------------|------|
 | **GitHub Pages** | Full documentation site with guides and examples | [🔗 View Site](https://kiranreddi.github.io/kvips/) |
 | **Getting Started** | Installation, compilation, first test | [🔗 Guide](https://kiranreddi.github.io/kvips/docs/getting-started/) |
-| **AXI4 VIP Guide** | Complete API reference, sequences, assertions | [🔗 Guide](https://kiranreddi.github.io/kvips/docs/axi4-vip/) |
+| **AXI4 VIP Guide** | Complete API reference, sequences, assertions, and RTL-DUT milestone | [🔗 Guide](https://kiranreddi.github.io/kvips/vips/axi4/) |
 | **Best Practices** | Testbench architecture, debugging, optimization | [🔗 Guide](https://kiranreddi.github.io/kvips/docs/best-practices/) |
 | **Code Review** | Quality assessment with recommendations | [🔗 Report](https://kiranreddi.github.io/kvips/docs/code-review/) |
 | **FAQ** | Common questions and troubleshooting | [🔗 FAQ](https://kiranreddi.github.io/kvips/docs/faq/) |
@@ -434,8 +453,8 @@ KVIPS is built on the shoulders of giants:
 ## 🚦 Roadmap
 
 ### Phase 1: Core Bus Protocols (2026 Q1-Q2)
-- [x] AXI4 Full (v1.0) — **COMPLETE**
-- [x] APB3/APB4 (v1.0) — **STABLE**
+- [x] AXI4 Full (v0.1) — **DUT VALIDATED**
+- [x] APB3/APB4 (v0.1) — **DUT VALIDATED**
 - [x] AHB-Lite/AHB Full (v1.0) — **STABLE**
 
 ### Phase 2: High-Speed Interfaces (2026 Q3-Q4)

@@ -83,5 +83,5 @@ responder. Its eight-test list covers masked writes, protection attributes,
 wait-state stability, mapped boundaries, and both unmapped `PSLVERR` cases.
 Questa, VCS, and Xcelium runners use an evidence gate requiring nonzero
 monitor handshakes, zero scoreboard mismatches, and no UVM or simulator
-errors. The target remains a single-device integration example; multi-slave
+errors. The DUT flow remains a single-device integration target; multi-slave
 decode and independent-master interoperability are not claimed.

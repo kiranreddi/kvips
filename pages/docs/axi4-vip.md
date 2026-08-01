@@ -13,7 +13,7 @@ permalink: /vips/axi4/
 Professional-grade AMBA AXI4 verification component with master/slave agents, protocol checkers, and built-in scoreboard
 </p>
 <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 1.5rem;">
-<span class="badge badge-success">Stable v1.0</span>
+<span class="badge badge-success">DUT validated v0.1</span>
 <span class="badge badge-info">UVM 1.1d/1.2</span>
 <span class="badge badge-primary">IEEE 1800</span>
 </div>
@@ -24,7 +24,10 @@ Professional-grade AMBA AXI4 verification component with master/slave agents, pr
 
 ## 📋 Overview
 
-The KVIPS AXI4 VIP provides a complete, production-ready verification environment for AMBA AXI4 (full) protocol. It includes:
+The KVIPS AXI4 VIP provides a portable verification environment for AMBA AXI4
+(full) protocol. Its executable back-to-back and RTL-DUT examples make the
+current integration scope concrete; review the linked gap documents before
+production adoption. It includes:
 
 <div class="grid grid-2" style="margin: 2rem 0;">
 <div class="card">
@@ -134,11 +137,41 @@ cd kvips/axi4/examples/uvm_back2back/sim
 # Xcelium
 ./run_xcelium.sh +UVM_TESTNAME=axi4_b2b_test
 
-# Verilator
+# Verilator (back-to-back CI path)
 ./run_verilator.sh +UVM_TESTNAME=axi4_b2b_test
 ```
 
 > 📝 Note: SVA assertions are skipped under Verilator.
+
+---
+
+## 🧪 RTL-DUT verification
+
+The separate [`axi4/examples/uvm_dut/`](https://github.com/kiranreddi/kvips/tree/main/axi4/examples/uvm_dut/)
+flow connects the KVIPS AXI4 master to a byte-addressed signal-level RAM DUT.
+It exercises real handshakes through the interface, assertions, monitor, and
+scoreboard; it is not a VIP-to-VIP loopback. The 11-test list covers:
+
+- single-beat and burst read/write traffic, including INCR/FIXED/WRAP
+- narrow and unaligned byte-lane accesses plus WSTRB behavior
+- 4KB boundary and maximum-length bursts
+- pipelined same-ID traffic and response framing
+- unmapped-address DECERR responses
+- master delays, channel backpressure, and front-door UVM RAL access
+
+Run the evidence-gated commercial regressions from the repository root:
+
+```bash
+make -C axi4/examples regress-rtl-questa USE_LSF=1
+make -C axi4/examples regress-rtl-vcs USE_LSF=1
+make -C axi4/examples regress-rtl-xcelium USE_LSF=1
+```
+
+The gate requires observed read/write handshakes, zero protocol-checker,
+UVM, and simulator errors, and zero scoreboard mismatch beats. The complete
+test matrix and remaining single-device boundaries are recorded in the
+[AXI4 DUT verification milestone](https://github.com/kiranreddi/kvips/blob/main/axi4/docs/dut_verification.md).
+Verilator remains a CI-only path for this DUT flow on the development workstation.
 
 ---
 
@@ -566,11 +599,12 @@ endclass
 <div class="card">
 <h3>📖 Documentation</h3>
 <ul>
-<li><a href="{{ site.baseurl }}/docs/axi4/user-guide/">User Guide</a></li>
-<li><a href="{{ site.baseurl }}/docs/axi4/api/">API Reference</a></li>
-<li><a href="{{ site.baseurl }}/docs/axi4/integration/">Integration Guide</a></li>
-<li><a href="{{ site.baseurl }}/docs/axi4/testplan/">Test Plan</a></li>
-<li><a href="{{ site.baseurl }}/docs/axi4/assertions/">Assertions</a></li>
+<li><a href="https://github.com/kiranreddi/kvips/blob/main/axi4/docs/user_guide.md">User Guide</a></li>
+<li><a href="https://github.com/kiranreddi/kvips/blob/main/axi4/sv/pkg/axi4_uvm_pkg.sv">UVM package/API surface</a></li>
+<li><a href="https://github.com/kiranreddi/kvips/blob/main/axi4/docs/integration_guide.md">Integration Guide</a></li>
+<li><a href="https://github.com/kiranreddi/kvips/blob/main/axi4/docs/testplan.md">Test Plan</a></li>
+<li><a href="https://github.com/kiranreddi/kvips/blob/main/axi4/docs/assertions.md">Assertions</a></li>
+<li><a href="https://github.com/kiranreddi/kvips/blob/main/axi4/docs/dut_verification.md">RTL-DUT verification</a></li>
 </ul>
 </div>
 
@@ -578,9 +612,8 @@ endclass
 <h3>🔧 Examples & Tools</h3>
 <ul>
 <li><a href="https://github.com/kiranreddi/kvips/tree/main/axi4/examples">Example Testbenches</a></li>
-<li><a href="{{ site.baseurl }}/docs/axi4/debug/">Debugging Guide</a></li>
-<li><a href="{{ site.baseurl }}/docs/axi4/performance/">Performance Tuning</a></li>
-<li><a href="{{ site.baseurl }}/docs/axi4/faq/">FAQ</a></li>
+<li><a href="{{ site.baseurl }}/docs/best-practices/">Debugging and best practices</a></li>
+<li><a href="{{ site.baseurl }}/docs/faq/">FAQ</a></li>
 </ul>
 </div>
 </div>

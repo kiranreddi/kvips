@@ -2,9 +2,9 @@
 
 <div align="center">
 
-**Version:** 1.1 (January 2026)  
-**Status:** Production Ready (AXI4, APB, AHB)  
-**Maintainer:** K's Verification Team  
+**Version:** 1.2 (August 2026)<br>
+**Status:** DUT-validated baseline for AXI4 and APB; AHB remains separately scoped<br>
+**Maintainer:** K's Verification Team<br>
 **License:** MIT
 
 </div>
@@ -34,7 +34,7 @@
 
 ### Overview
 
-KVIPS (K's Verification IP Suite) is a professional-grade, vendor-neutral verification IP library built with SystemVerilog and UVM. It provides production-ready components for verifying AMBA protocol implementations and other high-speed interfaces in semiconductor designs.
+KVIPS (K's Verification IP Suite) is a vendor-neutral verification IP library built with SystemVerilog and UVM. AXI4 and APB now have executable RTL-DUT examples with evidence-gated commercial regressions; this review records current scope rather than a certification or production-equivalence claim.
 
 ### Key Highlights
 
@@ -45,12 +45,12 @@ KVIPS (K's Verification IP Suite) is a professional-grade, vendor-neutral verifi
 - **🔓 Vendor-Neutral:** Pure SystemVerilog with no vendor lock-in
 - **⚡ Runtime Flexible:** Single-image builds with runtime protocol selection
 
-### Current Status (January 2026)
+### Current Status (August 2026)
 
 | VIP | Status | Maturity | Test Coverage | Documentation | Recommended Use |
 |-----|--------|----------|---------------|---------------|-----------------|
-| **AXI4 Full** | ✅ Stable v1.0 | Production | 95%+ | Complete | Production projects |
-| **APB (APB3/APB4)** | ✅ Stable v1.0 | Production | 90%+ | Complete | Production projects |
+| **AXI4 Full** | ✅ DUT validated v0.1 | RTL-DUT + commercial evidence | Test matrix documented | Complete | Integration bring-up with gap review |
+| **APB (APB3/APB4)** | ✅ DUT validated v0.1 | RTL-DUT + commercial evidence | Test matrix documented | Complete | Integration bring-up with gap review |
 | **AHB (AHB-Lite/Full)** | ✅ Stable v1.0 | Production | 90%+ | Complete | Production projects |
 
 ---
@@ -141,7 +141,7 @@ VIP Environment (e.g., axi4_env)
 
 ### AXI4 Full VIP
 
-#### Status: ✅ Production Stable (v1.0)
+#### Status: ✅ DUT validated baseline (v0.1)
 
 #### Overview
 
@@ -231,29 +231,31 @@ endclass
 
 #### Documentation
 
-- **Main Documentation:** [pages/docs/axi4-vip.md](./docs/axi4-vip.md)
+- **Main Documentation:** [AXI4 GitHub Pages guide](https://kiranreddi.github.io/kvips/vips/axi4/)
 - **Source Location:** `kvips/axi4/`
 - **Examples:** `kvips/axi4/examples/uvm_back2back/`
+- **RTL-DUT example:** `kvips/axi4/examples/uvm_dut/`
 - **Detailed Guides:**
   - `axi4/docs/user_guide.md`
   - `axi4/docs/integration_guide.md`
   - `axi4/docs/supported_features.md`
   - `axi4/docs/assertions.md`
+  - `axi4/docs/dut_verification.md`
 
 #### Validation Status
 
 - ✅ Siemens Questa 2025.3_2
 - ✅ Synopsys VCS 2025.06_1
 - ✅ Cadence Xcelium 25.03.007
-- ✅ Full regression suite (100+ tests)
-- ✅ Protocol compliance verified
-- ✅ Used in production silicon projects
+- ✅ RTL-DUT regression list is evidence-gated on handshakes, checker health, and scoreboard agreement
+- ✅ Protocol compliance checks exercised by the commercial DUT and back-to-back suites
+- ⚠️ This review does not claim certification, formal closure, or production-project equivalence
 
 ---
 
 ### APB VIP
 
-#### Status: ✅ Stable (v1.0)
+#### Status: ✅ DUT validated baseline (v0.1)
 
 #### Overview
 
@@ -343,22 +345,25 @@ endclass
 
 #### Documentation
 
-- **Main Documentation:** [pages/docs/apb-vip.md](./pages/docs/apb-vip.md)
+- **Main Documentation:** [APB GitHub Pages guide](https://kiranreddi.github.io/kvips/docs/apb-vip/)
 - **Source Location:** `kvips/apb/`
 - **Examples:** `kvips/apb/examples/uvm_back2back/`
+- **RTL-DUT example:** `kvips/apb/examples/uvm_dut/`
 - **Detailed Guides:**
   - `apb/docs/user_guide.md`
   - `apb/docs/integration_guide.md`
   - `apb/docs/supported_features.md`
   - `apb/docs/assertions.md`
+  - `apb/docs/dut_verification.md`
 
 #### Validation Status
 
 - ✅ Siemens Questa 2025.3_2
 - ✅ Synopsys VCS 2025.06_1
 - ✅ Cadence Xcelium 25.03.007
-- ✅ Full regression suite (50+ tests)
-- ✅ Extended validation complete
+- ✅ APB4 RTL-DUT regression list is evidence-gated on handshakes, checker health, and scoreboard agreement
+- ✅ APB3/APB4 mode selection remains covered by the back-to-back suite
+- ⚠️ This review does not claim certification, formal closure, or production-project equivalence
 
 ---
 
@@ -934,8 +939,8 @@ endclass
 
 | Protocol | Status | Target | Priority |
 |----------|--------|--------|----------|
-| AXI4 Full | ✅ Complete | v1.0 | High |
-| APB | ✅ Stable | v1.0 | High |
+| AXI4 Full | ✅ DUT validated | v0.1 | High |
+| APB | ✅ DUT validated | v0.1 | High |
 | AHB | ✅ Stable | v1.0 | Medium |
 | AXI-Lite | 📋 Planned | Q2 2026 | Medium |
 | AXI-Stream | 📋 Planned | Q3 2026 | Medium |
@@ -1041,7 +1046,10 @@ Contribution guidelines are currently managed through GitHub Issues and Discussi
 
 ## Conclusion
 
-KVIPS represents a professional, production-ready verification IP solution for modern semiconductor verification. With comprehensive protocol support, extensive documentation, and multi-simulator validation, KVIPS accelerates verification efforts while maintaining the highest quality standards.
+KVIPS provides a portable verification IP baseline for modern protocol
+verification. AXI4 and APB have executable DUT examples, multi-simulator
+evidence gates, and documented boundaries; users should review those boundaries
+before claiming certification or production equivalence.
 
 The modular architecture, consistent UVM patterns, and extensive configuration options make KVIPS adaptable to diverse verification scenarios, from simple smoke tests to complex SoC-level verification environments.
 

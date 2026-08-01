@@ -11,9 +11,10 @@ AXI4 Full. It provides master and reactive-slave BFMs, a passive monitor,
 starter assertions, functional coverage hooks, a write-derived readback
 scoreboard, and runnable back-to-back examples.
 
-This is an example-tested VIP, not a certification or vendor-equivalence
-claim. The exact implemented scope and remaining work are maintained in
-`axi4/docs/testplan.md` and `axi4/docs/reference_parity_audit.md`.
+The back-to-back suite is a runnable protocol baseline, and the repository also
+contains an executable RTL-DUT integration flow. This is not a certification or
+vendor-equivalence claim. The exact implemented scope and remaining work are
+maintained in `axi4/docs/testplan.md` and `axi4/docs/reference_parity_audit.md`.
 
 ## Implemented behavior
 
@@ -131,6 +132,25 @@ make xcelium TEST=axi4_b2b_test SEED=1
 For LSF, source the site profile, load the required simulator module in the
 job environment, and use the matching `regress-*` target. The complete test
 list is `axi4/examples/uvm_back2back/sim/tests_questa.list`.
+
+## RTL-DUT verification
+
+`axi4/examples/uvm_dut/` connects the KVIPS AXI4 master to a byte-addressed
+signal-level RAM DUT. The 11-test list covers burst shapes, byte strobes,
+unaligned accesses, the 4KB boundary, pipelining, DECERR, backpressure, and
+front-door RAL access. Each commercial regression is evidence-gated on real
+handshakes, zero checker/UVM/simulator errors, and zero scoreboard mismatch
+beats:
+
+```bash
+make -C axi4/examples regress-rtl-questa USE_LSF=1
+make -C axi4/examples regress-rtl-vcs USE_LSF=1
+make -C axi4/examples regress-rtl-xcelium USE_LSF=1
+```
+
+See the [AXI4 DUT verification milestone](https://github.com/kiranreddi/kvips/blob/main/axi4/docs/dut_verification.md)
+for the topology, test matrix, and remaining integration boundaries. Verilator
+is retained as a CI-only path on the development workstation.
 
 ## Known boundaries
 
