@@ -3,6 +3,7 @@
 +incdir+ahb/sv/assertions
 +incdir+ahb/sv/if
 +incdir+ahb/examples/uvm_dut/tb
++define+KVIPS_AHB_DUT_RAW_TIMING
 ahb/sv/if/ahb_if.sv
 ahb/sv/pkg/ahb_types_pkg.sv
 ahb/sv/pkg/ahb_uvm_pkg.sv

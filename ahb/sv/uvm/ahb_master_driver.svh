@@ -170,7 +170,9 @@ class ahb_master_driver #(
     int unsigned last_data_beat;
     int unsigned drain_edges;
 `ifdef VERILATOR
+`ifdef KVIPS_AHB_DUT_RAW_TIMING
     bit          raw_edge_ready;
+`endif
 `endif
 
     super.run_phase(phase);
@@ -223,12 +225,14 @@ class ahb_master_driver #(
       while (cur_beat < cur_beats || data_valid) begin
         @(`AHB_M_EVT);
 `ifdef VERILATOR
+`ifdef KVIPS_AHB_DUT_RAW_TIMING
         // Capture the handshake value in the active region, before the
         // clocked DUT updates HREADYOUT.  A raw-interface master must decide
         // whether this edge accepted the held control phase from the value
         // that was present at the edge, not from the responder's post-NBA
         // value for the following cycle.
         raw_edge_ready = (vif.HREADY === 1'b1);
+`endif
 `endif
         // The reference slave updates HREADY/HRESP/HRDATA with nonblocking
         // assignments at the same edge.  Sample after that NBA update so the
@@ -244,12 +248,30 @@ class ahb_master_driver #(
 
         // Stall: hold signals stable (clocking block does this if we don't drive)
 `ifdef VERILATOR
+`ifdef KVIPS_AHB_DUT_RAW_TIMING
         if (!raw_edge_ready) begin
           // The current address/control phase remains on the bus.  The next
           // outer iteration samples the next edge and advances only when the
           // DUT has observed HREADY high at that edge.
           continue;
         end
+`else
+        begin
+          int unsigned stall_cycles;
+          stall_cycles = 0;
+          while (`AHB_M_CB.HREADY !== 1'b1) begin
+            stall_cycles++;
+            if ((cfg.handshake_timeout_cycles != 0) && (stall_cycles > cfg.handshake_timeout_cycles)) begin
+              `uvm_fatal(RID,
+                $sformatf("Timeout waiting for HREADY (HREADY=%b HREADYOUT=%b HRESETn=%b HSEL=%b HTRANS=%b)",
+                  `AHB_M_CB.HREADY, `AHB_M_CB.HREADYOUT, vif.HRESETn, vif.HSEL, vif.HTRANS))
+            end
+            @(`AHB_M_EVT);
+            if (!vif.HRESETn) break;
+          end
+          if (!vif.HRESETn) continue;
+        end
+`endif
 `else
         begin
           int unsigned stall_cycles;
