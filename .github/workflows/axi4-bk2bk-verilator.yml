@@ -1,25 +1,26 @@
-name: AHB Verilator Regressions
+name: AXI4 BK2BK CI
 
 on:
   push:
     branches: [ main, develop ]
     paths:
-      - 'ahb/**'
+      - 'axi4/**'
       - 'common/**'
       - 'third_party/uvm/**'
-      - '.github/workflows/ahb-verilator-regressions.yml'
+      - '.github/workflows/axi4-bk2bk-verilator.yml'
       - '.github/verilator-version'
       - '.github/actions/setup-verilator/**'
   pull_request:
     branches: [ main ]
     paths:
-      - 'ahb/**'
+      - 'axi4/**'
       - 'common/**'
       - 'third_party/uvm/**'
+      - '.github/workflows/axi4-bk2bk-verilator.yml'
 
 jobs:
-  ahb-regressions:
-    name: AHB Regressions (Verilator)
+  axi4-bk2bk:
+    name: AXI4 BK2BK (Verilator)
     runs-on: ubuntu-latest
 
     steps:
@@ -29,19 +30,10 @@ jobs:
       - name: Setup Verilator
         uses: ./.github/actions/setup-verilator
 
-      - name: Run AHB Regressions
+      - name: Run AXI4 BK2BK Regressions
         run: |
-          cd ahb/examples/uvm_back2back/sim
+          cd axi4/examples/uvm_back2back/sim
           chmod +x run_verilator.sh regress_verilator.sh
-
-          export VERILATOR_JOBS=$(nproc)
-          ./regress_verilator.sh
-
-      - name: Run AHB RTL-DUT Regressions
-        run: |
-          cd ahb/examples/uvm_dut/sim
-          chmod +x run_verilator.sh regress_verilator.sh
-
           export VERILATOR_JOBS=$(nproc)
           ./regress_verilator.sh
 
@@ -49,7 +41,5 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: ahb-verilator-results
-          path: |
-            ahb/examples/uvm_back2back/sim/out/verilator/
-            ahb/examples/uvm_dut/sim/out/verilator/
+          name: axi4-bk2bk-verilator-results
+          path: axi4/examples/uvm_back2back/sim/out/verilator/

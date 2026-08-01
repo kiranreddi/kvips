@@ -49,7 +49,7 @@ social:
   links:
     - https://github.com/kiranreddi/kvips
 
-# Exclude from build
+# Exclude from build (RTL trees and tooling — keep the Pages site lean)
 exclude:
   - Gemfile
   - Gemfile.lock
@@ -59,10 +59,22 @@ exclude:
   - .jekyll-cache
   - .git
   - .gitignore
+  - .github
+  - .devcontainer
+  - .pre-commit-config.yaml
   - LICENSE
+  - Makefile
   - axi4
+  - axi4_lite
+  - apb
+  - ahb
   - common
   - docs
+  - scripts
+  - third_party
+  - KVIPS_COMPREHENSIVE_REVIEW.md
+  - QUICK_REFERENCE.md
+  - README.md
 
 # Include assets
 include:

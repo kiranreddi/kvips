@@ -1,0 +1,45 @@
+name: AHB DUT CI
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'ahb/**'
+      - 'common/**'
+      - 'third_party/uvm/**'
+      - '.github/workflows/ahb-dut-verilator.yml'
+      - '.github/verilator-version'
+      - '.github/actions/setup-verilator/**'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'ahb/**'
+      - 'common/**'
+      - 'third_party/uvm/**'
+      - '.github/workflows/ahb-dut-verilator.yml'
+
+jobs:
+  ahb-dut:
+    name: AHB DUT (Verilator)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Verilator
+        uses: ./.github/actions/setup-verilator
+
+      - name: Run AHB DUT Regressions
+        run: |
+          cd ahb/examples/uvm_dut/sim
+          chmod +x run_verilator.sh regress_verilator.sh
+          export VERILATOR_JOBS=$(nproc)
+          ./regress_verilator.sh
+
+      - name: Archive Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ahb-dut-verilator-results
+          path: ahb/examples/uvm_dut/sim/out/verilator/
